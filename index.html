@@ -13,8 +13,13 @@
   body{ font-family:'Inter','Segoe UI',system-ui,sans-serif; }
   .mono{ font-family:'JetBrains Mono', monospace; }
 
-  .footer-links-row{ margin-bottom:8px; }
+  .footer-links-row{ margin-bottom:8px; flex-wrap:nowrap; gap:10px; }
   .footer-links-row:last-of-type{ margin-bottom:10px; }
+  .footer-links-row a{ white-space:nowrap; font-size:13px; }
+  @media (max-width:480px){
+    .footer-links-row{ gap:6px; }
+    .footer-links-row a{ font-size:10.5px; }
+  }
 
   /* Tighten up spacing across sections so the page doesn't feel so empty */
   .hero{ padding:20px 24px 12px; }
