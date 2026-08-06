@@ -204,6 +204,20 @@
   </div>
 </section>
 
+<section class="teaser-section" id="waitlist">
+  <span class="eyebrow">Next Drop Loading...</span>
+  <h2 style="font-size:clamp(24px,4vw,36px); font-weight:800; color:var(--blue-950); letter-spacing:-0.02em; margin-top:14px;">VALENCE GOOD</h2>
+  <div class="countdown mono" id="countdown">
+    <div class="unit"><div class="num" id="cd-days">04</div><div class="lbl">Days</div></div>
+    <div class="sep">:</div>
+    <div class="unit"><div class="num" id="cd-hours">12</div><div class="lbl">Hours</div></div>
+    <div class="sep">:</div>
+    <div class="unit"><div class="num" id="cd-mins">30</div><div class="lbl">Mins</div></div>
+    <div class="sep">:</div>
+    <div class="unit"><div class="num" id="cd-secs">00</div><div class="lbl">Secs</div></div>
+  </div>
+</section>
+
 <section class="perks" id="auth">
   <div class="wrap">
     <div class="stats-head" style="margin-bottom:32px;">
@@ -233,27 +247,6 @@
         <p>Verified owners get early access to the next drop and member drops.</p>
       </div>
     </div>
-  </div>
-</section>
-
-<section class="teaser-section" id="waitlist">
-  <span class="eyebrow">Next Drop Loading...</span>
-  <h2 style="font-size:clamp(24px,4vw,36px); font-weight:800; color:var(--blue-950); letter-spacing:-0.02em; margin-top:14px;">VALENCE GOOD</h2>
-  <div class="countdown mono" id="countdown">
-    <div class="unit"><div class="num" id="cd-days">04</div><div class="lbl">Days</div></div>
-    <div class="sep">:</div>
-    <div class="unit"><div class="num" id="cd-hours">12</div><div class="lbl">Hours</div></div>
-    <div class="sep">:</div>
-    <div class="unit"><div class="num" id="cd-mins">30</div><div class="lbl">Mins</div></div>
-    <div class="sep">:</div>
-    <div class="unit"><div class="num" id="cd-secs">00</div><div class="lbl">Secs</div></div>
-  </div>
-  <div class="card waitlist-card">
-    <label for="wl-email">Priority access</label>
-    <form id="waitlist-form" class="field-row">
-      <input id="wl-email" type="email" required placeholder="you@email.com" aria-label="Email for priority access">
-      <button type="submit" class="btn btn-solid">Join Waitlist</button>
-    </form>
   </div>
 </section>
 
@@ -287,14 +280,6 @@
     tick();
     var timer = setInterval(tick, 1000);
   })();
-
-  document.getElementById('waitlist-form').addEventListener('submit', function(e){
-    e.preventDefault();
-    var toast = document.getElementById('toast');
-    toast.classList.add('show');
-    setTimeout(function(){ toast.classList.remove('show'); }, 2400);
-    this.reset();
-  });
 </script>
 
 </body>
