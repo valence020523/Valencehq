@@ -39,11 +39,16 @@
   form{ display:flex; flex-direction:column; gap:14px; }
   form.hidden{ display:none; }
   label{ font-size:12.5px; font-weight:600; color:#4a5568; }
-  input[type="email"], input[type="password"]{
+  .hint{ font-size:11.5px; color:#94a3b8; font-weight:500; margin-top:3px; display:block; }
+  input[type="email"], input[type="password"], input[type="text"], input[type="tel"]{
     width:100%; box-sizing:border-box; padding:10px 12px; margin-top:4px;
     border:1px solid #d9dee6; border-radius:8px; font-size:14px; font-family:inherit;
   }
-  input[type="email"]:focus, input[type="password"]:focus{ outline:none; border-color:#d4af61; }
+  input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focus, input[type="tel"]:focus{ outline:none; border-color:#d4af61; }
+  input.field-error{ border-color:#e14545; }
+  .field-msg{ font-size:11.5px; color:#b42318; margin-top:4px; display:none; }
+  .field-msg.show{ display:block; }
+  .field-msg.ok{ color:#0a7a3c; }
   .submit-btn{
     margin-top:6px; padding:11px 0; border-radius:999px; border:none; cursor:pointer;
     font-size:14px; font-weight:700; color:#fff;
@@ -84,14 +89,31 @@
     <button type="submit" class="submit-btn">Log In</button>
   </form>
 
-  <form id="signup-form" class="hidden">
+  <form id="signup-form" class="hidden" novalidate>
+    <div>
+      <label for="signup-username">Username</label>
+      <input type="text" id="signup-username" required autocomplete="username" minlength="3" maxlength="24" pattern="[A-Za-z0-9_]+">
+      <span class="hint">3–24 characters, letters/numbers/underscore only</span>
+      <span class="field-msg" id="username-msg"></span>
+    </div>
     <div>
       <label for="signup-email">Email</label>
       <input type="email" id="signup-email" required autocomplete="email">
+      <span class="field-msg" id="email-msg"></span>
+    </div>
+    <div>
+      <label for="signup-phone">Phone number</label>
+      <input type="tel" id="signup-phone" required autocomplete="tel" placeholder="+1 555 123 4567">
+      <span class="field-msg" id="phone-msg"></span>
     </div>
     <div>
       <label for="signup-password">Password</label>
       <input type="password" id="signup-password" required autocomplete="new-password" minlength="6">
+    </div>
+    <div>
+      <label for="signup-password-confirm">Confirm password</label>
+      <input type="password" id="signup-password-confirm" required autocomplete="new-password" minlength="6">
+      <span class="field-msg" id="confirm-msg"></span>
     </div>
     <button type="submit" class="submit-btn">Create Account</button>
   </form>
@@ -107,6 +129,12 @@
   const loginForm = document.getElementById('login-form');
   const signupForm = document.getElementById('signup-form');
   const msgEl = document.getElementById('msg');
+
+  // If a session already exists, no need to be on this page at all.
+  (async () => {
+    const { data } = await supabaseClient.auth.getSession();
+    if (data.session) window.location.href = 'dashboard.html';
+  })();
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -126,10 +154,15 @@
   function hideMsg(){
     msgEl.className = 'msg';
   }
+  function fieldMsg(id, text, ok){
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'field-msg' + (text ? ' show' : '') + (ok ? ' ok' : '');
+  }
 
   function getRedirectTarget(){
     const params = new URLSearchParams(window.location.search);
-    return params.get('redirect') || 'index.html';
+    return params.get('redirect') || 'dashboard.html';
   }
 
   loginForm.addEventListener('submit', async (e) => {
@@ -151,22 +184,110 @@
     window.location.href = getRedirectTarget();
   });
 
+  // ---- Signup ----
+  const usernameInput = document.getElementById('signup-username');
+  const emailInput = document.getElementById('signup-email');
+  const phoneInput = document.getElementById('signup-phone');
+  const passwordInput = document.getElementById('signup-password');
+  const confirmInput = document.getElementById('signup-password-confirm');
+
+  function normalizePhone(v){
+    return v.replace(/[^\d+]/g, '');
+  }
+
+  // Checks the `profile_lookup` view (safe, read-only) for an existing
+  // row matching this username / email / phone so we can reject
+  // duplicates before ever calling signUp().
+  async function findConflict(username, email, phone){
+    const { data, error } = await supabaseClient
+      .from('profile_lookup')
+      .select('username,email,phone')
+      .or(`username.ilike.${username},email.ilike.${email},phone.eq.${phone}`)
+      .limit(5);
+
+    if (error) {
+      // If the lookup itself fails (e.g. table not set up yet), don't block
+      // signup on it — auth.signUp() still enforces email uniqueness.
+      console.warn('Availability check failed:', error.message);
+      return { conflicts: [], checkFailed: true };
+    }
+
+    const conflicts = [];
+    (data || []).forEach(row => {
+      if (row.username && row.username.toLowerCase() === username.toLowerCase()) conflicts.push('username');
+      if (row.email && row.email.toLowerCase() === email.toLowerCase()) conflicts.push('email');
+      if (row.phone && row.phone === phone) conflicts.push('phone');
+    });
+    return { conflicts, checkFailed: false };
+  }
+
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideMsg();
+    ['username-msg','email-msg','phone-msg','confirm-msg'].forEach(id => fieldMsg(id, '', false));
+    [usernameInput, emailInput, phoneInput].forEach(el => el.classList.remove('field-error'));
+
+    const username = usernameInput.value.trim();
+    const email = emailInput.value.trim();
+    const phone = normalizePhone(phoneInput.value.trim());
+    const password = passwordInput.value;
+    const confirm = confirmInput.value;
+
+    // Client-side validation
+    if (!/^[A-Za-z0-9_]{3,24}$/.test(username)) {
+      fieldMsg('username-msg', 'Use 3–24 letters, numbers, or underscores.');
+      usernameInput.classList.add('field-error');
+      return;
+    }
+    if (phone.length < 8) {
+      fieldMsg('phone-msg', 'Enter a valid phone number, including country code.');
+      phoneInput.classList.add('field-error');
+      return;
+    }
+    if (password !== confirm) {
+      fieldMsg('confirm-msg', 'Passwords do not match.');
+      return;
+    }
+
     const submitBtn = signupForm.querySelector('.submit-btn');
     submitBtn.disabled = true;
-    const email = document.getElementById('signup-email').value.trim();
-    const password = document.getElementById('signup-password').value;
 
-    const { error } = await supabaseClient.auth.signUp({ email, password });
+    const { conflicts, checkFailed } = await findConflict(username, email, phone);
+
+    if (conflicts.length) {
+      if (conflicts.includes('username')) {
+        fieldMsg('username-msg', 'That username is already taken.');
+        usernameInput.classList.add('field-error');
+      }
+      if (conflicts.includes('email')) {
+        fieldMsg('email-msg', 'An account with this email already exists.');
+        emailInput.classList.add('field-error');
+      }
+      if (conflicts.includes('phone')) {
+        fieldMsg('phone-msg', 'That phone number is already registered.');
+        phoneInput.classList.add('field-error');
+      }
+      submitBtn.disabled = false;
+      return;
+    }
+
+    const { error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: { data: { username, phone } }
+    });
+
     submitBtn.disabled = false;
 
     if (error) {
+      // Covers the case where the pre-check above failed silently
+      // (checkFailed) and Supabase's own uniqueness check catches it.
       showMsg(error.message, 'error');
       return;
     }
-    showMsg('Account created. Check your email to confirm, then log in.', 'success');
+
+    showMsg('Account created — check your email for a verification code…', 'success');
+    window.location.href = 'otp.html?email=' + encodeURIComponent(email);
   });
 </script>
 </body>

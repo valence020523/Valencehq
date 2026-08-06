@@ -227,7 +227,7 @@
         <span class="brand-name"><span class="letter">V</span><span class="letter">A</span><span class="letter">L</span><span class="letter">E</span><span class="letter">N</span><span class="letter">C</span><span class="letter">E</span></span>
       </div>
     </div>
-      <a class="auth-link" href="login.html">Log In / Sign Up</a>
+      <a class="auth-link" href="login.html" id="auth-link">Log In / Sign Up</a>
     </div>
     <div class="nav-actions-wrap">
       <div class="nav-actions">
@@ -358,5 +358,22 @@
 
 <div class="toast" id="toast">Added to waitlist ✓</div>
 
+<script>
+  // Supabase persists the session in localStorage by default, so a returning
+  // visitor who never logged out is still authenticated even after fully
+  // closing the browser — send them straight to their dashboard. A visitor
+  // who explicitly logged out has no session, so they simply stay here.
+  (async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const authLink = document.getElementById('auth-link');
+    if (session) {
+      if (authLink) {
+        authLink.textContent = 'Dashboard';
+        authLink.href = 'dashboard.html';
+      }
+      window.location.href = 'dashboard.html';
+    }
+  })();
+</script>
 </body>
 </html>

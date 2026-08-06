@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verify Your Email — VALENCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+  body{ font-family:'Inter','Segoe UI',system-ui,sans-serif; margin:0; }
+  header{
+    background:linear-gradient(180deg, var(--blue-950), #0d1c33);
+    border-bottom:1px solid #24365a;
+    padding:18px 24px;
+  }
+  .back-link{
+    font-size:12.5px; font-weight:600; color:#cbb98d;
+    text-decoration:underline; text-underline-offset:3px; text-decoration-color:rgba(212,175,97,0.5);
+  }
+  .back-link:hover{ color:#fff; }
+  main{ max-width:420px; margin:0 auto; padding:48px 24px 64px; }
+  main h1{
+    font-size:clamp(26px,4vw,36px); font-weight:800; color:var(--blue-950);
+    letter-spacing:-0.02em; margin-bottom:6px;
+  }
+  main > p.sub{ color:#4a5568; font-size:14px; line-height:1.6; margin-bottom:8px; }
+  main > p.sub strong{ color:var(--blue-950); }
+
+  form{ display:flex; flex-direction:column; gap:14px; margin-top:24px; }
+  label{ font-size:12.5px; font-weight:600; color:#4a5568; }
+  .otp-input{
+    width:100%; box-sizing:border-box; padding:14px 12px; margin-top:4px;
+    border:1px solid #d9dee6; border-radius:8px; font-size:22px; font-family:'JetBrains Mono',monospace;
+    letter-spacing:0.4em; text-align:center;
+  }
+  .otp-input:focus{ outline:none; border-color:#d4af61; }
+  .submit-btn{
+    margin-top:6px; padding:11px 0; border-radius:999px; border:none; cursor:pointer;
+    font-size:14px; font-weight:700; color:#fff;
+    background:linear-gradient(135deg,var(--blue-950),#1d3a63);
+  }
+  .submit-btn:disabled{ opacity:0.6; cursor:default; }
+  .resend{
+    margin-top:16px; text-align:center; font-size:13px; color:#4a5568;
+  }
+  .resend button{
+    background:none; border:none; padding:0; font-size:13px; font-weight:600;
+    color:#cbb98d; text-decoration:underline; cursor:pointer;
+  }
+  .resend button:disabled{ color:#c2c9d3; cursor:default; text-decoration:none; }
+  .msg{ font-size:13px; margin-top:14px; padding:10px 12px; border-radius:8px; display:none; }
+  .msg.show{ display:block; }
+  .msg.error{ background:#fdecec; color:#b42318; }
+  .msg.success{ background:#eafaf0; color:#0a7a3c; }
+
+  footer{ padding:18px 24px 16px; text-align:center; }
+  footer a{ color:#cbb98d; font-size:13px; text-decoration:underline; }
+</style>
+</head>
+<body>
+<header>
+  <a class="back-link" href="index.html">&larr; Back to VALENCE</a>
+</header>
+<main>
+  <h1>Check your email</h1>
+  <p class="sub">We sent a 6-digit verification code to <strong id="email-display">your email</strong>.</p>
+
+  <form id="otp-form" novalidate>
+    <div>
+      <label for="otp-code">Verification code</label>
+      <input type="text" id="otp-code" class="otp-input" inputmode="numeric" pattern="\d{6}" maxlength="6" required autocomplete="one-time-code" placeholder="••••••">
+    </div>
+    <button type="submit" class="submit-btn">Verify &amp; Continue</button>
+  </form>
+
+  <div class="resend">
+    Didn't get a code? <button type="button" id="resend-btn">Resend code</button>
+  </div>
+
+  <div id="msg" class="msg"></div>
+</main>
+<footer>
+  <a href="login.html">Back to Log In</a>
+</footer>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const email = params.get('email') || '';
+  document.getElementById('email-display').textContent = email || 'your email';
+
+  const otpForm = document.getElementById('otp-form');
+  const otpInput = document.getElementById('otp-code');
+  const resendBtn = document.getElementById('resend-btn');
+  const msgEl = document.getElementById('msg');
+
+  function showMsg(text, type){
+    msgEl.textContent = text;
+    msgEl.className = 'msg show ' + type;
+  }
+
+  if (!email) {
+    showMsg('Missing email — please sign up again.', 'error');
+  }
+
+  otpForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!email) return;
+    const submitBtn = otpForm.querySelector('.submit-btn');
+    submitBtn.disabled = true;
+
+    const { error } = await supabaseClient.auth.verifyOtp({
+      email,
+      token: otpInput.value.trim(),
+      type: 'signup'
+    });
+
+    submitBtn.disabled = false;
+
+    if (error) {
+      showMsg(error.message, 'error');
+      return;
+    }
+    showMsg('Verified — redirecting…', 'success');
+    window.location.href = 'dashboard.html';
+  });
+
+  resendBtn.addEventListener('click', async () => {
+    if (!email) return;
+    resendBtn.disabled = true;
+    const { error } = await supabaseClient.auth.resend({ type: 'signup', email });
+    if (error) {
+      showMsg(error.message, 'error');
+    } else {
+      showMsg('A new code is on its way.', 'success');
+    }
+    setTimeout(() => { resendBtn.disabled = false; }, 20000);
+  });
+</script>
+</body>
+</html>
