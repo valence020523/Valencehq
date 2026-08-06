@@ -158,6 +158,12 @@
 
   /* Countdown + waitlist, styled as a centered .card */
   .teaser-section{ padding:8px 24px 20px; text-align:center; }
+  .countdown-box{
+    max-width:420px; margin:0 auto;
+    border:1px solid var(--blue-500);
+    border-radius:0;
+    padding:24px 20px 20px;
+  }
   .countdown{ display:flex; justify-content:center; gap:22px; margin:12px 0 4px; }
   .countdown .unit .num{
     font-family:'JetBrains Mono', monospace; font-size:clamp(26px,4.5vw,38px);
@@ -214,16 +220,18 @@
 </section>
 
 <section class="teaser-section" id="waitlist">
-  <span class="eyebrow">Next Drop Loading...</span>
-  <h2 style="font-size:clamp(24px,4vw,36px); font-weight:800; color:var(--blue-950); letter-spacing:-0.02em; margin-top:8px;">VALENCE GOOD</h2>
-  <div class="countdown mono" id="countdown">
-    <div class="unit"><div class="num" id="cd-days">04</div><div class="lbl">Days</div></div>
-    <div class="sep">:</div>
-    <div class="unit"><div class="num" id="cd-hours">12</div><div class="lbl">Hours</div></div>
-    <div class="sep">:</div>
-    <div class="unit"><div class="num" id="cd-mins">30</div><div class="lbl">Mins</div></div>
-    <div class="sep">:</div>
-    <div class="unit"><div class="num" id="cd-secs">00</div><div class="lbl">Secs</div></div>
+  <div class="countdown-box">
+    <span class="eyebrow">Next Drop Loading...</span>
+    <h2 style="font-size:clamp(24px,4vw,36px); font-weight:800; color:var(--blue-950); letter-spacing:-0.02em; margin-top:2px;">VALENCE GOOD</h2>
+    <div class="countdown mono" id="countdown">
+      <div class="unit"><div class="num" id="cd-days">04</div><div class="lbl">Days</div></div>
+      <div class="sep">:</div>
+      <div class="unit"><div class="num" id="cd-hours">12</div><div class="lbl">Hours</div></div>
+      <div class="sep">:</div>
+      <div class="unit"><div class="num" id="cd-mins">30</div><div class="lbl">Mins</div></div>
+      <div class="sep">:</div>
+      <div class="unit"><div class="num" id="cd-secs">00</div><div class="lbl">Secs</div></div>
+    </div>
   </div>
 </section>
 
