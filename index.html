@@ -185,6 +185,33 @@
     .lookbook-grid{ grid-template-columns:repeat(2,1fr); }
     .waitlist-card .field-row{ flex-direction:column; }
   }
+
+  /* Brand concept, styled to match the .perks dark section language */
+  .concept{ background:var(--blue-950); padding:56px 28px 64px; border-top:1px solid rgba(255,255,255,0.08); }
+  .concept-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:18px;
+    max-width:1040px; margin:0 auto;
+  }
+  .concept-item{
+    text-align:center; padding:26px 18px;
+    background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1);
+    border-radius:var(--radius);
+  }
+  .concept-item .icon{
+    width:52px; height:52px; margin:0 auto 16px;
+    border:1.5px solid var(--blue-500); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--blue-500);
+  }
+  .concept-item .icon svg{ width:24px; height:24px; }
+  .concept-item h3{
+    font-size:13px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase;
+    color:#fff; margin-bottom:8px;
+  }
+  .concept-item p{ font-size:13px; color:#cbb98d; line-height:1.5; }
+  @media (max-width:760px){
+    .concept-grid{ grid-template-columns:repeat(2,1fr); }
+  }
 </style>
 </head>
 <body>
@@ -267,6 +294,59 @@
         <div class="icon">④</div>
         <h3>Unlock perks</h3>
         <p>Verified owners get early access to the next drop and member drops.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="concept" id="concept">
+  <div class="wrap">
+    <div class="stats-head" style="margin-bottom:20px;">
+      <div class="kicker" style="color:#e3c877;">Brand Concept</div>
+      <h2 style="color:#fff;">What VALENCE stands for.</h2>
+    </div>
+    <div class="concept-grid">
+      <div class="concept-item">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <h3>Authenticity</h3>
+        <p>Every piece is unique.</p>
+      </div>
+      <div class="concept-item">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 3h12l3 5-9 13L3 8z"/>
+            <path d="M3 8h18M9 3l-2 5 5 13 5-13-2-5M9 8h6"/>
+          </svg>
+        </div>
+        <h3>Exclusivity</h3>
+        <p>Limited drops. Maximum value.</p>
+      </div>
+      <div class="concept-item">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="8" r="3"/>
+            <path d="M3 20c0-3 2.5-5.5 6-5.5S15 17 15 20"/>
+            <circle cx="17" cy="9" r="2.4"/>
+            <path d="M15.2 14.7c2.6.2 4.3 2.3 4.3 5.3"/>
+          </svg>
+        </div>
+        <h3>Community</h3>
+        <p>We move together. We rise together.</p>
+      </div>
+      <div class="concept-item">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 8l4 3 5-6 5 6 4-3-2 10H5L3 8z"/>
+            <path d="M5 18h14"/>
+          </svg>
+        </div>
+        <h3>Legacy</h3>
+        <p>More than fashion, it's a movement.</p>
       </div>
     </div>
   </div>
