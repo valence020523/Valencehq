@@ -16,6 +16,12 @@
   .footer-links-top{ margin-bottom:14px; }
   .footer-links-bottom{ margin-bottom:16px; }
 
+  /* Tighten up spacing across sections so the page doesn't feel so empty */
+  .hero{ padding:20px 24px 12px; }
+  .sub{ margin:0 auto 10px; }
+  footer{ padding:18px 24px 16px; }
+  .perks{ padding:24px 24px; }
+
   header{
     background:linear-gradient(180deg, var(--blue-950), #0d1c33);
     border-bottom:1px solid #24365a;
@@ -99,12 +105,12 @@
   }
 
   /* Drop / product section, styled to match .stats-section + .stat-card language */
-  .drop-section{ padding:20px 28px 84px; }
+  .drop-section{ padding:8px 24px 16px; }
   .drop-grid{
-    max-width:640px; margin:0 auto;
+    max-width:420px; margin:0 auto;
   }
   .drop-visual{
-    aspect-ratio:4/5; border-radius:var(--radius); overflow:hidden;
+    aspect-ratio:4/5; max-height:340px; border-radius:var(--radius); overflow:hidden;
     background:linear-gradient(160deg, var(--blue-100), var(--white));
     border:1px solid #ecdfbe; position:relative;
   }
@@ -133,7 +139,7 @@
   .drop-panel ul li::before{ content:'✓'; color:var(--blue-600); font-weight:700; flex-shrink:0; }
 
   /* Lookbook, styled like a soft image grid consistent with card radius/border */
-  .lookbook-section{ padding:20px 28px 84px; }
+  .lookbook-section{ padding:20px 28px 40px; }
   .lookbook-grid{
     display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
     max-width:1040px; margin:36px auto 0;
@@ -151,8 +157,8 @@
   .vision-quote span{ color:var(--muted); font-weight:500; }
 
   /* Countdown + waitlist, styled as a centered .card */
-  .teaser-section{ padding:20px 28px 90px; text-align:center; }
-  .countdown{ display:flex; justify-content:center; gap:22px; margin:26px 0 34px; }
+  .teaser-section{ padding:8px 24px 20px; text-align:center; }
+  .countdown{ display:flex; justify-content:center; gap:22px; margin:12px 0 4px; }
   .countdown .unit .num{
     font-family:'JetBrains Mono', monospace; font-size:clamp(26px,4.5vw,38px);
     font-weight:700; color:var(--blue-950);
@@ -209,7 +215,7 @@
 
 <section class="teaser-section" id="waitlist">
   <span class="eyebrow">Next Drop Loading...</span>
-  <h2 style="font-size:clamp(24px,4vw,36px); font-weight:800; color:var(--blue-950); letter-spacing:-0.02em; margin-top:14px;">VALENCE GOOD</h2>
+  <h2 style="font-size:clamp(24px,4vw,36px); font-weight:800; color:var(--blue-950); letter-spacing:-0.02em; margin-top:8px;">VALENCE GOOD</h2>
   <div class="countdown mono" id="countdown">
     <div class="unit"><div class="num" id="cd-days">04</div><div class="lbl">Days</div></div>
     <div class="sep">:</div>
@@ -223,7 +229,7 @@
 
 <section class="perks" id="auth">
   <div class="wrap">
-    <div class="stats-head" style="margin-bottom:32px;">
+    <div class="stats-head" style="margin-bottom:20px;">
       <div class="kicker" style="color:#e3c877;">Digital Identity</div>
       <h2 style="color:#fff;">Verify your identity.</h2>
       <p class="sub" style="color:#cbb98d; margin-top:12px;">Scan the QR tag to prove ownership, check your garment's serial number, and unlock perks tied to that exact piece.</p>
