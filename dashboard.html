@@ -124,7 +124,11 @@
 
   @media (max-width:880px){
     .top-row{ grid-template-columns:1fr; }
-    .bottom-row{ grid-template-columns:1fr; }
+  }
+  @media (max-width:480px){
+    .bottom-row{ gap:12px; }
+    .action-card{ padding:16px 14px; }
+    .action-card .label{ font-size:13px; }
   }
 
   .loading{ color:var(--text-dim); font-size:14px; padding:60px 30px; }
