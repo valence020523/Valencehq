@@ -51,7 +51,7 @@
   nav.primary-nav{ display:flex; flex-direction:column; gap:2px; }
   .nav-item{
     display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:8px;
-    font-size:13.5px; font-weight:500; color:var(--text-dim); cursor:pointer; border:1px solid transparent;
+    font-size:13.5px; font-weight:700; color:var(--text-dim); cursor:pointer; border:1px solid transparent;
   }
   .nav-item svg{ width:17px; height:17px; flex-shrink:0; opacity:0.85; }
   .nav-item:hover{ background:var(--panel); color:var(--text); }
@@ -59,7 +59,7 @@
   .nav-item.active svg{ opacity:1; }
   .sidebar-bottom{ margin-top:auto; padding-top:16px; }
   .logout-btn{
-    font-size:11.5px; font-weight:600; color:var(--text-dim); background:none;
+    font-size:11.5px; font-weight:700; color:var(--text-dim); background:none;
     border:1px solid var(--border); border-radius:999px; padding:8px 12px; cursor:pointer;
     font-family:var(--sans); width:100%;
   }
@@ -85,8 +85,8 @@
   .profile-block{ display:flex; align-items:center; gap:10px; }
   a.profile-block:hover .name{ color:var(--gold-bright); }
   .profile-text{ text-align:right; line-height:1.3; }
-  .profile-text .label{ font-size:10px; letter-spacing:0.12em; color:var(--text-dimmer); font-family:var(--mono); }
-  .profile-text .name{ font-size:13.5px; font-weight:600; }
+  .profile-text .label{ font-size:10px; letter-spacing:0.12em; color:var(--text-dimmer); font-family:var(--mono); font-weight:700; }
+  .profile-text .name{ font-size:13.5px; font-weight:700; }
   .avatar-wrap{ position:relative; }
   .avatar{
     width:34px; height:34px; border-radius:50%; background:linear-gradient(145deg,#3a4a63,#1b2534);
@@ -110,13 +110,13 @@
   .founder-card, .collection-card{ display:flex; flex-direction:column; justify-content:space-between; }
   .collection-card{ cursor:pointer; }
   .collection-card:hover{ border-color:var(--gold); background:rgba(203,185,141,0.06); }
-  .eyebrow{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.12em; color:var(--text-dimmer); margin-bottom:8px; }
+  .eyebrow{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.12em; color:var(--text-dimmer); margin-bottom:8px; font-weight:700; }
   .collection-title{ font-size:15px; font-weight:700; color:var(--gold-bright); }
   .founder-card{ align-items:center; text-align:center; }
   .badge-wrap{ display:flex; flex-direction:column; align-items:center; gap:8px; margin:10px 0 4px; }
   .badge-icon{ width:52px; height:65px; color:#c98a5b; filter:drop-shadow(0 3px 6px rgba(0,0,0,0.4)); }
   .badge-name{ font-size:14px; font-weight:700; color:var(--gold-bright); }
-  .status-progress{ font-size:11px; color:var(--text-dimmer); font-family:var(--mono); }
+  .status-progress{ font-size:11px; color:var(--text-dimmer); font-family:var(--mono); font-weight:700; }
   .badge-icon.tier-bronze{ color:#c98a5b; }
   .badge-icon.tier-silver{ color:#c7ccd6; }
   .badge-icon.tier-gold{ color:var(--gold-bright); }
@@ -152,7 +152,7 @@
     display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--gold);
   }
   .stat-icon svg{ width:19px; height:19px; }
-  .stat-label{ font-family:var(--mono); font-size:10px; letter-spacing:0.1em; color:var(--text-dimmer); margin-bottom:3px; }
+  .stat-label{ font-family:var(--mono); font-size:10px; letter-spacing:0.1em; color:var(--text-dimmer); margin-bottom:3px; font-weight:700; }
   .stat-label.gold{ color:var(--gold-bright); }
   .stat-label.gold-bold{
     font-family:var(--sans); font-size:16px; font-weight:900; letter-spacing:0.01em;
@@ -173,7 +173,7 @@
   .product-swatch svg{ width:24px; height:24px; color:var(--gold); }
   .product-body{ padding:12px 14px 14px; }
   .product-name{ font-size:13px; font-weight:700; margin-bottom:4px; }
-  .product-sub{ font-size:11.5px; color:var(--text-dim); display:flex; align-items:center; gap:6px; }
+  .product-sub{ font-size:11.5px; color:var(--text-dim); display:flex; align-items:center; gap:6px; font-weight:700; }
   .product-sub .dot{ width:6px; height:6px; border-radius:50%; background:var(--green); }
 
   .events-grid{ display:grid; grid-template-columns:1.5fr 1fr; gap:16px; }
@@ -191,15 +191,15 @@
 
   /* ---------- real-time activity (now at the bottom, full width) ---------- */
   .activity-section{ display:flex; flex-direction:column; }
-  .activity-section h3{ font-size:13px; letter-spacing:0.1em; font-family:var(--mono); color:var(--text-dim); margin:0 0 16px; font-weight:600; }
+  .activity-section h3{ font-size:13px; letter-spacing:0.1em; font-family:var(--mono); color:var(--text-dim); margin:0 0 16px; font-weight:700; }
   .activity-list{ list-style:none; margin:0 0 18px; padding:0; display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-  .activity-list li{ display:flex; gap:9px; font-size:12.5px; line-height:1.4; }
+  .activity-list li{ display:flex; gap:9px; font-size:12.5px; line-height:1.4; font-weight:700; }
   .activity-list .tick{ width:6px; height:6px; border-radius:50%; background:var(--gold); margin-top:5px; flex-shrink:0; }
   .activity-list .time{ color:var(--text-dimmer); font-family:var(--mono); font-size:11px; margin-right:4px; }
   .activity-actions{ display:flex; gap:12px; }
   .btn-outline{
     background:none; cursor:pointer; border:1px solid rgba(203,185,141,0.4); color:var(--gold-bright);
-    border-radius:8px; padding:9px 16px; font-size:12px; font-weight:600; font-family:var(--sans);
+    border-radius:8px; padding:9px 16px; font-size:12px; font-weight:700; font-family:var(--sans);
   }
   .btn-outline:hover{ background:rgba(203,185,141,0.1); border-color:var(--gold); }
 
