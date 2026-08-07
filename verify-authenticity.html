@@ -55,7 +55,6 @@
   #qr-reader-wrap.active{ display:block; }
   #qr-reader{ width:100%; }
   #qr-reader video{ border-radius:16px 16px 0 0; }
-  /* html5-qrcode injects its own controls/border UI; keep it minimal */
   #qr-reader__dashboard_section_csr button{
     font-family:var(--sans); font-size:12px; font-weight:600; color:var(--black);
     background:var(--gold-bright); border:none; border-radius:8px; padding:8px 14px; cursor:pointer;
@@ -168,7 +167,22 @@
 
   async function onScanSuccess(decodedText) {
     await stopScan();
-    await verifyCode(decodedText);
+    await verifyCode(extractCode(decodedText));
+  }
+
+  // A scanned QR may encode either a bare code ("VLC-001") or a full link
+  // back to this page ("https://valencehq.vercel.app/verify-authenticity.html?code=VLC-001").
+  // Pull just the code out either way.
+  function extractCode(raw) {
+    const trimmed = (raw || '').trim();
+    try {
+      const url = new URL(trimmed);
+      const fromParam = url.searchParams.get('code');
+      if (fromParam) return fromParam;
+    } catch (e) {
+      // not a URL — fall through and treat raw text as the code itself
+    }
+    return trimmed;
   }
 
   cancelBtn.addEventListener('click', stopScan);
@@ -190,13 +204,13 @@
     resultPanel.classList.add('active');
     resultPanel.innerHTML = `<div class="result-status">Looking up code…</div>`;
 
-    if (typeof supabase === 'undefined') {
+    if (typeof supabaseClient === 'undefined') {
       renderResult(false, { code }, 'Verification service is not configured.');
       return;
     }
 
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from('products')
         .select('*')
         .eq('qr_code', code)
