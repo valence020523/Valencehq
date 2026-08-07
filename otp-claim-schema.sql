@@ -84,6 +84,15 @@ create trigger on_auth_user_created_retailer
   for each row
   execute function public.handle_new_retailer();
 
+-- The Auth service connects as the restricted `supabase_auth_admin` role.
+-- Even though handle_new_retailer() is SECURITY DEFINER, Postgres still
+-- requires that role to have privileges on public.retailers for the
+-- trigger to fire at all — without this grant, signUp() fails outright
+-- with "Database error saving new user" because the whole transaction
+-- (including the auth.users insert itself) gets rolled back.
+grant usage on schema public to supabase_auth_admin;
+grant select, insert, update on public.retailers to supabase_auth_admin;
+
 -- ---------- 2. OTP codes ----------
 create table if not exists public.otp_codes (
   id bigint generated always as identity primary key,
