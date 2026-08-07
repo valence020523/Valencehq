@@ -112,6 +112,15 @@
   .collection-card:hover{ border-color:var(--gold); background:rgba(203,185,141,0.06); }
   .eyebrow{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.12em; color:var(--text-dimmer); margin-bottom:8px; }
   .founder-title, .collection-title{ font-size:15px; font-weight:700; color:var(--gold-bright); }
+  .status-progress{ font-size:11px; color:var(--text-dimmer); margin-top:6px; font-family:var(--mono); }
+  .founder-title.tier-bronze{ color:#c98a5b; }
+  .founder-title.tier-silver{ color:#c7ccd6; }
+  .founder-title.tier-gold{ color:var(--gold-bright); }
+  .founder-title.tier-platinum{ color:#bfe9ff; }
+  .card-icon.tier-bronze{ color:#c98a5b; }
+  .card-icon.tier-silver{ color:#c7ccd6; }
+  .card-icon.tier-gold{ color:var(--gold); }
+  .card-icon.tier-platinum{ color:#bfe9ff; }
   .card-icon{ align-self:flex-end; width:34px; height:34px; margin-top:14px; color:var(--gold); opacity:0.9; }
 
   .hero{
@@ -318,10 +327,11 @@
       <div class="top-row">
         <div class="card founder-card">
           <div>
-            <div class="eyebrow">FOUNDER STATUS</div>
-            <div class="founder-title">Genesis Founder #001</div>
+            <div class="eyebrow">STATUS</div>
+            <div class="founder-title" id="status-badge">Bronze Badge</div>
+            <div class="status-progress" id="status-progress">Loading…</div>
           </div>
-          <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
+          <svg class="card-icon" id="status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
         </div>
 
         <a class="card collection-card" href="collection.html">
@@ -417,6 +427,29 @@
       const initial = displayName.charAt(0).toUpperCase();
       avatarEls.forEach(el => { el.textContent = initial; });
     }
+
+    // Badge tier — reads meta.purchase_count from Supabase user_metadata.
+    // Update that field (e.g. via a DB trigger or webhook on order completion)
+    // and this badge will automatically level up.
+    const purchaseCount = Number(meta.purchase_count) || 0;
+    const tiers = [
+      { key: 'bronze',   name: 'Bronze Badge',   min: 0,  next: 3  },
+      { key: 'silver',   name: 'Silver Badge',   min: 3,  next: 6  },
+      { key: 'gold',     name: 'Gold Badge',     min: 6,  next: 10 },
+      { key: 'platinum', name: 'Platinum Badge', min: 10, next: null },
+    ];
+    const tier = [...tiers].reverse().find(t => purchaseCount >= t.min);
+
+    const badgeEl = document.getElementById('status-badge');
+    const progressEl = document.getElementById('status-progress');
+    const iconEl = document.getElementById('status-icon');
+
+    badgeEl.textContent = tier.name;
+    badgeEl.className = `founder-title tier-${tier.key}`;
+    iconEl.setAttribute('class', `card-icon tier-${tier.key}`);
+    progressEl.textContent = tier.next
+      ? `${tier.next - purchaseCount} purchase${(tier.next - purchaseCount) === 1 ? '' : 's'} to next tier`
+      : 'Highest tier reached';
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
