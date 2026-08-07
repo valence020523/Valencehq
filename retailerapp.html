@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retailer — VALENCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+  :root{
+    --black:#05070b; --navy-900:#0b1220; --gold:#cbb98d; --gold-bright:#e6d9b0;
+    --panel:rgba(255,255,255,0.035); --border:rgba(255,255,255,0.09);
+    --text:#f2f1ec; --text-dim:#93a0b4; --text-dimmer:#5c6779;
+    --mono:'JetBrains Mono',monospace; --sans:'Inter','Segoe UI',system-ui,sans-serif;
+    --green:#7fd8a0; --red:#e88a8a;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--black); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; text-decoration:none; }
+  header{
+    display:flex; align-items:center; justify-content:space-between; padding:18px 30px;
+    border-bottom:1px solid var(--border); background:linear-gradient(180deg,var(--navy-900),var(--black));
+  }
+  .logo-chip img{ display:block; height:30px; width:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
+  .brandmark{ display:flex; align-items:center; gap:10px; }
+  .brand-word{ font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:15px; }
+  #signout-btn{
+    font-size:12px; font-family:var(--mono); color:var(--text-dim); background:none;
+    border:1px solid var(--border); border-radius:999px; padding:6px 14px; cursor:pointer; display:none;
+  }
+  #signout-btn:hover{ color:var(--gold-bright); border-color:var(--gold); }
+
+  main{ max-width:480px; margin:0 auto; padding:60px 24px 90px; }
+  h1{ font-size:22px; font-weight:800; margin:0 0 8px; }
+  .sub{ font-size:13.5px; color:var(--text-dim); margin:0 0 30px; }
+
+  .panel{ border:1px solid var(--border); background:var(--panel); border-radius:16px; padding:24px; }
+  label{ display:block; font-size:11.5px; font-family:var(--mono); color:var(--text-dimmer); margin:16px 0 6px; }
+  label:first-of-type{ margin-top:0; }
+  input{
+    width:100%; padding:11px 13px; border-radius:8px; border:1px solid var(--border);
+    background:rgba(255,255,255,0.03); color:var(--text); font-family:var(--sans); font-size:13.5px;
+    text-transform:uppercase;
+  }
+  input:focus{ outline:none; border-color:var(--gold); }
+
+  .btn{
+    margin-top:22px; width:100%; font-size:13px; font-weight:700; letter-spacing:0.03em; color:var(--black);
+    background:var(--gold-bright); border:none; border-radius:999px; padding:13px; cursor:pointer; font-family:var(--sans);
+  }
+  .btn:hover{ background:var(--gold); }
+  .btn:disabled{ opacity:0.5; cursor:default; }
+
+  .msg{ margin-top:16px; font-size:12.5px; font-family:var(--mono); }
+  .msg.error{ color:var(--red); }
+  .msg.success{ color:var(--green); }
+
+  #app-section{ display:none; }
+  #login-section{ display:block; }
+
+  /* OTP display */
+  .otp-panel{ text-align:center; padding:32px 24px; }
+  .otp-panel.hidden{ display:none; }
+  .otp-item{ font-family:var(--mono); font-size:12px; color:var(--text-dim); margin-bottom:14px; }
+  .otp-value{
+    font-family:var(--mono); font-weight:700; font-size:38px; letter-spacing:0.15em;
+    color:var(--gold-bright); margin-bottom:18px;
+  }
+  .otp-ring-wrap{ position:relative; width:76px; height:76px; margin:0 auto 14px; }
+  .otp-ring-wrap svg{ width:100%; height:100%; transform:rotate(-90deg); }
+  .otp-ring-bg{ stroke:var(--border); }
+  .otp-ring-fg{ stroke:var(--gold-bright); stroke-linecap:round; transition:stroke-dashoffset 1s linear; }
+  .otp-ring-label{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-size:15px; font-weight:700; color:var(--text);
+  }
+  .otp-expired-note{ font-family:var(--mono); font-size:12px; color:var(--red); margin-top:6px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brandmark">
+    <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
+    <span class="brand-word">VALENCE RETAILER</span>
+  </div>
+  <button id="signout-btn">SIGN OUT</button>
+</header>
+
+<main>
+  <!-- LOGIN -->
+  <section id="login-section">
+    <h1>Retailer Login</h1>
+    <p class="sub">Sign in to generate a one-time authentication code for a customer's item.</p>
+    <div class="panel">
+      <label for="email">EMAIL</label>
+      <input type="email" id="email" autocomplete="username" style="text-transform:none;" />
+      <label for="password">PASSWORD</label>
+      <input type="password" id="password" autocomplete="current-password" style="text-transform:none;" />
+      <button class="btn" id="login-btn">SIGN IN</button>
+      <div class="msg" id="login-msg"></div>
+    </div>
+  </section>
+
+  <!-- GENERATE OTP -->
+  <section id="app-section">
+    <h1>Generate Code</h1>
+    <p class="sub" id="retailer-greeting">Enter the item's QR code to issue a 30-second authentication code the customer can use to register it.</p>
+
+    <div class="panel">
+      <label for="qr_code">QR CODE</label>
+      <input type="text" id="qr_code" placeholder="VLC-0001" />
+      <button class="btn" id="gen-btn">GENERATE CODE</button>
+      <div class="msg" id="gen-msg"></div>
+    </div>
+
+    <div class="panel otp-panel hidden" id="otp-panel">
+      <div class="otp-item" id="otp-item-label"></div>
+      <div class="otp-value" id="otp-value"></div>
+      <div class="otp-ring-wrap">
+        <svg viewBox="0 0 76 76">
+          <circle class="otp-ring-bg" cx="38" cy="38" r="33" fill="none" stroke-width="5"/>
+          <circle class="otp-ring-fg" id="otp-ring" cx="38" cy="38" r="33" fill="none" stroke-width="5"
+            stroke-dasharray="207.3" stroke-dashoffset="0"/>
+        </svg>
+        <div class="otp-ring-label" id="otp-seconds">30</div>
+      </div>
+      <div class="otp-expired-note hidden" id="otp-expired-note">Expired — generate a new code.</div>
+    </div>
+  </section>
+</main>
+
+<script>
+  const loginSection = document.getElementById('login-section');
+  const appSection = document.getElementById('app-section');
+  const signoutBtn = document.getElementById('signout-btn');
+  const loginMsg = document.getElementById('login-msg');
+  const genMsg = document.getElementById('gen-msg');
+  const retailerGreeting = document.getElementById('retailer-greeting');
+
+  const otpPanel = document.getElementById('otp-panel');
+  const otpItemLabel = document.getElementById('otp-item-label');
+  const otpValue = document.getElementById('otp-value');
+  const otpRing = document.getElementById('otp-ring');
+  const otpSeconds = document.getElementById('otp-seconds');
+  const otpExpiredNote = document.getElementById('otp-expired-note');
+
+  const OTP_SECONDS = 30;
+  const RING_CIRCUMFERENCE = 2 * Math.PI * 33; // matches r=33 above
+  let countdownTimer = null;
+  let currentRetailer = null;
+
+  async function checkSession() {
+    const { data } = await supabaseClient.auth.getSession();
+    if (!data.session) {
+      showLoggedOut();
+      return;
+    }
+    const retailer = await loadRetailer(data.session.user.id);
+    if (retailer && retailer.active) {
+      currentRetailer = retailer;
+      showLoggedIn();
+    } else {
+      await supabaseClient.auth.signOut();
+      showLoggedOut();
+      loginMsg.textContent = 'This account is not an active retailer account.';
+      loginMsg.className = 'msg error';
+    }
+  }
+
+  async function loadRetailer(userId) {
+    const { data, error } = await supabaseClient
+      .from('retailers')
+      .select('id, name, active')
+      .eq('id', userId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return data;
+  }
+
+  function showLoggedIn() {
+    loginSection.style.display = 'none';
+    appSection.style.display = 'block';
+    signoutBtn.style.display = 'inline-block';
+    retailerGreeting.textContent = currentRetailer?.name
+      ? `Signed in as ${currentRetailer.name}. Enter the item's QR code to issue a 30-second authentication code.`
+      : `Enter the item's QR code to issue a 30-second authentication code.`;
+  }
+
+  function showLoggedOut() {
+    loginSection.style.display = 'block';
+    appSection.style.display = 'none';
+    signoutBtn.style.display = 'none';
+    otpPanel.classList.add('hidden');
+    clearCountdown();
+  }
+
+  document.getElementById('login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    loginMsg.textContent = '';
+    loginMsg.className = 'msg';
+
+    if (!email || !password) {
+      loginMsg.textContent = 'Enter your email and password.';
+      loginMsg.classList.add('error');
+      return;
+    }
+
+    const { error, data } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      loginMsg.textContent = error.message;
+      loginMsg.classList.add('error');
+      return;
+    }
+
+    const retailer = await loadRetailer(data.user.id);
+    if (!retailer || !retailer.active) {
+      await supabaseClient.auth.signOut();
+      loginMsg.textContent = 'This account is not an active retailer account.';
+      loginMsg.classList.add('error');
+      return;
+    }
+    currentRetailer = retailer;
+    showLoggedIn();
+  });
+
+  signoutBtn.addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    showLoggedOut();
+  });
+
+  function generateOtp() {
+    // 6-digit numeric code, cryptographically random.
+    const bytes = new Uint32Array(1);
+    crypto.getRandomValues(bytes);
+    return String(bytes[0] % 1000000).padStart(6, '0');
+  }
+
+  function clearCountdown() {
+    if (countdownTimer) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+  }
+
+  function startCountdown() {
+    clearCountdown();
+    otpExpiredNote.classList.add('hidden');
+    let remaining = OTP_SECONDS;
+    otpSeconds.textContent = remaining;
+    otpRing.style.strokeDasharray = String(RING_CIRCUMFERENCE);
+    otpRing.style.strokeDashoffset = '0';
+
+    countdownTimer = setInterval(() => {
+      remaining -= 1;
+      otpSeconds.textContent = Math.max(remaining, 0);
+      const offset = RING_CIRCUMFERENCE * (1 - remaining / OTP_SECONDS);
+      otpRing.style.strokeDashoffset = String(offset);
+
+      if (remaining <= 0) {
+        clearCountdown();
+        otpValue.style.opacity = '0.35';
+        otpExpiredNote.classList.remove('hidden');
+      }
+    }, 1000);
+  }
+
+  document.getElementById('gen-btn').addEventListener('click', async () => {
+    const qrCode = document.getElementById('qr_code').value.trim().toUpperCase();
+    genMsg.textContent = '';
+    genMsg.className = 'msg';
+    otpPanel.classList.add('hidden');
+    clearCountdown();
+
+    if (!qrCode) {
+      genMsg.textContent = 'Enter a QR code.';
+      genMsg.classList.add('error');
+      return;
+    }
+
+    const genBtn = document.getElementById('gen-btn');
+    genBtn.disabled = true;
+
+    try {
+      // Confirm the item exists and isn't already claimed before issuing a code.
+      const { data: product, error: lookupError } = await supabaseClient
+        .from('products')
+        .select('qr_code, product_name, owner_name')
+        .eq('qr_code', qrCode)
+        .maybeSingle();
+
+      if (lookupError) throw lookupError;
+
+      if (!product) {
+        genMsg.textContent = 'No product found with that QR code.';
+        genMsg.classList.add('error');
+        return;
+      }
+      if (product.owner_name) {
+        genMsg.textContent = 'This item is already registered to an owner.';
+        genMsg.classList.add('error');
+        return;
+      }
+
+      const otp = generateOtp();
+      const expiresAt = new Date(Date.now() + OTP_SECONDS * 1000).toISOString();
+
+      const { error: insertError } = await supabaseClient
+        .from('otp_codes')
+        .insert([{
+          qr_code: qrCode,
+          otp,
+          expires_at: expiresAt,
+          created_by: currentRetailer.id,
+        }]);
+
+      if (insertError) throw insertError;
+
+      otpItemLabel.textContent = `${product.product_name || 'Item'} · ${qrCode}`;
+      otpValue.textContent = otp;
+      otpValue.style.opacity = '1';
+      otpPanel.classList.remove('hidden');
+      startCountdown();
+
+      genMsg.textContent = 'Show this code to the customer — it\u2019s valid for 30 seconds.';
+      genMsg.classList.add('success');
+    } catch (err) {
+      console.error('OTP generation failed', err);
+      genMsg.textContent = err.message || 'Could not generate a code. Try again.';
+      genMsg.classList.add('error');
+    } finally {
+      genBtn.disabled = false;
+    }
+  });
+
+  checkSession();
+</script>
+</body>
+</html>

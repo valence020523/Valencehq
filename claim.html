@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register Your Item — VALENCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+  :root{
+    --black:#05070b; --navy-900:#0b1220; --gold:#cbb98d; --gold-bright:#e6d9b0;
+    --panel:rgba(255,255,255,0.035); --border:rgba(255,255,255,0.09);
+    --text:#f2f1ec; --text-dim:#93a0b4; --text-dimmer:#5c6779;
+    --mono:'JetBrains Mono',monospace; --sans:'Inter','Segoe UI',system-ui,sans-serif;
+    --green:#7fd8a0; --red:#e88a8a;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--black); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; text-decoration:none; }
+  header{
+    display:flex; align-items:center; justify-content:space-between; padding:16px 22px;
+    border-bottom:1px solid var(--border); background:linear-gradient(180deg,var(--navy-900),var(--black));
+  }
+  .brandmark{ display:flex; align-items:center; gap:10px; }
+  .logo-chip img{ display:block; height:26px; width:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
+  .brand-word{ font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:13px; }
+  .back-link{ font-size:12px; font-family:var(--mono); color:var(--text-dim); }
+  .back-link:hover{ color:var(--gold-bright); }
+
+  main{ max-width:480px; margin:0 auto; padding:32px 20px 70px; }
+  .step{ display:none; }
+  .step.active{ display:block; }
+
+  h1{ font-size:20px; font-weight:800; margin:0 0 8px; }
+  .sub{ font-size:13.5px; color:var(--text-dim); margin:0 0 24px; line-height:1.6; }
+
+  .panel{ border:1px solid var(--border); background:var(--panel); border-radius:16px; padding:22px; }
+  .panel + .panel{ margin-top:16px; }
+  label{ display:block; font-size:11.5px; font-family:var(--mono); color:var(--text-dimmer); margin:16px 0 6px; }
+  label:first-of-type{ margin-top:0; }
+  input{
+    width:100%; padding:11px 13px; border-radius:8px; border:1px solid var(--border);
+    background:rgba(255,255,255,0.03); color:var(--text); font-family:var(--sans); font-size:13.5px;
+  }
+  input.otp-input{ font-family:var(--mono); font-size:20px; letter-spacing:0.25em; text-align:center; }
+  input:focus{ outline:none; border-color:var(--gold); }
+
+  .btn{
+    margin-top:22px; width:100%; font-size:13px; font-weight:700; letter-spacing:0.03em; color:var(--black);
+    background:var(--gold-bright); border:none; border-radius:999px; padding:13px; cursor:pointer; font-family:var(--sans);
+  }
+  .btn:hover{ background:var(--gold); }
+  .btn:disabled{ opacity:0.5; cursor:default; }
+  .btn-secondary{
+    margin-top:10px; width:100%; font-size:12.5px; font-weight:600; color:var(--text);
+    background:transparent; border:1px solid var(--border); border-radius:999px; padding:11px; cursor:pointer; font-family:var(--sans);
+  }
+  .btn-secondary:hover{ border-color:var(--gold); color:var(--gold-bright); }
+
+  .msg{ margin-top:14px; font-size:12.5px; font-family:var(--mono); }
+  .msg.error{ color:var(--red); }
+  .msg.success{ color:var(--green); }
+
+  .item-summary{ text-align:center; margin-bottom:22px; }
+  .item-summary .name{ font-size:19px; font-weight:800; margin-bottom:4px; }
+  .item-summary .meta{ font-family:var(--mono); font-size:11.5px; color:var(--text-dimmer); }
+
+  .center-note{ text-align:center; font-size:13px; color:var(--text-dim); line-height:1.6; padding:60px 10px; }
+  .center-note a{ color:var(--gold-bright); text-decoration:underline; }
+
+  /* success */
+  .success-seal{ width:80px; height:80px; margin:20px auto 18px; display:block; }
+  .success-title{ text-align:center; font-size:18px; font-weight:800; color:var(--green); margin-bottom:6px; }
+  .success-sub{ text-align:center; font-size:13px; color:var(--text-dim); margin-bottom:26px; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brandmark">
+    <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
+    <span class="brand-word">VALENCE</span>
+  </div>
+  <a class="back-link" href="product.html" id="back-link">&larr; BACK</a>
+</header>
+
+<main>
+
+  <!-- Loading / error state before we know the item exists & is unclaimed -->
+  <div class="step active" id="step-loading">
+    <div class="center-note" id="loading-note">Looking up your item…</div>
+  </div>
+
+  <!-- Step 1: enter retailer OTP -->
+  <div class="step" id="step-otp">
+    <h1>Enter Retailer Code</h1>
+    <p class="sub">Ask the retailer to generate a one-time code for this item on their Valence app, then enter it below. It's only valid for 30 seconds.</p>
+    <div class="item-summary">
+      <div class="name" id="otp-item-name"></div>
+      <div class="meta" id="otp-item-meta"></div>
+    </div>
+    <div class="panel">
+      <label for="otp_input">ONE-TIME CODE</label>
+      <input type="text" id="otp_input" class="otp-input" inputmode="numeric" maxlength="6" placeholder="000000" />
+      <button class="btn" id="verify-otp-btn">VERIFY CODE</button>
+      <div class="msg" id="otp-msg"></div>
+    </div>
+  </div>
+
+  <!-- Step 2: confirm + register (serial + name) -->
+  <div class="step" id="step-register">
+    <h1>Confirm It's Yours</h1>
+    <p class="sub">Code verified. Confirm the serial number printed on the item's tag and enter your name to complete registration.</p>
+    <div class="panel">
+      <label for="item_number_input">SERIAL / ITEM NUMBER</label>
+      <input type="text" id="item_number_input" placeholder="VAL-0489" />
+      <label for="owner_name_input">YOUR NAME</label>
+      <input type="text" id="owner_name_input" placeholder="John Chibueke" />
+      <button class="btn" id="register-btn">REGISTER TO ME</button>
+      <button class="btn-secondary" id="cancel-register-btn" type="button">CANCEL</button>
+      <div class="msg" id="register-msg"></div>
+    </div>
+  </div>
+
+  <!-- Step 3: success -->
+  <div class="step" id="step-success">
+    <svg class="success-seal" viewBox="0 0 104 104" fill="none">
+      <circle cx="52" cy="52" r="46" stroke="var(--green)" stroke-width="2.5" opacity="0.85"/>
+      <circle cx="52" cy="52" r="38" fill="rgba(127,216,160,0.18)"/>
+      <path d="M35 53l12 12 22-24" stroke="var(--green)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="success-title">Registered</div>
+    <div class="success-sub">This item is now registered to you. Anyone who scans it going forward will see it as verified.</div>
+    <a class="btn" id="view-product-link" href="product.html">VIEW VERIFICATION PAGE</a>
+  </div>
+
+</main>
+
+<script>
+  const steps = {
+    loading: document.getElementById('step-loading'),
+    otp: document.getElementById('step-otp'),
+    register: document.getElementById('step-register'),
+    success: document.getElementById('step-success'),
+  };
+  const loadingNote = document.getElementById('loading-note');
+  const backLink = document.getElementById('back-link');
+
+  function showStep(name) {
+    Object.values(steps).forEach(s => s.classList.remove('active'));
+    steps[name].classList.add('active');
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const code = normalizeCode(params.get('code'));
+
+  function normalizeCode(str) {
+    return (str || '')
+      .replace(/[\u2010-\u2015\u2212]/g, '-')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .trim()
+      .toUpperCase();
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  let product = null;
+
+  async function init() {
+    if (!code) {
+      loadingNote.innerHTML = 'No item code was given. <a href="product.html">Go back and scan your tag</a>.';
+      return;
+    }
+    backLink.href = `product.html?code=${encodeURIComponent(code)}`;
+
+    if (typeof supabaseClient === 'undefined') {
+      loadingNote.textContent = 'Verification service is not configured.';
+      return;
+    }
+
+    try {
+      const { data, error } = await supabaseClient
+        .from('products')
+        .select('qr_code, product_name, batch_number, item_number, edition_name, edition_total, owner_name, manufactured_at')
+        .eq('qr_code', code)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        loadingNote.innerHTML = 'This code does not match any known Valence product. <a href="product.html">Try scanning again</a>.';
+        return;
+      }
+      if (data.owner_name) {
+        loadingNote.innerHTML = `This item is already registered. <a href="product.html?code=${encodeURIComponent(code)}">View its verification page</a>.`;
+        return;
+      }
+
+      product = data;
+      document.getElementById('otp-item-name').textContent = data.product_name || 'Valence Item';
+      const meta = data.item_number
+        ? `${data.item_number}${data.edition_total ? ` of ${data.edition_total}` : ''}`
+        : (data.batch_number ? `Batch ${data.batch_number}` : code);
+      document.getElementById('otp-item-meta').textContent = meta;
+
+      showStep('otp');
+    } catch (err) {
+      console.error('Lookup failed', err);
+      loadingNote.textContent = 'Could not reach the verification service. Please try again.';
+    }
+  }
+
+  document.getElementById('verify-otp-btn').addEventListener('click', async () => {
+    const otpMsg = document.getElementById('otp-msg');
+    const otp = document.getElementById('otp_input').value.trim();
+    otpMsg.textContent = '';
+    otpMsg.className = 'msg';
+
+    if (!otp) {
+      otpMsg.textContent = 'Enter the code the retailer gave you.';
+      otpMsg.classList.add('error');
+      return;
+    }
+
+    const btn = document.getElementById('verify-otp-btn');
+    btn.disabled = true;
+
+    try {
+      const { data, error } = await supabaseClient.rpc('verify_otp', {
+        p_qr_code: code,
+        p_otp: otp,
+      });
+      if (error) throw error;
+
+      if (!data || !data.ok) {
+        const reason = data && data.error === 'expired_otp'
+          ? 'That code has expired — ask the retailer for a new one.'
+          : 'That code is incorrect. Double-check and try again.';
+        otpMsg.textContent = reason;
+        otpMsg.classList.add('error');
+        return;
+      }
+
+      // Carry the verified OTP forward for the final registration call.
+      document.getElementById('step-register').dataset.otp = otp;
+      if (product.item_number) {
+        document.getElementById('item_number_input').placeholder = 'As printed on the tag';
+      }
+      showStep('register');
+    } catch (err) {
+      console.error('OTP verification failed', err);
+      otpMsg.textContent = 'Could not verify the code. Please try again.';
+      otpMsg.classList.add('error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('cancel-register-btn').addEventListener('click', () => {
+    showStep('otp');
+  });
+
+  document.getElementById('register-btn').addEventListener('click', async () => {
+    const registerMsg = document.getElementById('register-msg');
+    const itemNumber = document.getElementById('item_number_input').value.trim();
+    const ownerName = document.getElementById('owner_name_input').value.trim();
+    const otp = document.getElementById('step-register').dataset.otp;
+    registerMsg.textContent = '';
+    registerMsg.className = 'msg';
+
+    if (!itemNumber) {
+      registerMsg.textContent = 'Enter the serial number printed on the tag.';
+      registerMsg.classList.add('error');
+      return;
+    }
+    if (!ownerName) {
+      registerMsg.textContent = 'Enter your name.';
+      registerMsg.classList.add('error');
+      return;
+    }
+
+    const btn = document.getElementById('register-btn');
+    btn.disabled = true;
+
+    try {
+      const { data, error } = await supabaseClient.rpc('claim_product', {
+        p_qr_code: code,
+        p_otp: otp,
+        p_item_number: itemNumber,
+        p_owner_name: ownerName,
+      });
+      if (error) throw error;
+
+      if (!data || !data.ok) {
+        const messages = {
+          already_registered: 'This item was just registered by someone else.',
+          otp_not_verified: 'Your code expired — start over and ask for a new one.',
+          serial_mismatch: 'That serial number doesn\u2019t match this item. Double-check the tag.',
+          not_found: 'This item could not be found.',
+          missing_name: 'Enter your name.',
+        };
+        registerMsg.textContent = (data && messages[data.error]) || 'Could not complete registration.';
+        registerMsg.classList.add('error');
+        return;
+      }
+
+      document.getElementById('view-product-link').href = `product.html?code=${encodeURIComponent(code)}`;
+      showStep('success');
+    } catch (err) {
+      console.error('Registration failed', err);
+      registerMsg.textContent = 'Could not complete registration. Please try again.';
+      registerMsg.classList.add('error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  init();
+</script>
+</body>
+</html>

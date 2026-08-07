@@ -86,6 +86,12 @@
   }
   .row span:first-child{ color:var(--text); font-family:var(--mono); }
   .row span:last-child{ color:var(--text-dim); text-align:right; }
+  .status-pill{
+    display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:0.04em;
+    padding:2px 8px; border-radius:999px; margin-left:8px; vertical-align:middle;
+  }
+  .status-pill.unclaimed{ color:var(--gold-bright); background:rgba(203,185,141,0.12); border:1px solid rgba(203,185,141,0.35); }
+  .status-pill.claimed{ color:var(--green); background:rgba(127,216,160,0.1); border:1px solid rgba(127,216,160,0.3); }
 </style>
 </head>
 <body>
@@ -105,7 +111,7 @@
   <!-- LOGIN -->
   <section id="login-section">
     <h1>Admin Login</h1>
-    <p class="sub">Sign in to add or manage verified products.</p>
+    <p class="sub">Sign in to pre-register verified products.</p>
     <div class="panel">
       <label for="email">EMAIL</label>
       <input type="email" id="email" autocomplete="username" />
@@ -119,7 +125,7 @@
   <!-- ADD PRODUCT -->
   <section id="app-section">
     <h1>Add Product</h1>
-    <p class="sub">Create a new QR-verified product entry.</p>
+    <p class="sub">Pre-register a new QR-verified product. It stays <strong>unclaimed</strong> until a customer registers it themselves via a retailer OTP.</p>
 
     <div class="panel">
       <div class="section-label">PRODUCT</div>
@@ -140,7 +146,7 @@
 
     <div class="panel">
       <div class="section-label">EDITION &amp; SERIAL</div>
-      <div class="section-hint">Leave edition fields blank for non-limited products.</div>
+      <div class="section-hint">Leave edition fields blank for non-limited products. The item number doubles as the serial the customer must confirm when they claim it.</div>
 
       <label for="item_number">ITEM NUMBER</label>
       <input type="text" id="item_number" placeholder="VAL-0489" />
@@ -158,17 +164,6 @@
     </div>
 
     <div class="panel">
-      <div class="section-label">REGISTRATION</div>
-      <div class="section-hint">Owner name is partially masked on the public reveal.</div>
-
-      <label for="owner_name">REGISTERED OWNER</label>
-      <input type="text" id="owner_name" placeholder="John Chibueke" />
-
-      <label for="registered_at">REGISTRATION DATE</label>
-      <input type="date" id="registered_at" />
-    </div>
-
-    <div class="panel">
       <div class="section-label">SECURITY</div>
       <div class="section-hint">A unique token stamped on the physical tag, shown on the reveal to prove the database validates this exact item.</div>
 
@@ -179,7 +174,7 @@
       </div>
     </div>
 
-    <button class="btn" id="add-btn">ADD PRODUCT</button>
+    <button class="btn" id="add-btn">ADD PRODUCT (UNCLAIMED)</button>
     <div class="msg" id="add-msg"></div>
 
     <div class="recent">
@@ -295,9 +290,6 @@
     const edition_total_raw = fieldValue('edition_total');
     const edition_total = edition_total_raw ? parseInt(edition_total_raw, 10) : null;
 
-    const owner_name = fieldValue('owner_name');
-    const registered_at = document.getElementById('registered_at').value || null;
-
     const security_hash = fieldValue('security_hash');
 
     addMsg.textContent = '';
@@ -312,6 +304,9 @@
     const addBtn = document.getElementById('add-btn');
     addBtn.disabled = true;
 
+    // owner_name / registered_at are intentionally omitted — every product
+    // is inserted UNCLAIMED. A customer fills those in later via claim.html,
+    // gated by a retailer-generated OTP.
     const { error } = await supabaseClient
       .from('products')
       .insert([{
@@ -322,8 +317,6 @@
         item_number: item_number || null,
         edition_name: edition_name || null,
         edition_total,
-        owner_name: owner_name || null,
-        registered_at,
         security_hash: security_hash || null,
       }]);
 
@@ -337,12 +330,11 @@
       return;
     }
 
-    addMsg.textContent = `Added "${qr_code}" successfully.`;
+    addMsg.textContent = `Added "${qr_code}" successfully (unclaimed).`;
     addMsg.classList.add('success');
 
     ['qr_code','product_name','batch_number','manufactured_at',
-     'item_number','edition_name','edition_total',
-     'owner_name','registered_at','security_hash'].forEach(id => {
+     'item_number','edition_name','edition_total','security_hash'].forEach(id => {
       document.getElementById(id).value = '';
     });
 
@@ -365,11 +357,14 @@
       const serial = p.item_number
         ? `${p.item_number}${p.edition_total ? ` of ${p.edition_total}` : ''}`
         : (p.batch_number || '—');
-      const owner = p.owner_name ? ` · ${p.owner_name}` : '';
+      const claimed = !!p.owner_name;
+      const statusPill = claimed
+        ? '<span class="status-pill claimed">CLAIMED</span>'
+        : '<span class="status-pill unclaimed">UNCLAIMED</span>';
       return `
         <div class="row">
           <span>${escapeHtml(p.qr_code)}</span>
-          <span>${escapeHtml(p.product_name || '—')} · ${escapeHtml(serial)}${escapeHtml(owner)}</span>
+          <span>${escapeHtml(p.product_name || '—')} · ${escapeHtml(serial)}${statusPill}</span>
         </div>
       `;
     }).join('') || '<div class="row"><span>—</span><span>No products yet</span></div>';

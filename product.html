@@ -114,13 +114,30 @@
     stroke-dasharray:24; stroke-dashoffset:24;
     animation:check-in 0.35s 0.4s ease-out forwards;
   }
+  .seal.unclaimed .seal-ring{ animation:ring-in 0.7s cubic-bezier(.2,.8,.2,1) both; }
+  .seal.unclaimed .seal-dot{
+    stroke-dasharray:20; stroke-dashoffset:20;
+    animation:check-in 0.35s 0.45s ease-out forwards;
+  }
   @keyframes ring-in{ from{ opacity:0; transform:scale(0.7); } to{ opacity:1; transform:scale(1); } }
   @keyframes check-in{ to{ stroke-dashoffset:0; } }
 
   .verdict{ font-size:16px; font-weight:800; letter-spacing:0.02em; margin-top:14px; }
   .verdict.valid{ color:var(--green); }
   .verdict.invalid{ color:var(--red); }
+  .verdict.unclaimed{ color:var(--gold-bright); }
   .verdict-sub{ font-family:var(--mono); font-size:11px; color:var(--text-dimmer); margin-top:4px; letter-spacing:0.04em; }
+
+  .panel.unclaimed{ border-color:rgba(203,185,141,0.35); }
+  .unclaimed-message{
+    text-align:center; font-size:13px; line-height:1.6; color:var(--text-dim); margin:0 0 22px; padding:0 6px;
+  }
+  .claim-btn{
+    display:block; text-align:center; font-size:13px; font-weight:700; letter-spacing:0.03em; color:var(--black);
+    background:var(--gold-bright); border:none; border-radius:999px; padding:13px; cursor:pointer; font-family:var(--sans);
+    margin-top:4px;
+  }
+  .claim-btn:hover{ background:var(--gold); }
 
   .item-name{ text-align:center; font-size:21px; font-weight:800; margin:22px 0 10px; line-height:1.3; }
   .edition-pill{
@@ -354,9 +371,10 @@
       if (error) throw error;
 
       if (data) {
-        renderResult(true, { code, ...data }, null, rawScanned);
+        const status = data.owner_name ? 'valid' : 'unclaimed';
+        renderResult(status, { code, ...data }, null, rawScanned);
       } else {
-        renderResult(false, { code }, 'This code does not match any known Valence product.', rawScanned);
+        renderResult('invalid', { code }, 'This code does not match any known Valence product.', rawScanned);
       }
     } catch (err) {
       console.error('Verification lookup failed', err);
@@ -364,8 +382,11 @@
     }
   }
 
-  function renderResult(valid, data, message, rawScanned) {
+  function renderResult(status, data, message, rawScanned) {
     showStage(resultStage);
+
+    const valid = status === 'valid';
+    const unclaimed = status === 'unclaimed';
 
     const itemName = data.product_name || 'Valence Item';
     const editionName = data.edition_name;
@@ -375,20 +396,29 @@
       ? `${editionName}${editionTotal ? ` · ${itemNumber} of ${editionTotal}` : ''}`
       : (data.batch_number ? `Batch ${data.batch_number}` : null);
 
+    const sealSvg = valid ? sealValidSvg() : (unclaimed ? sealUnclaimedSvg() : sealInvalidSvg());
+    const verdictClass = valid ? 'valid' : (unclaimed ? 'unclaimed' : 'invalid');
+    const verdictText = valid
+      ? 'Authentic Product — Verified'
+      : (unclaimed ? 'Authentic Product — Not Yet Registered' : 'Not Verified');
+    const verdictSub = valid
+      ? 'MATCHED AGAINST VALENCE REGISTRY'
+      : (unclaimed ? 'GENUINE ITEM · AWAITING OWNER REGISTRATION' : 'NO REGISTRY MATCH');
+
     let html = `
       <div class="seal-wrap">
-        ${valid ? sealValidSvg() : sealInvalidSvg()}
-        <div class="verdict ${valid ? 'valid' : 'invalid'}">
-          ${valid ? 'Authentic Product — Verified' : 'Not Verified'}
-        </div>
-        <div class="verdict-sub">${valid ? 'MATCHED AGAINST VALENCE REGISTRY' : 'NO REGISTRY MATCH'}</div>
+        ${sealSvg}
+        <div class="verdict ${verdictClass}">${verdictText}</div>
+        <div class="verdict-sub">${verdictSub}</div>
       </div>
     `;
 
-    if (valid) {
+    if (valid || unclaimed) {
       html += `<div class="item-name">${escapeHtml(itemName)}</div>`;
       if (editionText) html += `<div class="edition-pill">${escapeHtml(editionText)}</div>`;
+    }
 
+    if (valid) {
       html += `
         <div class="panel valid">
           <div class="panel-label">REGISTRATION</div>
@@ -397,6 +427,28 @@
           <div class="result-row"><span>ITEM NUMBER</span><span>${escapeHtml(String(itemNumber || '—'))}</span></div>
           <div class="result-row"><span>MANUFACTURED</span><span>${escapeHtml(formatDate(data.manufactured_at))}</span></div>
         </div>
+      `;
+
+      if (data.security_hash) {
+        html += `
+          <div class="hash-strip">
+            <div class="hash-label">SECURITY TOKEN</div>
+            <div class="hash-value">${escapeHtml(data.security_hash)}</div>
+          </div>
+        `;
+      }
+    } else if (unclaimed) {
+      html += `
+        <p class="unclaimed-message">
+          This item is genuine but hasn't been registered to an owner yet.
+          Ask the retailer for a one-time code, then confirm it's yours below.
+        </p>
+        <div class="panel unclaimed">
+          <div class="panel-label">PRODUCT</div>
+          <div class="result-row"><span>ITEM NUMBER</span><span>${escapeHtml(String(itemNumber || '—'))}</span></div>
+          <div class="result-row"><span>MANUFACTURED</span><span>${escapeHtml(formatDate(data.manufactured_at))}</span></div>
+        </div>
+        <a class="claim-btn" href="claim.html?code=${encodeURIComponent(data.code)}">REGISTER THIS ITEM</a>
       `;
 
       if (data.security_hash) {
@@ -441,6 +493,17 @@
         <circle class="seal-ring" cx="52" cy="52" r="46" stroke="var(--green)" stroke-width="2.5" opacity="0.85"/>
         <circle cx="52" cy="52" r="38" fill="var(--green-glow)"/>
         <path class="seal-check" d="M35 53l12 12 22-24" stroke="var(--green)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+  }
+
+  function sealUnclaimedSvg() {
+    return `
+      <svg class="seal unclaimed" viewBox="0 0 104 104" fill="none">
+        <circle class="seal-ring" cx="52" cy="52" r="46" stroke="var(--gold-bright)" stroke-width="2.5" opacity="0.85"/>
+        <circle cx="52" cy="52" r="38" fill="rgba(203,185,141,0.14)"/>
+        <path class="seal-dot" d="M52 34v22" stroke="var(--gold-bright)" stroke-width="4.5" stroke-linecap="round"/>
+        <circle cx="52" cy="66" r="2.6" fill="var(--gold-bright)"/>
       </svg>
     `;
   }
