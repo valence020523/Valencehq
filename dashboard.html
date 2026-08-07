@@ -197,7 +197,7 @@
     }
 
     main.dash{ padding:18px 16px 44px; }
-    .topbar{ margin-bottom:20px; }
+    .topbar{ display:none; }
     h1.welcome{ font-size:19px; margin-bottom:16px; }
 
     /* top-row: founder + collection share row 1, hero video becomes row 2 (full width) */
@@ -243,17 +243,23 @@
       <button class="menu-btn" id="menu-btn" aria-label="Open menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
-      <div class="logo-chip sm"><img src="valence-mark.jpg" alt="VALENCE"></div>
+      <div class="logo-chip sm"><img src="valence-mark.jpeg" alt="VALENCE"></div>
     </div>
-    <div class="avatar-wrap">
-      <div class="avatar" id="avatar-initial-m">—</div>
-      <div class="status-dot"></div>
+    <div class="profile-block">
+      <div class="profile-text">
+        <div class="label">PROFILE</div>
+        <div class="name" id="dash-username-m">—</div>
+      </div>
+      <div class="avatar-wrap">
+        <div class="avatar" id="avatar-initial-m">—</div>
+        <div class="status-dot"></div>
+      </div>
     </div>
   </header>
 
   <div class="app">
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><div class="logo-chip lg"><img src="valence-logo.jpg" alt="VALENCE"></div></div>
+      <div class="brand"><div class="logo-chip lg"><img src="valence-logo.jpeg" alt="VALENCE"></div></div>
       <nav class="primary-nav">
         <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Dashboard</div>
         <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>My Profile</div>
@@ -273,7 +279,7 @@
 
     <main class="dash">
       <div class="topbar">
-        <div class="logo-chip"><img src="valence-logo.jpg" alt="VALENCE"></div>
+        <div class="logo-chip"><img src="valence-logo.jpeg" alt="VALENCE"></div>
         <div class="profile-block">
           <div class="profile-text">
             <div class="label">PROFILE</div>
@@ -384,6 +390,7 @@
 
     document.getElementById('welcome-name').textContent = displayName;
     document.getElementById('dash-username').textContent = displayName;
+    document.getElementById('dash-username-m').textContent = displayName;
     document.getElementById('avatar-initial').textContent = displayName.charAt(0).toUpperCase();
     document.getElementById('avatar-initial-m').textContent = displayName.charAt(0).toUpperCase();
 
