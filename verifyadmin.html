@@ -92,6 +92,13 @@
   }
   .status-pill.unclaimed{ color:var(--gold-bright); background:rgba(203,185,141,0.12); border:1px solid rgba(203,185,141,0.35); }
   .status-pill.claimed{ color:var(--green); background:rgba(127,216,160,0.1); border:1px solid rgba(127,216,160,0.3); }
+  .status-pill.active{ color:var(--green); background:rgba(127,216,160,0.1); border:1px solid rgba(127,216,160,0.3); }
+  .status-pill.inactive{ color:var(--red); background:rgba(232,138,138,0.1); border:1px solid rgba(232,138,138,0.3); }
+  .toggle-btn{
+    font-family:var(--mono); font-size:10px; color:var(--text-dim); background:none;
+    border:1px solid var(--border); border-radius:999px; padding:3px 10px; cursor:pointer; margin-left:8px;
+  }
+  .toggle-btn:hover{ color:var(--gold-bright); border-color:var(--gold); }
 </style>
 </head>
 <body>
@@ -181,6 +188,33 @@
       <h2>Recently added</h2>
       <div id="recent-list"></div>
     </div>
+
+    <h1 style="margin-top:56px;">Add Retailer</h1>
+    <p class="sub">Creates their login and links it to a retailer account in one step. Share the password with them yourself — it's shown once and not stored anywhere retrievable.</p>
+
+    <div class="panel">
+      <div class="section-label">RETAILER</div>
+
+      <label for="retailer_name">STORE / RETAILER NAME</label>
+      <input type="text" id="retailer_name" placeholder="Flagship Store — Lagos" />
+
+      <label for="retailer_email">EMAIL</label>
+      <input type="email" id="retailer_email" placeholder="retailer@example.com" />
+
+      <label for="retailer_password">PASSWORD</label>
+      <div class="hash-row">
+        <input type="text" id="retailer_password" placeholder="Generate or type one" />
+        <button class="gen-btn" id="gen-retailer-pw-btn" type="button">GENERATE</button>
+      </div>
+    </div>
+
+    <button class="btn" id="add-retailer-btn">ADD RETAILER</button>
+    <div class="msg" id="retailer-msg"></div>
+
+    <div class="recent">
+      <h2>Retailers</h2>
+      <div id="retailer-list"></div>
+    </div>
   </section>
 </main>
 
@@ -200,6 +234,7 @@
     appSection.style.display = 'block';
     signoutBtn.style.display = 'inline-block';
     loadRecent();
+    loadRetailers();
   }
 
   function showLoggedOut() {
@@ -374,6 +409,139 @@
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  // ---------------- Retailer management ----------------
+
+  function generatePassword() {
+    const bytes = new Uint8Array(9);
+    crypto.getRandomValues(bytes);
+    // base64url-ish, readable, no ambiguous separators needed
+    return btoa(String.fromCharCode(...bytes)).replace(/[+/=]/g, '').slice(0, 12);
+  }
+
+  document.getElementById('gen-retailer-pw-btn').addEventListener('click', () => {
+    document.getElementById('retailer_password').value = generatePassword();
+  });
+
+  // Creating a login normally needs the Supabase admin API, which requires a
+  // service-role key that must never be shipped to the browser. Instead we
+  // use a second, non-persisting Supabase client to call the ordinary public
+  // signUp() — this creates the auth user without touching or replacing the
+  // admin's own signed-in session in `supabaseClient`.
+  function getSupabaseCreds() {
+    const url = supabaseClient.supabaseUrl || window.SUPABASE_URL;
+    const key = supabaseClient.supabaseKey || window.SUPABASE_ANON_KEY;
+    return { url, key };
+  }
+
+  document.getElementById('add-retailer-btn').addEventListener('click', async () => {
+    const retailerMsg = document.getElementById('retailer-msg');
+    const name = fieldValue('retailer_name');
+    const email = fieldValue('retailer_email').toLowerCase();
+    const password = fieldValue('retailer_password');
+
+    retailerMsg.textContent = '';
+    retailerMsg.className = 'msg';
+
+    if (!name || !email || !password) {
+      retailerMsg.textContent = 'Fill in name, email, and password.';
+      retailerMsg.classList.add('error');
+      return;
+    }
+    if (password.length < 8) {
+      retailerMsg.textContent = 'Password should be at least 8 characters — use Generate.';
+      retailerMsg.classList.add('error');
+      return;
+    }
+
+    const btn = document.getElementById('add-retailer-btn');
+    btn.disabled = true;
+
+    try {
+      const { url, key } = getSupabaseCreds();
+      if (!url || !key) {
+        throw new Error('Could not read Supabase URL/key from supabaseClient. Expose window.SUPABASE_URL and window.SUPABASE_ANON_KEY in supabase-config.js and reload.');
+      }
+
+      const signupClient = window.supabase.createClient(url, key, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      });
+
+      const { data: signupData, error: signupError } = await signupClient.auth.signUp({ email, password });
+      if (signupError) throw signupError;
+
+      const newUserId = signupData.user?.id;
+      if (!newUserId) {
+        throw new Error('Signup did not return a user id — check your Supabase project settings.');
+      }
+
+      const { error: insertError } = await supabaseClient
+        .from('retailers')
+        .insert([{ id: newUserId, name, email, active: true }]);
+
+      if (insertError) throw insertError;
+
+      retailerMsg.innerHTML = `Retailer added. Share these credentials with them:<br>Email: ${escapeHtml(email)}<br>Password: ${escapeHtml(password)}`;
+      retailerMsg.classList.add('success');
+
+      ['retailer_name', 'retailer_email', 'retailer_password'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+
+      loadRetailers();
+    } catch (err) {
+      console.error('Add retailer failed', err);
+      retailerMsg.textContent = err.message || 'Could not add retailer.';
+      retailerMsg.classList.add('error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  async function loadRetailers() {
+    const retailerList = document.getElementById('retailer-list');
+    const { data, error } = await supabaseClient
+      .from('retailers')
+      .select('id, name, email, active, created_at')
+      .order('created_at', { ascending: false })
+      .limit(20);
+
+    if (error || !data) {
+      retailerList.innerHTML = '<div class="row"><span>—</span><span>Could not load retailers</span></div>';
+      return;
+    }
+
+    retailerList.innerHTML = data.map(r => {
+      const pill = r.active
+        ? '<span class="status-pill active">ACTIVE</span>'
+        : '<span class="status-pill inactive">INACTIVE</span>';
+      const toggleLabel = r.active ? 'DEACTIVATE' : 'ACTIVATE';
+      return `
+        <div class="row">
+          <span>${escapeHtml(r.name || '—')}</span>
+          <span>${escapeHtml(r.email || '—')}${pill}<button class="toggle-btn" data-id="${escapeHtml(r.id)}" data-active="${r.active}">${toggleLabel}</button></span>
+        </div>
+      `;
+    }).join('') || '<div class="row"><span>—</span><span>No retailers yet</span></div>';
+
+    retailerList.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const currentlyActive = btn.dataset.active === 'true';
+        btn.disabled = true;
+        const { error } = await supabaseClient
+          .from('retailers')
+          .update({ active: !currentlyActive })
+          .eq('id', id);
+        btn.disabled = false;
+        if (error) {
+          console.error('Toggle retailer failed', error);
+          return;
+        }
+        loadRetailers();
+      });
+    });
   }
 
   checkSession();
