@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VALENCE — Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+  :root{
+    --blue-950:#0b1220; --blue-900:#101a2c; --blue-600:#3a6df0; --blue-500:#5b86f5;
+    --border:#24365a; --text:#e6ecf7; --muted:#93a2bf; --gold:#d4af61;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(180deg, var(--blue-950), var(--blue-900));
+    font-family:'Inter','Segoe UI',system-ui,sans-serif; color:var(--text); padding:24px;
+  }
+  .card{
+    width:100%; max-width:440px; background:rgba(255,255,255,0.04); border:1px solid var(--border);
+    border-radius:14px; padding:28px 26px;
+  }
+  h1{ font-size:18px; margin:0 0 4px; }
+  p.desc{ font-size:13px; color:var(--muted); margin:0 0 22px; line-height:1.5; }
+  label{ display:block; font-size:12px; letter-spacing:0.04em; color:var(--muted); margin-bottom:6px; }
+  input[type="email"], input[type="password"], input[type="text"]{
+    width:100%; padding:10px 12px; border-radius:8px; border:1px solid var(--border);
+    background:rgba(255,255,255,0.03); color:var(--text); font-size:14px; font-family:inherit;
+    margin-bottom:16px;
+  }
+  input:focus{ outline:none; border-color:var(--blue-500); }
+  button{
+    width:100%; padding:11px; border-radius:8px; border:1px solid var(--gold); cursor:pointer;
+    background:rgba(212,175,97,0.14); color:var(--gold); font-size:14px; font-weight:600; font-family:inherit;
+    transition:background .2s ease;
+  }
+  button:hover{ background:rgba(212,175,97,0.24); }
+  button:disabled{ opacity:0.5; cursor:not-allowed; }
+  .msg{ font-size:13px; margin-top:14px; min-height:18px; }
+  .msg.ok{ color:#3ddc84; }
+  .msg.err{ color:#ff6b6b; }
+  .hidden{ display:none; }
+  .field-hint{ font-size:11.5px; color:var(--muted); margin:-10px 0 16px; }
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- Login gate -->
+  <div id="login-view">
+    <h1>Admin Login</h1>
+    <p class="desc">Sign in with an admin account to edit the site.</p>
+    <label for="email">Email</label>
+    <input type="email" id="email" autocomplete="username">
+    <label for="password">Password</label>
+    <input type="password" id="password" autocomplete="current-password">
+    <button id="login-btn">Log In</button>
+    <div class="msg" id="login-msg"></div>
+  </div>
+
+  <!-- Editor, shown only after a verified admin logs in -->
+  <div id="editor-view" class="hidden">
+    <h1>Edit Homepage</h1>
+    <p class="desc">This is the only field admins can change here — the small line at the top of the hero section on the homepage (currently reads "GENESIS 001 — LIVE").</p>
+    <label for="eyebrow">Hero eyebrow text</label>
+    <input type="text" id="eyebrow" maxlength="60">
+    <div class="field-hint">Shown exactly as typed, e.g. "GENESIS 002 — LIVE".</div>
+    <button id="save-btn">Save Change</button>
+    <div class="msg" id="save-msg"></div>
+  </div>
+
+</div>
+
+<script>
+  // ---- Configure which logged-in accounts are allowed to use this page ----
+  // Add the email address(es) of your admin account(s) here.
+  const ADMIN_EMAILS = [
+    'admin@example.com'
+  ];
+
+  const loginView = document.getElementById('login-view');
+  const editorView = document.getElementById('editor-view');
+  const loginMsg = document.getElementById('login-msg');
+  const saveMsg = document.getElementById('save-msg');
+  const eyebrowInput = document.getElementById('eyebrow');
+
+  function setMsg(el, text, ok){
+    el.textContent = text;
+    el.className = 'msg ' + (ok ? 'ok' : 'err');
+  }
+
+  async function loadCurrentValue(){
+    const { data, error } = await supabaseClient
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'hero_eyebrow')
+      .single();
+    if (!error && data) {
+      eyebrowInput.value = data.value;
+    } else {
+      eyebrowInput.value = 'GENESIS 001 — LIVE';
+    }
+  }
+
+  async function showEditorIfAdmin(){
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session && session.user && ADMIN_EMAILS.includes(session.user.email)) {
+      loginView.classList.add('hidden');
+      editorView.classList.remove('hidden');
+      await loadCurrentValue();
+      return true;
+    }
+    return false;
+  }
+
+  document.getElementById('login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    setMsg(loginMsg, '', true);
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      setMsg(loginMsg, 'Login failed: ' + error.message, false);
+      return;
+    }
+    if (!ADMIN_EMAILS.includes(email)) {
+      setMsg(loginMsg, 'This account is not authorized as an admin.', false);
+      await supabaseClient.auth.signOut();
+      return;
+    }
+    await showEditorIfAdmin();
+  });
+
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const newValue = eyebrowInput.value.trim();
+    setMsg(saveMsg, '', true);
+    if (!newValue) {
+      setMsg(saveMsg, 'Text cannot be empty.', false);
+      return;
+    }
+    const { error } = await supabaseClient
+      .from('site_settings')
+      .upsert({ key: 'hero_eyebrow', value: newValue }, { onConflict: 'key' });
+
+    if (error) {
+      setMsg(saveMsg, 'Save failed: ' + error.message, false);
+    } else {
+      setMsg(saveMsg, 'Saved — the homepage now shows this text.', true);
+    }
+  });
+
+  // If already logged in as admin (session persisted), skip straight to editor.
+  (async () => { await showEditorIfAdmin(); })();
+</script>
+</body>
+</html>

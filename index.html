@@ -239,7 +239,7 @@
 </header>
 
 <section class="hero">
-  <span class="eyebrow">GENESIS 001 — LIVE</span>
+  <span class="eyebrow" id="hero-eyebrow">GENESIS 001 — LIVE</span>
   <h1>Not just clothing. <span>Limited drops, digitally verified.</span></h1>
   <p class="sub">Premium fashion in limited runs. Every piece carries an embedded QR signature that proves it's real, and it's yours.</p>
 </section>
@@ -372,6 +372,27 @@
         authLink.href = 'dashboard.html';
       }
       window.location.href = 'dashboard.html';
+    }
+  })();
+
+  // Pull the hero eyebrow text ("GENESIS 001 — LIVE") from Supabase so the
+  // admin panel (indexadmin.html) can change it site-wide without editing
+  // this file. Falls back silently to the text already in the HTML above
+  // if the row doesn't exist yet or the fetch fails.
+  (async () => {
+    const el = document.getElementById('hero-eyebrow');
+    if (!el) return;
+    try {
+      const { data, error } = await supabaseClient
+        .from('site_settings')
+        .select('value')
+        .eq('key', 'hero_eyebrow')
+        .single();
+      if (!error && data && data.value) {
+        el.textContent = data.value;
+      }
+    } catch (e) {
+      // keep default text on any failure
     }
   })();
 </script>
