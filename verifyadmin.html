@@ -132,6 +132,8 @@
   const addMsg = document.getElementById('add-msg');
   const recentList = document.getElementById('recent-list');
 
+  const ADMIN_EMAIL = 'mhilesjr@gmail.com';
+
   function showLoggedIn() {
     loginSection.style.display = 'none';
     appSection.style.display = 'block';
@@ -147,8 +149,15 @@
 
   async function checkSession() {
     const { data } = await supabase.auth.getSession();
-    if (data.session) {
+    if (data.session && data.session.user?.email === ADMIN_EMAIL) {
       showLoggedIn();
+    } else if (data.session) {
+      // Logged in as someone else — the database will refuse writes anyway,
+      // but don't even show the form.
+      await supabase.auth.signOut();
+      showLoggedOut();
+      loginMsg.textContent = 'This admin page is restricted to an authorized account.';
+      loginMsg.className = 'msg error';
     } else {
       showLoggedOut();
     }
@@ -166,9 +175,21 @@
       return;
     }
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (email.toLowerCase() !== ADMIN_EMAIL) {
+      loginMsg.textContent = 'This admin page is restricted to an authorized account.';
+      loginMsg.classList.add('error');
+      return;
+    }
+
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       loginMsg.textContent = error.message;
+      loginMsg.classList.add('error');
+      return;
+    }
+    if (data.user?.email !== ADMIN_EMAIL) {
+      await supabase.auth.signOut();
+      loginMsg.textContent = 'This admin page is restricted to an authorized account.';
       loginMsg.classList.add('error');
       return;
     }
