@@ -468,19 +468,31 @@
         auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
       });
 
-      const { data: signupData, error: signupError } = await signupClient.auth.signUp({ email, password });
+      // Passing role/name here is what the `handle_new_retailer` trigger
+      // reads to auto-create the public.retailers row — see
+      // otp-claim-schema.sql. We deliberately do NOT insert into
+      // `retailers` from here; a client-side insert right after signUp()
+      // is what caused the retailers_id_fkey violation.
+      const { data: signupData, error: signupError } = await signupClient.auth.signUp({
+        email,
+        password,
+        options: { data: { role: 'retailer', name } },
+      });
       if (signupError) throw signupError;
+
+      // Supabase intentionally returns a look-alike "success" response with
+      // an empty identities array (rather than an error) when the email is
+      // already registered, so it can't be used to enumerate accounts. That
+      // response's user id doesn't back a real new user, so the trigger
+      // never fires — catch it here instead of letting it fail silently.
+      if (signupData.user && Array.isArray(signupData.user.identities) && signupData.user.identities.length === 0) {
+        throw new Error('That email already has an account. Use a different email, or reset their password instead.');
+      }
 
       const newUserId = signupData.user?.id;
       if (!newUserId) {
         throw new Error('Signup did not return a user id — check your Supabase project settings.');
       }
-
-      const { error: insertError } = await supabaseClient
-        .from('retailers')
-        .insert([{ id: newUserId, name, email, active: true }]);
-
-      if (insertError) throw insertError;
 
       retailerMsg.innerHTML = `Retailer added. Share these credentials with them:<br>Email: ${escapeHtml(email)}<br>Password: ${escapeHtml(password)}`;
       retailerMsg.classList.add('success');
@@ -489,6 +501,8 @@
         document.getElementById(id).value = '';
       });
 
+      // The trigger runs inside the same transaction as the signUp() call,
+      // so the retailers row already exists by the time we get here.
       loadRetailers();
     } catch (err) {
       console.error('Add retailer failed', err);

@@ -47,6 +47,43 @@ create policy "admin can update retailers" on public.retailers
   for update
   using ((auth.jwt() ->> 'email') = 'mhilesjr@gmail.com');
 
+-- Row-provisioning trigger: when a new auth user is created with
+-- raw_user_meta_data->>'role' = 'retailer' (set via signUp()'s options.data
+-- in verifyadmin.html), automatically create the matching public.retailers
+-- row in the SAME transaction as the auth.users insert. This is what
+-- verifyadmin.html now relies on instead of inserting into retailers
+-- directly from the browser — a client-side insert right after signUp()
+-- can violate the retailers_id_fkey constraint, either from a brief
+-- replication race or because Supabase intentionally returns a look-alike
+-- "success" response (with a non-backing id) when you sign up an email
+-- that's already registered, to avoid leaking which emails exist.
+create or replace function public.handle_new_retailer()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.raw_user_meta_data ->> 'role' = 'retailer' then
+    insert into public.retailers (id, name, email, active)
+    values (
+      new.id,
+      coalesce(new.raw_user_meta_data ->> 'name', new.email),
+      new.email,
+      true
+    )
+    on conflict (id) do nothing;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created_retailer on auth.users;
+create trigger on_auth_user_created_retailer
+  after insert on auth.users
+  for each row
+  execute function public.handle_new_retailer();
+
 -- ---------- 2. OTP codes ----------
 create table if not exists public.otp_codes (
   id bigint generated always as identity primary key,
