@@ -7,9 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js?v=2"></script>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
   :root{
     --black:#05070b; --navy-900:#0b1220; --gold:#cbb98d; --gold-bright:#e6d9b0;
@@ -45,47 +42,6 @@
   .scan-btn:hover{ background:var(--gold); }
   .scan-btn:disabled{ opacity:0.5; cursor:default; }
   .note{ margin-top:20px; font-size:11.5px; color:var(--text-dimmer); font-family:var(--mono); }
-
-  /* --- QR reader --- */
-  #qr-reader-wrap{
-    display:none; margin-top:26px; text-align:left;
-    border:1px solid var(--border); border-radius:16px; overflow:hidden;
-    background:var(--panel);
-  }
-  #qr-reader-wrap.active{ display:block; }
-  #qr-reader{ width:100%; }
-  #qr-reader video{ border-radius:16px 16px 0 0; }
-  #qr-reader__dashboard_section_csr button{
-    font-family:var(--sans); font-size:12px; font-weight:600; color:var(--black);
-    background:var(--gold-bright); border:none; border-radius:8px; padding:8px 14px; cursor:pointer;
-  }
-  #qr-reader__status_span{ font-family:var(--mono); font-size:11px; color:var(--text-dim); }
-  .qr-footer{ padding:12px 16px; border-top:1px solid var(--border); text-align:center; }
-  .cancel-scan{
-    font-family:var(--mono); font-size:11.5px; color:var(--text-dim); background:none; border:none; cursor:pointer;
-  }
-  .cancel-scan:hover{ color:var(--gold-bright); }
-
-  /* --- Result panel --- */
-  #result-panel{
-    display:none; margin-top:26px; padding:22px 20px; border-radius:16px; text-align:left;
-    border:1px solid var(--border); background:var(--panel);
-  }
-  #result-panel.active{ display:block; }
-  #result-panel.valid{ border-color:rgba(127,216,160,0.4); }
-  #result-panel.invalid{ border-color:rgba(232,138,138,0.4); }
-  .result-status{ display:flex; align-items:center; gap:10px; font-weight:700; font-size:14px; margin-bottom:10px; }
-  .result-status.valid{ color:var(--green); }
-  .result-status.invalid{ color:var(--red); }
-  .result-row{ display:flex; justify-content:space-between; gap:12px; font-size:12.5px; padding:7px 0; border-bottom:1px solid var(--border); }
-  .result-row:last-child{ border-bottom:none; }
-  .result-row span:first-child{ color:var(--text-dimmer); font-family:var(--mono); }
-  .result-row span:last-child{ color:var(--text); text-align:right; }
-  .scan-again{
-    margin-top:16px; width:100%; font-size:12.5px; font-weight:600; color:var(--text); background:transparent;
-    border:1px solid var(--border); border-radius:999px; padding:10px; cursor:pointer; font-family:var(--sans);
-  }
-  .scan-again:hover{ border-color:var(--gold); color:var(--gold-bright); }
 </style>
 </head>
 <body>
@@ -101,202 +57,27 @@
 <main>
   <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
   <h1>Verify Authenticity</h1>
-  <p>Scan the QR code stitched or printed into your garment to confirm it's genuine Valence and see its production batch.</p>
+  <p>Scan the QR code stitched or printed into your garment to confirm it's genuine Valence, see its production batch, and view its registration details.</p>
 
   <button class="scan-btn" id="scan-btn">SCAN QR CODE</button>
-  <div class="note" id="scan-note"></div>
-
-  <div id="qr-reader-wrap">
-    <div id="qr-reader"></div>
-    <div class="qr-footer">
-      <button class="cancel-scan" id="cancel-scan">CANCEL SCAN</button>
-    </div>
-  </div>
-
-  <div id="result-panel"></div>
+  <div class="note">Opens your camera on the next screen</div>
 </main>
 
 <script>
-  const scanBtn = document.getElementById('scan-btn');
-  const scanNote = document.getElementById('scan-note');
-  const readerWrap = document.getElementById('qr-reader-wrap');
-  const cancelBtn = document.getElementById('cancel-scan');
-  const resultPanel = document.getElementById('result-panel');
-
-  let html5QrCode = null;
-  let isScanning = false;
-
-  async function startScan() {
-    resultPanel.classList.remove('active');
-    resultPanel.innerHTML = '';
-    scanNote.textContent = '';
-    readerWrap.classList.add('active');
-    scanBtn.disabled = true;
-
-    try {
-      if (typeof Html5Qrcode === 'undefined') {
-        throw new Error('Html5Qrcode library failed to load (check network/CDN access).');
-      }
-      html5QrCode = new Html5Qrcode('qr-reader');
-      await html5QrCode.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: (viewfinderWidth, viewfinderHeight) => {
-            const edge = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.7);
-            return { width: edge, height: edge };
-          }
-        },
-        onScanSuccess,
-        () => { /* per-frame decode failures are expected while aiming — ignore */ }
-      );
-      isScanning = true;
-    } catch (err) {
-      readerWrap.classList.remove('active');
-      scanBtn.disabled = false;
-      scanNote.textContent = 'Camera unavailable — check permissions and try again.';
-      console.error('Unable to start QR scanner', err);
-    }
-  }
-
-  async function stopScan() {
-    if (html5QrCode && isScanning) {
-      try {
-        await html5QrCode.stop();
-        html5QrCode.clear();
-      } catch (err) {
-        console.error('Error stopping scanner', err);
-      }
-    }
-    isScanning = false;
-    readerWrap.classList.remove('active');
-    scanBtn.disabled = false;
-  }
-
-  async function onScanSuccess(decodedText) {
-    await stopScan();
-    await verifyCode(extractCode(decodedText), decodedText);
-  }
-
-  // A scanned QR may encode either a bare code ("VLC-001") or a full link
-  // back to this page ("https://valencehq.vercel.app/verify-authenticity.html?code=VLC-001").
-  // Pull just the code out either way.
-  function extractCode(raw) {
-    console.log('[QR] raw decoded text:', JSON.stringify(raw));
-    const trimmed = (raw || '').trim();
-    let extracted = trimmed;
-    try {
-      const url = new URL(trimmed);
-      const fromParam = url.searchParams.get('code');
-      if (fromParam) extracted = fromParam;
-    } catch (e) {
-      // not a URL — fall through and treat raw text as the code itself
-    }
-    const normalized = normalizeCode(extracted);
-    console.log('[QR] extracted code:', JSON.stringify(extracted), '-> normalized:', JSON.stringify(normalized));
-    return normalized;
-  }
-
-  // Fixes common lookalike-character issues from copy/paste or autocorrect:
-  // en dash / em dash / minus sign -> hyphen, zero-width chars removed, trimmed + uppercased.
-  function normalizeCode(str) {
-    return (str || '')
-      .replace(/[\u2010-\u2015\u2212]/g, '-')   // en/em dash, minus sign -> hyphen
-      .replace(/[\u200B-\u200D\uFEFF]/g, '')     // zero-width chars
-      .trim()
-      .toUpperCase();
-  }
-
-  cancelBtn.addEventListener('click', stopScan);
-  scanBtn.addEventListener('click', startScan);
-
-  // If the QR encodes a link like verify-authenticity.html?code=VLC-0001,
-  // a normal phone camera will open this page directly with that param —
-  // auto-run the lookup instead of waiting for the in-page scan button.
+  // Legacy physical tags may encode a full link back to this exact page
+  // (verify-authenticity.html?code=VLC-0001). Keep honoring those by
+  // forwarding straight into the product reveal flow, skipping the camera.
   const params = new URLSearchParams(window.location.search);
   const codeFromUrl = params.get('code');
   if (codeFromUrl) {
-    verifyCode(normalizeCode(codeFromUrl), codeFromUrl);
+    window.location.replace('product.html?code=' + encodeURIComponent(codeFromUrl));
   }
 
-  // --- Look up the scanned code in Supabase and render the result ---
-  // NOTE: adjust the table/column names below (`products`, `qr_code`,
-  // `product_name`, `batch_number`, `manufactured_at`) to match your schema.
-  async function verifyCode(code, rawScanned) {
-    resultPanel.classList.add('active');
-    resultPanel.innerHTML = `<div class="result-status">Looking up code…</div>`;
-
-    if (typeof supabaseClient === 'undefined') {
-      renderResult(false, { code }, 'Verification service is not configured.', rawScanned);
-      return;
-    }
-
-    try {
-      const { data, error } = await supabaseClient
-        .from('products')
-        .select('*')
-        .eq('qr_code', code)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        renderResult(true, {
-          code,
-          'Product': data.product_name || '—',
-          'Batch': data.batch_number || '—',
-          'Manufactured': data.manufactured_at || '—',
-        }, null, rawScanned);
-      } else {
-        renderResult(false, { code }, 'This code does not match any known Valence product.', rawScanned);
-      }
-    } catch (err) {
-      console.error('Verification lookup failed', err);
-      renderResult(false, { code }, 'Could not reach the verification service. Please try again.', rawScanned);
-    }
-  }
-
-  function renderResult(valid, fields, message, rawScanned) {
-    resultPanel.classList.remove('valid', 'invalid');
-    resultPanel.classList.add(valid ? 'valid' : 'invalid');
-
-    const rows = Object.entries(fields)
-      .filter(([k]) => k !== 'code' || true)
-      .map(([k, v]) => `<div class="result-row"><span>${k === 'code' ? 'SCANNED CODE' : k.toUpperCase()}</span><span>${escapeHtml(String(v))}</span></div>`)
-      .join('');
-
-    // Debug block: only shown when verification fails and we have the raw
-    // scanned text, so you can see on-device exactly what was decoded
-    // (including any hidden/lookalike characters) without needing a computer.
-    let debugBlock = '';
-    if (!valid && rawScanned) {
-      const codeVal = fields.code || '';
-      const charCodes = Array.from(codeVal).map(ch => ch.charCodeAt(0).toString(16).padStart(4, '0')).join(' ');
-      debugBlock = `
-        <div style="margin-top:14px;padding:12px;border:1px dashed var(--border);border-radius:10px;">
-          <div style="font-family:var(--mono);font-size:10.5px;color:var(--text-dimmer);margin-bottom:6px;">DEBUG — RAW SCANNED TEXT</div>
-          <div style="font-family:var(--mono);font-size:11px;color:var(--text);word-break:break-all;margin-bottom:8px;">${escapeHtml(rawScanned)}</div>
-          <div style="font-family:var(--mono);font-size:10.5px;color:var(--text-dimmer);margin-bottom:6px;">EXTRACTED CODE CHAR CODES (hex)</div>
-          <div style="font-family:var(--mono);font-size:11px;color:var(--text);word-break:break-all;">${escapeHtml(charCodes)}</div>
-        </div>`;
-    }
-
-    resultPanel.innerHTML = `
-      <div class="result-status ${valid ? 'valid' : 'invalid'}">
-        ${valid ? '✓ Genuine Valence Item' : '✕ Not Verified'}
-      </div>
-      ${message ? `<p style="margin:0 0 12px;color:var(--text-dim);font-size:12.5px;">${escapeHtml(message)}</p>` : ''}
-      ${rows}
-      ${debugBlock}
-      <button class="scan-again" id="scan-again-btn">SCAN ANOTHER CODE</button>
-    `;
-
-    document.getElementById('scan-again-btn').addEventListener('click', startScan);
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
+  // The scan button now hands off to product.html, which opens the camera
+  // immediately and renders the full authenticity + registration reveal.
+  document.getElementById('scan-btn').addEventListener('click', () => {
+    window.location.href = 'product.html?scan=1';
+  });
 </script>
 </body>
 </html>

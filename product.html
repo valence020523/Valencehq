@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Verifying — VALENCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js?v=2"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  :root{
+    --black:#05070b; --navy-900:#0b1220; --gold:#cbb98d; --gold-bright:#e6d9b0;
+    --panel:rgba(255,255,255,0.035); --panel-solid:#0d1119; --border:rgba(255,255,255,0.09);
+    --text:#f2f1ec; --text-dim:#93a0b4; --text-dimmer:#5c6779;
+    --mono:'JetBrains Mono',monospace; --sans:'Inter','Segoe UI',system-ui,sans-serif;
+    --green:#7fd8a0; --green-glow:rgba(127,216,160,0.18); --red:#e88a8a; --red-glow:rgba(232,138,138,0.16);
+  }
+  *{box-sizing:border-box;}
+  html,body{ height:100%; }
+  body{ margin:0; background:var(--black); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; text-decoration:none; }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between; padding:16px 22px;
+    border-bottom:1px solid var(--border); background:linear-gradient(180deg,var(--navy-900),var(--black));
+    position:sticky; top:0; z-index:20;
+  }
+  .brandmark{ display:flex; align-items:center; gap:10px; }
+  .logo-chip img{ display:block; height:26px; width:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
+  .brand-word{ font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:13px; }
+  .back-link{ font-size:12px; font-family:var(--mono); color:var(--text-dim); }
+  .back-link:hover{ color:var(--gold-bright); }
+
+  main{ max-width:480px; margin:0 auto; padding:0 0 60px; min-height:calc(100vh - 63px); }
+
+  /* ---------------- Camera / scanning stage ---------------- */
+  #scan-stage{ padding:26px 20px 0; }
+  #scan-stage.hidden{ display:none; }
+  .scan-heading{ text-align:center; margin-bottom:18px; }
+  .scan-heading h1{ font-size:18px; font-weight:700; margin:0 0 6px; }
+  .scan-heading p{ font-size:13px; line-height:1.6; color:var(--text-dim); margin:0; }
+
+  #cam-frame{
+    position:relative; border-radius:20px; overflow:hidden; border:1px solid var(--border);
+    background:#000; aspect-ratio:1/1;
+  }
+  #qr-reader{ width:100%; height:100%; }
+  #qr-reader video{ width:100% !important; height:100% !important; object-fit:cover; }
+  /* html5-qrcode injects its own controls; keep them unobtrusive */
+  #qr-reader__dashboard_section_csr button{
+    font-family:var(--sans); font-size:12px; font-weight:600; color:var(--black);
+    background:var(--gold-bright); border:none; border-radius:8px; padding:8px 14px; cursor:pointer;
+  }
+  #qr-reader__status_span{ font-family:var(--mono); font-size:11px; color:var(--text-dim); }
+
+  .scan-frame-overlay{
+    position:absolute; inset:0; pointer-events:none; z-index:5;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .scan-brackets{ position:relative; width:68%; aspect-ratio:1/1; }
+  .scan-brackets span{ position:absolute; width:26px; height:26px; border:2.5px solid var(--gold-bright); }
+  .scan-brackets span:nth-child(1){ top:0; left:0; border-right:none; border-bottom:none; border-radius:6px 0 0 0; }
+  .scan-brackets span:nth-child(2){ top:0; right:0; border-left:none; border-bottom:none; border-radius:0 6px 0 0; }
+  .scan-brackets span:nth-child(3){ bottom:0; left:0; border-right:none; border-top:none; border-radius:0 0 0 6px; }
+  .scan-brackets span:nth-child(4){ bottom:0; right:0; border-left:none; border-top:none; border-radius:0 0 6px 0; }
+  .scan-line{
+    position:absolute; left:6%; right:6%; height:2px; top:0;
+    background:linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+    box-shadow:0 0 10px 1px rgba(230,217,176,0.7);
+    animation:sweep 2.4s ease-in-out infinite;
+  }
+  @keyframes sweep{
+    0%,100%{ top:6%; opacity:0; }
+    10%{ opacity:1; }
+    50%{ top:94%; opacity:1; }
+    60%{ opacity:0; }
+  }
+
+  .scan-footer{ padding:16px 4px 0; text-align:center; }
+  .cancel-scan{
+    font-family:var(--mono); font-size:12px; color:var(--text-dim); background:none;
+    border:1px solid var(--border); border-radius:999px; padding:9px 20px; cursor:pointer;
+  }
+  .cancel-scan:hover{ color:var(--gold-bright); border-color:var(--gold); }
+  .scan-note{ margin-top:14px; font-size:11.5px; color:var(--text-dimmer); font-family:var(--mono); text-align:center; }
+
+  /* ---------------- Looking-up stage ---------------- */
+  #lookup-stage{ padding:110px 24px; text-align:center; }
+  #lookup-stage.hidden{ display:none; }
+  .spinner{
+    width:34px; height:34px; margin:0 auto 20px; border-radius:50%;
+    border:2.5px solid var(--border); border-top-color:var(--gold-bright);
+    animation:spin 0.9s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  #lookup-stage p{ font-family:var(--mono); font-size:12.5px; color:var(--text-dim); }
+
+  /* ---------------- Result / reveal stage ---------------- */
+  #result-stage{ padding:34px 20px 0; }
+  #result-stage.hidden{ display:none; }
+
+  .seal-wrap{ display:flex; flex-direction:column; align-items:center; margin-bottom:22px; }
+  .seal{ width:104px; height:104px; }
+  .seal-ring{ transform-origin:52px 52px; }
+  .seal.valid .seal-ring{ animation:ring-in 0.7s cubic-bezier(.2,.8,.2,1) both; }
+  .seal.valid .seal-check{
+    stroke-dasharray:34; stroke-dashoffset:34;
+    animation:check-in 0.4s 0.55s ease-out forwards;
+  }
+  .seal.invalid .seal-x{
+    stroke-dasharray:24; stroke-dashoffset:24;
+    animation:check-in 0.35s 0.4s ease-out forwards;
+  }
+  @keyframes ring-in{ from{ opacity:0; transform:scale(0.7); } to{ opacity:1; transform:scale(1); } }
+  @keyframes check-in{ to{ stroke-dashoffset:0; } }
+
+  .verdict{ font-size:16px; font-weight:800; letter-spacing:0.02em; margin-top:14px; }
+  .verdict.valid{ color:var(--green); }
+  .verdict.invalid{ color:var(--red); }
+  .verdict-sub{ font-family:var(--mono); font-size:11px; color:var(--text-dimmer); margin-top:4px; letter-spacing:0.04em; }
+
+  .item-name{ text-align:center; font-size:21px; font-weight:800; margin:22px 0 10px; line-height:1.3; }
+  .edition-pill{
+    display:block; width:fit-content; margin:0 auto 28px; font-family:var(--mono); font-size:11px;
+    letter-spacing:0.04em; color:var(--gold-bright); background:rgba(203,185,141,0.09);
+    border:1px solid rgba(203,185,141,0.35); border-radius:999px; padding:6px 14px;
+  }
+
+  .panel{
+    border:1px solid var(--border); border-radius:16px; background:var(--panel); overflow:hidden; margin-bottom:16px;
+  }
+  .panel.valid{ border-color:rgba(127,216,160,0.28); }
+  .panel-label{
+    font-family:var(--mono); font-size:10.5px; letter-spacing:0.08em; color:var(--text-dimmer);
+    padding:12px 16px 0;
+  }
+  .result-row{ display:flex; justify-content:space-between; gap:14px; font-size:13px; padding:11px 16px; border-bottom:1px solid var(--border); }
+  .result-row:last-child{ border-bottom:none; }
+  .result-row span:first-child{ color:var(--text-dimmer); font-family:var(--mono); font-size:11px; letter-spacing:0.03em; }
+  .result-row span:last-child{ color:var(--text); text-align:right; font-weight:600; }
+
+  /* Security hash strip — the signature element: a faint holographic
+     shimmer sweeps across it, echoing a foil authentication sticker. */
+  .hash-strip{
+    position:relative; margin:20px 0 4px; padding:13px 16px; border-radius:12px;
+    border:1px solid var(--border); background:var(--panel-solid); overflow:hidden;
+  }
+  .hash-strip::before{
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(115deg, transparent 20%, rgba(203,185,141,0.16) 45%, rgba(255,255,255,0.08) 50%, rgba(203,185,141,0.16) 55%, transparent 80%);
+    background-size:220% 100%; animation:shimmer 3.2s ease-in-out infinite;
+  }
+  @keyframes shimmer{ 0%{ background-position:120% 0; } 100%{ background-position:-40% 0; } }
+  .hash-label{ position:relative; font-family:var(--mono); font-size:9.5px; letter-spacing:0.1em; color:var(--text-dimmer); margin-bottom:5px; }
+  .hash-value{ position:relative; font-family:var(--mono); font-size:11px; letter-spacing:0.02em; color:var(--gold-bright); word-break:break-all; }
+
+  .invalid-message{
+    text-align:center; font-size:13px; line-height:1.6; color:var(--text-dim); margin:0 0 22px; padding:0 6px;
+  }
+
+  .action-row{ display:flex; gap:10px; margin-top:26px; }
+  .scan-again, .dash-link{
+    flex:1; text-align:center; font-size:12.5px; font-weight:600; font-family:var(--sans);
+    border-radius:999px; padding:12px; cursor:pointer;
+  }
+  .scan-again{ color:var(--black); background:var(--gold-bright); border:none; }
+  .scan-again:hover{ background:var(--gold); }
+  .dash-link{ color:var(--text); background:transparent; border:1px solid var(--border); }
+  .dash-link:hover{ border-color:var(--gold); color:var(--gold-bright); }
+
+  .debug-block{ margin-top:16px; padding:12px; border:1px dashed var(--border); border-radius:10px; }
+  .debug-block .dt{ font-family:var(--mono); font-size:10.5px; color:var(--text-dimmer); margin-bottom:6px; }
+  .debug-block .dv{ font-family:var(--mono); font-size:11px; color:var(--text); word-break:break-all; margin-bottom:8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brandmark">
+    <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
+    <span class="brand-word">VALENCE</span>
+  </div>
+  <a class="back-link" href="verify-authenticity.html">&larr; BACK</a>
+</header>
+
+<main>
+
+  <!-- Stage 1: camera opens immediately -->
+  <div id="scan-stage">
+    <div class="scan-heading">
+      <h1>Scan Your Tag</h1>
+      <p>Line up the QR code stitched or printed into your garment.</p>
+    </div>
+    <div id="cam-frame">
+      <div id="qr-reader"></div>
+      <div class="scan-frame-overlay">
+        <div class="scan-brackets">
+          <span></span><span></span><span></span><span></span>
+          <div class="scan-line"></div>
+        </div>
+      </div>
+    </div>
+    <div class="scan-footer">
+      <button class="cancel-scan" id="cancel-scan">CANCEL</button>
+    </div>
+    <div class="scan-note" id="scan-note"></div>
+  </div>
+
+  <!-- Stage 2: looking up the code -->
+  <div id="lookup-stage" class="hidden">
+    <div class="spinner"></div>
+    <p>VERIFYING TAG…</p>
+  </div>
+
+  <!-- Stage 3: the reveal -->
+  <div id="result-stage" class="hidden"></div>
+
+</main>
+
+<script>
+  const scanStage = document.getElementById('scan-stage');
+  const lookupStage = document.getElementById('lookup-stage');
+  const resultStage = document.getElementById('result-stage');
+  const scanNote = document.getElementById('scan-note');
+  const cancelBtn = document.getElementById('cancel-scan');
+
+  let html5QrCode = null;
+  let isScanning = false;
+
+  function showStage(stage) {
+    [scanStage, lookupStage, resultStage].forEach(s => s.classList.add('hidden'));
+    stage.classList.remove('hidden');
+  }
+
+  async function startScan() {
+    scanNote.textContent = '';
+    showStage(scanStage);
+    try {
+      if (typeof Html5Qrcode === 'undefined') {
+        throw new Error('Html5Qrcode library failed to load (check network/CDN access).');
+      }
+      html5QrCode = new Html5Qrcode('qr-reader');
+      await html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: (vw, vh) => {
+            const edge = Math.floor(Math.min(vw, vh) * 0.72);
+            return { width: edge, height: edge };
+          }
+        },
+        onScanSuccess,
+        () => { /* per-frame decode failures are expected while aiming — ignore */ }
+      );
+      isScanning = true;
+    } catch (err) {
+      scanNote.textContent = 'Camera unavailable — check permissions and try again.';
+      console.error('Unable to start QR scanner', err);
+    }
+  }
+
+  async function stopScan() {
+    if (html5QrCode && isScanning) {
+      try {
+        await html5QrCode.stop();
+        html5QrCode.clear();
+      } catch (err) {
+        console.error('Error stopping scanner', err);
+      }
+    }
+    isScanning = false;
+  }
+
+  async function onScanSuccess(decodedText) {
+    await stopScan();
+    verifyCode(extractCode(decodedText), decodedText);
+  }
+
+  cancelBtn.addEventListener('click', async () => {
+    await stopScan();
+    window.location.href = 'verify-authenticity.html';
+  });
+
+  // A scanned QR may encode either a bare code ("VLC-001") or a full link
+  // back to this page ("https://valencehq.vercel.app/product.html?code=VLC-001").
+  function extractCode(raw) {
+    const trimmed = (raw || '').trim();
+    let extracted = trimmed;
+    try {
+      const url = new URL(trimmed);
+      const fromParam = url.searchParams.get('code');
+      if (fromParam) extracted = fromParam;
+    } catch (e) {
+      // not a URL — treat raw text as the code itself
+    }
+    return normalizeCode(extracted);
+  }
+
+  // Fixes common lookalike-character issues from copy/paste or autocorrect:
+  // en dash / em dash / minus sign -> hyphen, zero-width chars removed.
+  function normalizeCode(str) {
+    return (str || '')
+      .replace(/[\u2010-\u2015\u2212]/g, '-')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      .trim()
+      .toUpperCase();
+  }
+
+  // Partially masks a registered owner's name for privacy on a public scan,
+  // e.g. "John Chibueke" -> "Jo** Ch******". Swap in an owner-auth check to
+  // show the full name when the person scanning is the registered owner.
+  function maskName(name) {
+    if (!name) return '—';
+    return name.split(' ').map(word => {
+      if (word.length <= 2) return word;
+      return word.slice(0, 2) + '*'.repeat(word.length - 2);
+    }).join(' ');
+  }
+
+  function formatDate(value) {
+    if (!value) return '—';
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return String(value);
+    return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // --- Look up the scanned code in Supabase and render the reveal ---
+  // NOTE: adjust table/column names to match your schema. Expected columns
+  // on `products`: qr_code, product_name, batch_number, manufactured_at,
+  // item_number, edition_name, edition_total, owner_name, registered_at,
+  // security_hash.
+  async function verifyCode(code, rawScanned) {
+    showStage(lookupStage);
+
+    if (typeof supabaseClient === 'undefined') {
+      renderResult(false, { code }, 'Verification service is not configured.', rawScanned);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabaseClient
+        .from('products')
+        .select('*')
+        .eq('qr_code', code)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        renderResult(true, { code, ...data }, null, rawScanned);
+      } else {
+        renderResult(false, { code }, 'This code does not match any known Valence product.', rawScanned);
+      }
+    } catch (err) {
+      console.error('Verification lookup failed', err);
+      renderResult(false, { code }, 'Could not reach the verification service. Please try again.', rawScanned);
+    }
+  }
+
+  function renderResult(valid, data, message, rawScanned) {
+    showStage(resultStage);
+
+    const itemName = data.product_name || 'Valence Item';
+    const editionName = data.edition_name;
+    const editionTotal = data.edition_total;
+    const itemNumber = data.item_number || data.code;
+    const editionText = editionName
+      ? `${editionName}${editionTotal ? ` · ${itemNumber} of ${editionTotal}` : ''}`
+      : (data.batch_number ? `Batch ${data.batch_number}` : null);
+
+    let html = `
+      <div class="seal-wrap">
+        ${valid ? sealValidSvg() : sealInvalidSvg()}
+        <div class="verdict ${valid ? 'valid' : 'invalid'}">
+          ${valid ? 'Authentic Product — Verified' : 'Not Verified'}
+        </div>
+        <div class="verdict-sub">${valid ? 'MATCHED AGAINST VALENCE REGISTRY' : 'NO REGISTRY MATCH'}</div>
+      </div>
+    `;
+
+    if (valid) {
+      html += `<div class="item-name">${escapeHtml(itemName)}</div>`;
+      if (editionText) html += `<div class="edition-pill">${escapeHtml(editionText)}</div>`;
+
+      html += `
+        <div class="panel valid">
+          <div class="panel-label">REGISTRATION</div>
+          <div class="result-row"><span>REGISTERED OWNER</span><span>${escapeHtml(maskName(data.owner_name))}</span></div>
+          <div class="result-row"><span>REGISTERED ON</span><span>${escapeHtml(formatDate(data.registered_at))}</span></div>
+          <div class="result-row"><span>ITEM NUMBER</span><span>${escapeHtml(String(itemNumber || '—'))}</span></div>
+          <div class="result-row"><span>MANUFACTURED</span><span>${escapeHtml(formatDate(data.manufactured_at))}</span></div>
+        </div>
+      `;
+
+      if (data.security_hash) {
+        html += `
+          <div class="hash-strip">
+            <div class="hash-label">SECURITY TOKEN</div>
+            <div class="hash-value">${escapeHtml(data.security_hash)}</div>
+          </div>
+        `;
+      }
+    } else {
+      html += `<p class="invalid-message">${escapeHtml(message || 'This code could not be verified.')}</p>`;
+
+      if (rawScanned) {
+        const codeVal = data.code || '';
+        const charCodes = Array.from(codeVal).map(ch => ch.charCodeAt(0).toString(16).padStart(4, '0')).join(' ');
+        html += `
+          <div class="debug-block">
+            <div class="dt">DEBUG — RAW SCANNED TEXT</div>
+            <div class="dv">${escapeHtml(rawScanned)}</div>
+            <div class="dt">EXTRACTED CODE CHAR CODES (hex)</div>
+            <div class="dv">${escapeHtml(charCodes)}</div>
+          </div>
+        `;
+      }
+    }
+
+    html += `
+      <div class="action-row">
+        <button class="scan-again" id="scan-again-btn">SCAN ANOTHER</button>
+        <a class="dash-link" href="dashboard.html">DASHBOARD</a>
+      </div>
+    `;
+
+    resultStage.innerHTML = html;
+    document.getElementById('scan-again-btn').addEventListener('click', startScan);
+  }
+
+  function sealValidSvg() {
+    return `
+      <svg class="seal valid" viewBox="0 0 104 104" fill="none">
+        <circle class="seal-ring" cx="52" cy="52" r="46" stroke="var(--green)" stroke-width="2.5" opacity="0.85"/>
+        <circle cx="52" cy="52" r="38" fill="var(--green-glow)"/>
+        <path class="seal-check" d="M35 53l12 12 22-24" stroke="var(--green)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    `;
+  }
+
+  function sealInvalidSvg() {
+    return `
+      <svg class="seal invalid" viewBox="0 0 104 104" fill="none">
+        <circle cx="52" cy="52" r="46" stroke="var(--red)" stroke-width="2.5" opacity="0.85"/>
+        <circle cx="52" cy="52" r="38" fill="var(--red-glow)"/>
+        <path class="seal-x" d="M40 40l24 24M64 40l-24 24" stroke="var(--red)" stroke-width="4.5" stroke-linecap="round"/>
+      </svg>
+    `;
+  }
+
+  // --- Entry point ---
+  // If the QR encoded a link with ?code=, or verify-authenticity.html
+  // forwarded one, skip straight to the lookup. Otherwise open the camera
+  // immediately — no extra tap required.
+  const params = new URLSearchParams(window.location.search);
+  const codeFromUrl = params.get('code');
+  if (codeFromUrl) {
+    verifyCode(normalizeCode(codeFromUrl), codeFromUrl);
+  } else {
+    startScan();
+  }
+</script>
+</body>
+</html>

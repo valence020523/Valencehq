@@ -40,13 +40,29 @@
   .sub{ font-size:13.5px; color:var(--text-dim); margin:0 0 30px; }
 
   .panel{ border:1px solid var(--border); background:var(--panel); border-radius:16px; padding:24px; }
+  .panel + .panel{ margin-top:18px; }
+  .section-label{
+    font-size:11px; font-family:var(--mono); letter-spacing:0.08em; color:var(--gold); margin:0 0 4px;
+  }
+  .section-hint{ font-size:11.5px; color:var(--text-dimmer); margin:0 0 16px; }
   label{ display:block; font-size:11.5px; font-family:var(--mono); color:var(--text-dimmer); margin:16px 0 6px; }
   label:first-of-type{ margin-top:0; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row > div{ flex:1; }
   input{
     width:100%; padding:11px 13px; border-radius:8px; border:1px solid var(--border);
     background:rgba(255,255,255,0.03); color:var(--text); font-family:var(--sans); font-size:13.5px;
   }
   input:focus{ outline:none; border-color:var(--gold); }
+  input[readonly]{ color:var(--gold-bright); font-family:var(--mono); font-size:12.5px; }
+
+  .hash-row{ display:flex; gap:8px; align-items:stretch; }
+  .hash-row input{ flex:1; }
+  .gen-btn{
+    font-family:var(--mono); font-size:11px; font-weight:600; color:var(--text);
+    background:transparent; border:1px solid var(--border); border-radius:8px; padding:0 14px; cursor:pointer; white-space:nowrap;
+  }
+  .gen-btn:hover{ border-color:var(--gold); color:var(--gold-bright); }
 
   .btn{
     margin-top:22px; width:100%; font-size:13px; font-weight:700; letter-spacing:0.03em; color:var(--black);
@@ -104,18 +120,67 @@
   <section id="app-section">
     <h1>Add Product</h1>
     <p class="sub">Create a new QR-verified product entry.</p>
+
     <div class="panel">
+      <div class="section-label">PRODUCT</div>
+      <div class="section-hint">Shown on the public verification page.</div>
+
       <label for="qr_code">QR CODE (must be unique, e.g. VLC-0001)</label>
       <input type="text" id="qr_code" placeholder="VLC-0001" />
+
       <label for="product_name">PRODUCT NAME</label>
-      <input type="text" id="product_name" placeholder="Wool Overcoat" />
+      <input type="text" id="product_name" placeholder="Genesis Hoodie — Size L" />
+
       <label for="batch_number">BATCH NUMBER</label>
       <input type="text" id="batch_number" placeholder="BATCH-2026-01" />
+
       <label for="manufactured_at">MANUFACTURED DATE</label>
       <input type="date" id="manufactured_at" />
-      <button class="btn" id="add-btn">ADD PRODUCT</button>
-      <div class="msg" id="add-msg"></div>
     </div>
+
+    <div class="panel">
+      <div class="section-label">EDITION &amp; SERIAL</div>
+      <div class="section-hint">Leave edition fields blank for non-limited products.</div>
+
+      <label for="item_number">ITEM NUMBER</label>
+      <input type="text" id="item_number" placeholder="VAL-0489" />
+
+      <div class="field-row">
+        <div>
+          <label for="edition_name">EDITION NAME</label>
+          <input type="text" id="edition_name" placeholder="Genesis Vault — Limited Edition" />
+        </div>
+        <div>
+          <label for="edition_total">EDITION TOTAL</label>
+          <input type="number" id="edition_total" min="1" placeholder="500" />
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="section-label">REGISTRATION</div>
+      <div class="section-hint">Owner name is partially masked on the public reveal.</div>
+
+      <label for="owner_name">REGISTERED OWNER</label>
+      <input type="text" id="owner_name" placeholder="John Chibueke" />
+
+      <label for="registered_at">REGISTRATION DATE</label>
+      <input type="date" id="registered_at" />
+    </div>
+
+    <div class="panel">
+      <div class="section-label">SECURITY</div>
+      <div class="section-hint">A unique token stamped on the physical tag, shown on the reveal to prove the database validates this exact item.</div>
+
+      <label for="security_hash">SECURITY TOKEN</label>
+      <div class="hash-row">
+        <input type="text" id="security_hash" placeholder="VLC-7F3A-9C21-88BD" readonly />
+        <button class="gen-btn" id="gen-hash-btn" type="button">GENERATE</button>
+      </div>
+    </div>
+
+    <button class="btn" id="add-btn">ADD PRODUCT</button>
+    <div class="msg" id="add-msg"></div>
 
     <div class="recent">
       <h2>Recently added</h2>
@@ -131,6 +196,7 @@
   const loginMsg = document.getElementById('login-msg');
   const addMsg = document.getElementById('add-msg');
   const recentList = document.getElementById('recent-list');
+  const hashInput = document.getElementById('security_hash');
 
   const ADMIN_EMAIL = 'mhilesjr@gmail.com';
 
@@ -201,11 +267,38 @@
     showLoggedOut();
   });
 
+  // Generates a readable security token, e.g. "VLC-7F3A-9C21-88BD",
+  // using the browser's crypto RNG rather than Math.random.
+  function generateSecurityToken() {
+    const bytes = new Uint8Array(6);
+    crypto.getRandomValues(bytes);
+    const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0').toUpperCase()).join('');
+    return `VLC-${hex.slice(0, 4)}-${hex.slice(4, 8)}-${hex.slice(8, 12)}`;
+  }
+
+  document.getElementById('gen-hash-btn').addEventListener('click', () => {
+    hashInput.value = generateSecurityToken();
+  });
+
+  function fieldValue(id) {
+    return document.getElementById(id).value.trim();
+  }
+
   document.getElementById('add-btn').addEventListener('click', async () => {
-    const qr_code = document.getElementById('qr_code').value.trim();
-    const product_name = document.getElementById('product_name').value.trim();
-    const batch_number = document.getElementById('batch_number').value.trim();
+    const qr_code = fieldValue('qr_code');
+    const product_name = fieldValue('product_name');
+    const batch_number = fieldValue('batch_number');
     const manufactured_at = document.getElementById('manufactured_at').value || null;
+
+    const item_number = fieldValue('item_number');
+    const edition_name = fieldValue('edition_name');
+    const edition_total_raw = fieldValue('edition_total');
+    const edition_total = edition_total_raw ? parseInt(edition_total_raw, 10) : null;
+
+    const owner_name = fieldValue('owner_name');
+    const registered_at = document.getElementById('registered_at').value || null;
+
+    const security_hash = fieldValue('security_hash');
 
     addMsg.textContent = '';
     addMsg.className = 'msg';
@@ -221,7 +314,18 @@
 
     const { error } = await supabaseClient
       .from('products')
-      .insert([{ qr_code, product_name, batch_number, manufactured_at }]);
+      .insert([{
+        qr_code,
+        product_name,
+        batch_number,
+        manufactured_at,
+        item_number: item_number || null,
+        edition_name: edition_name || null,
+        edition_total,
+        owner_name: owner_name || null,
+        registered_at,
+        security_hash: security_hash || null,
+      }]);
 
     addBtn.disabled = false;
 
@@ -235,17 +339,20 @@
 
     addMsg.textContent = `Added "${qr_code}" successfully.`;
     addMsg.classList.add('success');
-    document.getElementById('qr_code').value = '';
-    document.getElementById('product_name').value = '';
-    document.getElementById('batch_number').value = '';
-    document.getElementById('manufactured_at').value = '';
+
+    ['qr_code','product_name','batch_number','manufactured_at',
+     'item_number','edition_name','edition_total',
+     'owner_name','registered_at','security_hash'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+
     loadRecent();
   });
 
   async function loadRecent() {
     const { data, error } = await supabaseClient
       .from('products')
-      .select('qr_code, product_name, batch_number')
+      .select('qr_code, product_name, batch_number, item_number, edition_total, owner_name')
       .order('created_at', { ascending: false })
       .limit(10);
 
@@ -254,12 +361,18 @@
       return;
     }
 
-    recentList.innerHTML = data.map(p => `
-      <div class="row">
-        <span>${escapeHtml(p.qr_code)}</span>
-        <span>${escapeHtml(p.product_name || '—')} · ${escapeHtml(p.batch_number || '—')}</span>
-      </div>
-    `).join('') || '<div class="row"><span>—</span><span>No products yet</span></div>';
+    recentList.innerHTML = data.map(p => {
+      const serial = p.item_number
+        ? `${p.item_number}${p.edition_total ? ` of ${p.edition_total}` : ''}`
+        : (p.batch_number || '—');
+      const owner = p.owner_name ? ` · ${p.owner_name}` : '';
+      return `
+        <div class="row">
+          <span>${escapeHtml(p.qr_code)}</span>
+          <span>${escapeHtml(p.product_name || '—')} · ${escapeHtml(serial)}${escapeHtml(owner)}</span>
+        </div>
+      `;
+    }).join('') || '<div class="row"><span>—</span><span>No products yet</span></div>';
   }
 
   function escapeHtml(str) {
