@@ -93,6 +93,37 @@ create trigger on_auth_user_created_retailer
 grant usage on schema public to supabase_auth_admin;
 grant select, insert, update on public.retailers to supabase_auth_admin;
 
+-- ---------- 1b. Patch the existing profiles trigger for retailer signups ----------
+-- Your project already had a trigger (handle_new_user) that creates a
+-- public.profiles row for every new auth user and requires phone/username.
+-- Retailer accounts don't need a profiles row at all, so skip it for them
+-- instead of trying to fabricate a fake phone number (which would also risk
+-- colliding with any uniqueness constraint on profiles.phone). This
+-- replaces the function body — same trigger, same name, just an early
+-- return added for retailer signups.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public'
+as $function$
+begin
+  if new.raw_user_meta_data ->> 'role' = 'retailer' then
+    return new;
+  end if;
+
+  insert into public.profiles (id, username, email, phone)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'username',
+    new.email,
+    new.raw_user_meta_data->>'phone'
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$function$;
+
 -- ---------- 2. OTP codes ----------
 create table if not exists public.otp_codes (
   id bigint generated always as identity primary key,
