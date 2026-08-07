@@ -174,15 +174,29 @@
   // back to this page ("https://valencehq.vercel.app/verify-authenticity.html?code=VLC-001").
   // Pull just the code out either way.
   function extractCode(raw) {
+    console.log('[QR] raw decoded text:', JSON.stringify(raw));
     const trimmed = (raw || '').trim();
+    let extracted = trimmed;
     try {
       const url = new URL(trimmed);
       const fromParam = url.searchParams.get('code');
-      if (fromParam) return fromParam;
+      if (fromParam) extracted = fromParam;
     } catch (e) {
       // not a URL — fall through and treat raw text as the code itself
     }
-    return trimmed;
+    const normalized = normalizeCode(extracted);
+    console.log('[QR] extracted code:', JSON.stringify(extracted), '-> normalized:', JSON.stringify(normalized));
+    return normalized;
+  }
+
+  // Fixes common lookalike-character issues from copy/paste or autocorrect:
+  // en dash / em dash / minus sign -> hyphen, zero-width chars removed, trimmed + uppercased.
+  function normalizeCode(str) {
+    return (str || '')
+      .replace(/[\u2010-\u2015\u2212]/g, '-')   // en/em dash, minus sign -> hyphen
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')     // zero-width chars
+      .trim()
+      .toUpperCase();
   }
 
   cancelBtn.addEventListener('click', stopScan);
@@ -194,7 +208,7 @@
   const params = new URLSearchParams(window.location.search);
   const codeFromUrl = params.get('code');
   if (codeFromUrl) {
-    verifyCode(codeFromUrl);
+    verifyCode(normalizeCode(codeFromUrl));
   }
 
   // --- Look up the scanned code in Supabase and render the result ---
