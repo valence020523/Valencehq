@@ -28,12 +28,23 @@
 
   /* ---------- logo chip (light backing so the chrome logo reads on dark bg) ---------- */
   .logo-chip{
-    background:rgba(255,255,255,0.94); border-radius:9px; padding:4px 10px;
+    background:rgba(255,255,255,0.96); border-radius:9px; padding:5px 12px;
     display:inline-flex; align-items:center; line-height:0;
+    box-shadow:0 0 0 1px rgba(203,185,141,0.35), 0 2px 10px rgba(0,0,0,0.35);
   }
-  .logo-chip img{ display:block; height:22px; width:auto; }
-  .logo-chip.sm img{ height:16px; }
-  .logo-chip.lg img{ height:30px; }
+  .logo-chip img{
+    display:block; height:28px; width:auto;
+    filter:contrast(1.25) brightness(1.05) saturate(1.05);
+  }
+  .logo-chip.sm img{ height:20px; }
+  .logo-chip.lg img{ height:38px; }
+  .brandmark{ display:flex; align-items:center; gap:10px; }
+  .brand-word{
+    font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:15px;
+    text-shadow:0 0 14px rgba(203,185,141,0.35);
+  }
+  .brand-word.sm{ font-size:12px; letter-spacing:0.13em; }
+  .brand-word.lg{ font-size:17px; }
 
   /* ---------- sidebar (desktop) ---------- */
   .sidebar{
@@ -120,6 +131,7 @@
   /* ---------- stat row ---------- */
   .stat-row{ display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin:22px 0 36px; }
   .stat-card{ display:flex; align-items:center; gap:14px; }
+  a.stat-card:hover{ border-color:var(--gold); background:rgba(203,185,141,0.06); }
   .stat-icon{
     width:38px; height:38px; border-radius:9px; background:rgba(203,185,141,0.1);
     display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--gold);
@@ -243,7 +255,10 @@
       <button class="menu-btn" id="menu-btn" aria-label="Open menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
-      <div class="logo-chip sm"><img src="valence-mark.jpeg" alt="VALENCE"></div>
+      <div class="brandmark">
+        <div class="logo-chip sm"><img src="valence-mark.jpeg" alt="VALENCE"></div>
+        <span class="brand-word sm">VALENCE</span>
+      </div>
     </div>
     <div class="profile-block">
       <div class="profile-text">
@@ -259,7 +274,12 @@
 
   <div class="app">
     <aside class="sidebar" id="sidebar">
-      <div class="brand"><div class="logo-chip lg"><img src="valence-logo.jpeg" alt="VALENCE"></div></div>
+      <div class="brand">
+        <div class="brandmark">
+          <div class="logo-chip lg"><img src="valence-logo.jpeg" alt="VALENCE"></div>
+          <span class="brand-word lg">VALENCE</span>
+        </div>
+      </div>
       <nav class="primary-nav">
         <div class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Dashboard</div>
         <div class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>My Profile</div>
@@ -279,7 +299,10 @@
 
     <main class="dash">
       <div class="topbar">
-        <div class="logo-chip"><img src="valence-logo.jpeg" alt="VALENCE"></div>
+        <div class="brandmark">
+          <div class="logo-chip"><img src="valence-logo.jpeg" alt="VALENCE"></div>
+          <span class="brand-word">VALENCE</span>
+        </div>
         <div class="profile-block">
           <div class="profile-text">
             <div class="label">PROFILE</div>
@@ -303,7 +326,7 @@
           <svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
         </div>
 
-        <a class="card collection-card" href="#">
+        <a class="card collection-card" href="collection.html">
           <div>
             <div class="eyebrow">SHOP</div>
             <div class="collection-title">My Collection</div>
@@ -315,23 +338,21 @@
           <video autoplay loop muted playsinline>
             <source src="hero-video.mp4" type="video/mp4">
           </video>
-          <div class="hero-watermark">VALENCE</div>
         </div>
       </div>
 
       <div class="stat-row">
-        <div class="card stat-card">
+        <a class="card stat-card" href="preorder.html">
           <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 7l6.5 9.5M16 7l-6.5 9.5"/></svg></div>
           <div>
             <div class="stat-label gold">PRE-ORDER</div>
-            <div class="stat-value">3 Platforms Live <span class="up">▲</span></div>
           </div>
-        </div>
+        </a>
         <div class="card stat-card">
           <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/></svg></div>
           <div>
             <div class="stat-label gold">VERIFY AUTHENTICITY</div>
-            <div class="stat-value">1,482 QR Scans</div>
+            <div class="stat-value">Scan QR Code</div>
           </div>
         </div>
         <div class="card stat-card">
