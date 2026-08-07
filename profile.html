@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile — VALENCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+  :root{
+    --black:#05070b; --navy-950:#080d16; --navy-900:#0b1220;
+    --panel:rgba(255,255,255,0.035); --border:rgba(255,255,255,0.09);
+    --gold:#cbb98d; --gold-bright:#e6d9b0; --green:#3ddc84; --red:#e5695e;
+    --text:#f2f1ec; --text-dim:#93a0b4; --text-dimmer:#5c6779;
+    --mono:'JetBrains Mono',monospace; --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--black); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; text-decoration:none; }
+
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 30px; border-bottom:1px solid var(--border);
+    background:linear-gradient(180deg,var(--navy-900),var(--black));
+  }
+  .logo-chip img{ display:block; height:30px; width:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
+  .brandmark{ display:flex; align-items:center; gap:10px; }
+  .brand-word{ font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:15px; }
+  .back-link{ font-size:12.5px; font-family:var(--mono); color:var(--text-dim); }
+  .back-link:hover{ color:var(--gold-bright); }
+
+  main{
+    max-width:520px; margin:0 auto; padding:50px 24px 80px;
+    background:radial-gradient(900px 340px at 50% -10%, rgba(203,185,141,0.10), transparent 60%);
+  }
+  h1{ font-size:24px; font-weight:800; margin:0 0 30px; }
+
+  .avatar-section{ display:flex; flex-direction:column; align-items:center; gap:16px; margin-bottom:38px; }
+  .avatar-big{
+    width:112px; height:112px; border-radius:50%; background:linear-gradient(145deg,#3a4a63,#1b2534);
+    background-size:cover; background-position:center;
+    display:flex; align-items:center; justify-content:center;
+    font-size:38px; font-weight:700; color:var(--text); border:2px solid var(--border);
+  }
+  .upload-btn{
+    font-size:12.5px; font-weight:600; color:var(--gold-bright); background:none; cursor:pointer;
+    border:1px solid rgba(203,185,141,0.4); border-radius:999px; padding:9px 18px; font-family:var(--sans);
+  }
+  .upload-btn:hover{ background:rgba(203,185,141,0.1); border-color:var(--gold); }
+  .upload-status{ font-size:11.5px; color:var(--text-dimmer); font-family:var(--mono); min-height:16px; }
+  .upload-status.error{ color:var(--red); }
+  .upload-status.success{ color:var(--green); }
+  input[type=file]{ display:none; }
+
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:16px; }
+  .field{ margin-bottom:16px; }
+  .field:last-child{ margin-bottom:0; }
+  .field label{ display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; color:var(--text-dimmer); margin-bottom:6px; }
+  .field .value{ font-size:14.5px; font-weight:600; }
+
+  .logout-btn{
+    display:block; width:100%; margin-top:10px; font-size:12.5px; font-weight:600; color:var(--text-dim);
+    background:none; border:1px solid var(--border); border-radius:999px; padding:10px; cursor:pointer; font-family:var(--sans);
+  }
+  .logout-btn:hover{ color:var(--text); border-color:var(--gold); }
+
+  .loading{ color:var(--text-dim); font-size:14px; padding:60px 30px; }
+</style>
+</head>
+<body>
+
+<div id="loading" class="loading">Loading your profile…</div>
+
+<div id="content" style="display:none;">
+  <header>
+    <div class="brandmark">
+      <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
+      <span class="brand-word">VALENCE</span>
+    </div>
+    <a class="back-link" href="dashboard.html">&larr; BACK TO DASHBOARD</a>
+  </header>
+
+  <main>
+    <h1>My Profile</h1>
+
+    <div class="avatar-section">
+      <div class="avatar-big" id="avatar-big">—</div>
+      <button class="upload-btn" id="upload-btn">Change Photo</button>
+      <input type="file" id="file-input" accept="image/*">
+      <div class="upload-status" id="upload-status"></div>
+    </div>
+
+    <div class="card">
+      <div class="field">
+        <label>USERNAME</label>
+        <div class="value" id="p-username">—</div>
+      </div>
+      <div class="field">
+        <label>EMAIL</label>
+        <div class="value" id="p-email">—</div>
+      </div>
+      <div class="field">
+        <label>PHONE</label>
+        <div class="value" id="p-phone">—</div>
+      </div>
+    </div>
+
+    <button class="logout-btn" id="logout-btn">Log Out</button>
+  </main>
+</div>
+
+<script>
+  let currentUser = null;
+
+  function setAvatarDisplay(url, initial){
+    const el = document.getElementById('avatar-big');
+    if (url) {
+      el.style.backgroundImage = `url("${url}")`;
+      el.textContent = '';
+    } else {
+      el.style.backgroundImage = 'none';
+      el.textContent = initial;
+    }
+  }
+
+  (async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (!session) {
+      window.location.href = 'index.html';
+      return;
+    }
+
+    currentUser = session.user;
+    const meta = currentUser.user_metadata || {};
+    const displayName = meta.username || (currentUser.email ? currentUser.email.split('@')[0] : 'Member');
+
+    document.getElementById('p-username').textContent = displayName;
+    document.getElementById('p-email').textContent = currentUser.email || '—';
+    document.getElementById('p-phone').textContent = meta.phone || currentUser.phone || '—';
+
+    setAvatarDisplay(meta.avatar_url, displayName.charAt(0).toUpperCase());
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+  })();
+
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || !session) {
+      window.location.href = 'index.html';
+    }
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'index.html';
+  });
+
+  const fileInput = document.getElementById('file-input');
+  const statusEl = document.getElementById('upload-status');
+
+  document.getElementById('upload-btn').addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
+    if (!file || !currentUser) return;
+
+    statusEl.className = 'upload-status';
+    statusEl.textContent = 'Uploading…';
+
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${currentUser.id}/avatar.${ext}`;
+
+      // Requires a public Supabase Storage bucket named "avatars"
+      const { error: uploadError } = await supabaseClient
+        .storage
+        .from('avatars')
+        .upload(path, file, { upsert: true, cacheControl: '3600' });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabaseClient
+        .storage
+        .from('avatars')
+        .getPublicUrl(path);
+
+      const publicUrl = `${publicUrlData.publicUrl}?t=${Date.now()}`;
+
+      const { error: updateError } = await supabaseClient.auth.updateUser({
+        data: { avatar_url: publicUrl }
+      });
+      if (updateError) throw updateError;
+
+      setAvatarDisplay(publicUrl, '');
+      statusEl.className = 'upload-status success';
+      statusEl.textContent = 'Photo updated.';
+    } catch (err) {
+      statusEl.className = 'upload-status error';
+      statusEl.textContent = err.message || 'Upload failed. Try again.';
+    }
+  });
+</script>
+</body>
+</html>

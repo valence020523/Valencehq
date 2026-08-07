@@ -83,12 +83,14 @@
 
   .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:34px; }
   .profile-block{ display:flex; align-items:center; gap:10px; }
+  a.profile-block:hover .name{ color:var(--gold-bright); }
   .profile-text{ text-align:right; line-height:1.3; }
   .profile-text .label{ font-size:10px; letter-spacing:0.12em; color:var(--text-dimmer); font-family:var(--mono); }
   .profile-text .name{ font-size:13.5px; font-weight:600; }
   .avatar-wrap{ position:relative; }
   .avatar{
     width:34px; height:34px; border-radius:50%; background:linear-gradient(145deg,#3a4a63,#1b2534);
+    background-size:cover; background-position:center;
     display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
     color:var(--text); border:1px solid var(--border);
   }
@@ -256,7 +258,7 @@
         <span class="brand-word sm">VALENCE</span>
       </div>
     </div>
-    <div class="profile-block">
+    <a class="profile-block" href="profile.html">
       <div class="profile-text">
         <div class="label">PROFILE</div>
         <div class="name" id="dash-username-m">—</div>
@@ -265,7 +267,7 @@
         <div class="avatar" id="avatar-initial-m">—</div>
         <div class="status-dot"></div>
       </div>
-    </div>
+    </a>
   </header>
 
   <div class="app">
@@ -299,7 +301,7 @@
           <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
           <span class="brand-word">VALENCE</span>
         </div>
-        <div class="profile-block">
+        <a class="profile-block" href="profile.html">
           <div class="profile-text">
             <div class="label">PROFILE</div>
             <div class="name" id="dash-username">—</div>
@@ -308,7 +310,7 @@
             <div class="avatar" id="avatar-initial">—</div>
             <div class="status-dot"></div>
           </div>
-        </div>
+        </a>
       </div>
 
       <h1 class="welcome">WELCOME BACK, <span id="welcome-name">—</span></h1>
@@ -344,13 +346,13 @@
             <div class="stat-label gold">PRE-ORDER</div>
           </div>
         </a>
-        <div class="card stat-card">
+        <a class="card stat-card" href="verify-authenticity.html">
           <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 11-4.5-2.5-8-6-8-11V5l8-3z"/></svg></div>
           <div>
             <div class="stat-label gold">VERIFY AUTHENTICITY</div>
             <div class="stat-value">Scan QR Code</div>
           </div>
-        </div>
+        </a>
         <div class="card stat-card">
           <div class="stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.8 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.8-3.8-9S9.5 5.5 12 3z"/></svg></div>
           <div>
@@ -378,15 +380,11 @@
 
       <div class="card activity-section">
         <h3>REAL-TIME BRAND ACTIVITY</h3>
-        <ul class="activity-list">
-          <li><span class="tick"></span><span><span class="time">[10m ago]</span><strong>QR Verified #0492</strong></span></li>
-          <li><span class="tick"></span><span><span class="time">[1h ago]</span><strong>New App Node Synced</strong></span></li>
-          <li><span class="tick"></span><span><span class="time">[3h ago]</span><strong>Vault Drop Scheduled</strong></span></li>
+        <ul class="activity-list" id="activity-feed">
+          <li><span class="tick"></span><span><span class="time">[10m ago]</span><strong>QR Scanned</strong> — Genesis Hoodie #0492 authenticated</span></li>
+          <li><span class="tick"></span><span><span class="time">[1h ago]</span><strong>Item Registered</strong> — Vault Sneaker added to your collection</span></li>
+          <li><span class="tick"></span><span><span class="time">[3h ago]</span><strong>Authenticity Confirmed</strong> — Order #2291 verified</span></li>
         </ul>
-        <div class="activity-actions">
-          <button class="btn-outline">+ DEPLOY NEW FEATURE</button>
-          <button class="btn-outline">⚙ CONFIGURE AUTHENTICATION</button>
-        </div>
       </div>
     </main>
   </div>
@@ -408,8 +406,17 @@
     document.getElementById('welcome-name').textContent = displayName;
     document.getElementById('dash-username').textContent = displayName;
     document.getElementById('dash-username-m').textContent = displayName;
-    document.getElementById('avatar-initial').textContent = displayName.charAt(0).toUpperCase();
-    document.getElementById('avatar-initial-m').textContent = displayName.charAt(0).toUpperCase();
+
+    const avatarEls = [document.getElementById('avatar-initial'), document.getElementById('avatar-initial-m')];
+    if (meta.avatar_url) {
+      avatarEls.forEach(el => {
+        el.style.backgroundImage = `url("${meta.avatar_url}")`;
+        el.textContent = '';
+      });
+    } else {
+      const initial = displayName.charAt(0).toUpperCase();
+      avatarEls.forEach(el => { el.textContent = initial; });
+    }
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
