@@ -473,10 +473,14 @@
       // otp-claim-schema.sql. We deliberately do NOT insert into
       // `retailers` from here; a client-side insert right after signUp()
       // is what caused the retailers_id_fkey violation.
+      // Your project has a pre-existing trigger on auth.users that inserts
+      // into `profiles` and requires a `username`. We pass one here (derived
+      // from the email) purely so that trigger doesn't fail and abort the
+      // whole signup — it has nothing to do with the retailer feature itself.
       const { data: signupData, error: signupError } = await signupClient.auth.signUp({
         email,
         password,
-        options: { data: { role: 'retailer', name } },
+        options: { data: { role: 'retailer', name, username: email.split('@')[0] } },
       });
       if (signupError) throw signupError;
 
