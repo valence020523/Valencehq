@@ -123,12 +123,39 @@
   .action-card svg{ width:18px; height:18px; color:var(--gold); }
 
   @media (max-width:880px){
-    .top-row{ grid-template-columns:1fr; }
+    main{ padding:20px 12px 40px; }
+    header{ padding:12px 14px; }
+    .brand-line{ font-size:11px; }
+    .menu-btn{ width:30px; height:30px; }
+    .avatar{ width:28px; height:28px; font-size:10px; }
+    .profile-text .name{ font-size:11px; }
+    .profile-text .label{ font-size:8px; }
+    h1.welcome{ font-size:18px; margin-bottom:14px; }
+
+    .top-row{ grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:12px; }
+    .founder-card{ padding:10px; }
+    .eyebrow{ font-size:7.5px; margin-bottom:5px; }
+    .founder-title{ font-size:11px; }
+    .founder-icon{ width:20px; height:20px; margin-top:6px; }
+
+    .video-card{ min-height:150px; }
+    .video-card video{ min-height:150px; }
+    .video-fallback{ font-size:7px; gap:4px; padding:6px; }
+    .video-fallback svg{ width:16px; height:16px; }
+
+    .updates-card{ padding:10px; }
+    .updates-card h3{ font-size:9.5px; margin-bottom:2px; }
+    .updates-sub{ font-size:7px; margin-bottom:8px; }
+    .activity-list{ gap:6px; }
+    .activity-list li{ font-size:8px; gap:5px; }
+    .activity-list .tick{ width:4px; height:4px; margin-top:3px; }
+    .activity-list .time{ font-size:7px; margin-right:2px; }
   }
   @media (max-width:480px){
-    .bottom-row{ gap:12px; }
-    .action-card{ padding:16px 14px; }
-    .action-card .label{ font-size:13px; }
+    .bottom-row{ gap:10px; }
+    .action-card{ padding:14px 12px; }
+    .action-card .label{ font-size:12px; }
+    .action-card svg{ width:15px; height:15px; }
   }
 
   .loading{ color:var(--text-dim); font-size:14px; padding:60px 30px; }
