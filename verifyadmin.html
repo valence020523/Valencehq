@@ -148,13 +148,13 @@
   }
 
   async function checkSession() {
-    const { data } = await supabase.auth.getSession();
+    const { data } = await supabaseClient.auth.getSession();
     if (data.session && data.session.user?.email === ADMIN_EMAIL) {
       showLoggedIn();
     } else if (data.session) {
       // Logged in as someone else — the database will refuse writes anyway,
       // but don't even show the form.
-      await supabase.auth.signOut();
+      await supabaseClient.auth.signOut();
       showLoggedOut();
       loginMsg.textContent = 'This admin page is restricted to an authorized account.';
       loginMsg.className = 'msg error';
@@ -181,14 +181,14 @@
       return;
     }
 
-    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
+    const { error, data } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) {
       loginMsg.textContent = error.message;
       loginMsg.classList.add('error');
       return;
     }
     if (data.user?.email !== ADMIN_EMAIL) {
-      await supabase.auth.signOut();
+      await supabaseClient.auth.signOut();
       loginMsg.textContent = 'This admin page is restricted to an authorized account.';
       loginMsg.classList.add('error');
       return;
@@ -197,7 +197,7 @@
   });
 
   signoutBtn.addEventListener('click', async () => {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     showLoggedOut();
   });
 
@@ -219,7 +219,7 @@
     const addBtn = document.getElementById('add-btn');
     addBtn.disabled = true;
 
-    const { error } = await supabase
+    const { error } = await supabaseClient
       .from('products')
       .insert([{ qr_code, product_name, batch_number, manufactured_at }]);
 
@@ -243,7 +243,7 @@
   });
 
   async function loadRecent() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
       .from('products')
       .select('qr_code, product_name, batch_number')
       .order('created_at', { ascending: false })
