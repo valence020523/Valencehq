@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-config.js"></script>
+<script src="supabase-config.js?v=2"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
   :root{
@@ -133,12 +133,18 @@
     readerWrap.classList.add('active');
     scanBtn.disabled = true;
 
-    html5QrCode = new Html5Qrcode('qr-reader');
-
     try {
+      if (typeof Html5Qrcode === 'undefined') {
+        throw new Error('Html5Qrcode library failed to load (check network/CDN access).');
+      }
+      html5QrCode = new Html5Qrcode('qr-reader');
       await html5QrCode.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 240, height: 240 } },
+        { fps: 10, qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const edge = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.7);
+            return { width: edge, height: edge };
+          }
+        },
         onScanSuccess,
         () => { /* per-frame decode failures are expected while aiming — ignore */ }
       );
