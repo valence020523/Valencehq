@@ -121,10 +121,14 @@
   .badge-icon.tier-silver{ color:#c7ccd6; }
   .badge-icon.tier-gold{ color:var(--gold-bright); }
   .badge-icon.tier-platinum{ color:#bfe9ff; }
+  .badge-icon.tier-diamond{ color:#7fe3ff; }
+  .badge-icon.tier-icon{ color:#ffe9a8; filter:drop-shadow(0 0 10px rgba(255,233,168,0.55)) drop-shadow(0 3px 6px rgba(0,0,0,0.4)); }
   .badge-name.tier-bronze{ color:#c98a5b; }
   .badge-name.tier-silver{ color:#c7ccd6; }
   .badge-name.tier-gold{ color:var(--gold-bright); }
   .badge-name.tier-platinum{ color:#bfe9ff; }
+  .badge-name.tier-diamond{ color:#7fe3ff; }
+  .badge-name.tier-icon{ color:#ffe9a8; }
   .card-icon{ align-self:flex-end; width:34px; height:34px; margin-top:14px; color:var(--gold); opacity:0.9; }
 
   .hero{
@@ -342,7 +346,7 @@
               <circle cx="24" cy="23" r="21" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="1.5"/>
               <path d="M24 12l3.2 6.5 7.2 1-5.2 5.1 1.2 7.1-6.4-3.4-6.4 3.4 1.2-7.1-5.2-5.1 7.2-1z" fill="rgba(0,0,0,0.28)"/>
             </svg>
-            <div class="badge-name" id="status-badge">Bronze Badge</div>
+            <div class="badge-name" id="status-badge">Bronze</div>
           </div>
           <div class="status-progress" id="status-progress">Loading…</div>
         </div>
@@ -446,12 +450,29 @@
     // and this badge will automatically level up.
     const purchaseCount = Number(meta.purchase_count) || 0;
     const tiers = [
-      { key: 'bronze',   name: 'Bronze Badge',   min: 0,  next: 3  },
-      { key: 'silver',   name: 'Silver Badge',   min: 3,  next: 6  },
-      { key: 'gold',     name: 'Gold Badge',     min: 6,  next: 10 },
-      { key: 'platinum', name: 'Platinum Badge', min: 10, next: null },
+      { key: 'bronze',   name: 'Bronze',   min: 0,  next: 3,    shape: 'medal' },
+      { key: 'silver',   name: 'Silver',   min: 3,  next: 6,    shape: 'medal' },
+      { key: 'gold',     name: 'Gold',     min: 6,  next: 10,   shape: 'medal' },
+      { key: 'platinum', name: 'Platinum', min: 10, next: 15,   shape: 'gem'   },
+      { key: 'diamond',  name: 'Diamond',  min: 15, next: 25,   shape: 'gem'   },
+      { key: 'icon',     name: 'Icon',     min: 25, next: null, shape: 'crown' },
     ];
     const tier = [...tiers].reverse().find(t => purchaseCount >= t.min);
+
+    const badgeShapes = {
+      medal: `<path d="M14 34 L4 58 L16 51 L23 59 L19 39 Z" opacity="0.55"/>
+              <path d="M34 34 L44 58 L32 51 L25 59 L29 39 Z" opacity="0.55"/>
+              <circle cx="24" cy="23" r="21"/>
+              <circle cx="24" cy="23" r="21" fill="none" stroke="rgba(0,0,0,0.25)" stroke-width="1.5"/>
+              <path d="M24 12l3.2 6.5 7.2 1-5.2 5.1 1.2 7.1-6.4-3.4-6.4 3.4 1.2-7.1-5.2-5.1 7.2-1z" fill="rgba(0,0,0,0.28)"/>`,
+      gem: `<path d="M8 20 L24 5 L40 20 L24 56 Z"/>
+            <path d="M8 20 L40 20" stroke="rgba(0,0,0,0.28)" stroke-width="1.4" fill="none"/>
+            <path d="M24 5 L16 20 L24 56" stroke="rgba(0,0,0,0.22)" stroke-width="1.2" fill="none"/>
+            <path d="M24 5 L32 20 L24 56" stroke="rgba(0,0,0,0.22)" stroke-width="1.2" fill="none"/>`,
+      crown: `<path d="M6 46 L6 24 L16 34 L24 14 L32 34 L42 24 L42 46 Z"/>
+              <circle cx="6" cy="21" r="4"/><circle cx="24" cy="11" r="4"/><circle cx="42" cy="21" r="4"/>
+              <rect x="6" y="46" width="36" height="7" rx="1.5"/>`,
+    };
 
     const badgeEl = document.getElementById('status-badge');
     const progressEl = document.getElementById('status-progress');
@@ -460,6 +481,7 @@
     badgeEl.textContent = tier.name;
     badgeEl.className = `badge-name tier-${tier.key}`;
     iconEl.setAttribute('class', `badge-icon tier-${tier.key}`);
+    iconEl.innerHTML = badgeShapes[tier.shape];
     progressEl.textContent = tier.next
       ? `${tier.next - purchaseCount} purchase${(tier.next - purchaseCount) === 1 ? '' : 's'} to next tier`
       : 'Highest tier reached';
