@@ -26,18 +26,14 @@
 
   .app{ display:flex; min-height:100vh; }
 
-  /* ---------- logo chip (light backing so the chrome logo reads on dark bg) ---------- */
-  .logo-chip{
-    background:rgba(255,255,255,0.96); border-radius:9px; padding:5px 12px;
-    display:inline-flex; align-items:center; line-height:0;
-    box-shadow:0 0 0 1px rgba(203,185,141,0.35), 0 2px 10px rgba(0,0,0,0.35);
-  }
+  /* ---------- logo (transparent PNG, sits directly on the dark UI) ---------- */
+  .logo-chip{ display:inline-flex; align-items:center; line-height:0; }
   .logo-chip img{
-    display:block; height:28px; width:auto;
-    filter:contrast(1.25) brightness(1.05) saturate(1.05);
+    display:block; height:34px; width:auto;
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5));
   }
-  .logo-chip.sm img{ height:20px; }
-  .logo-chip.lg img{ height:38px; }
+  .logo-chip.sm img{ height:26px; }
+  .logo-chip.lg img{ height:44px; }
   .brandmark{ display:flex; align-items:center; gap:10px; }
   .brand-word{
     font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:15px;
@@ -256,7 +252,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
       <div class="brandmark">
-        <div class="logo-chip sm"><img src="valence-mark.jpeg" alt="VALENCE"></div>
+        <div class="logo-chip sm"><img src="valence-mark.png" alt="VALENCE"></div>
         <span class="brand-word sm">VALENCE</span>
       </div>
     </div>
@@ -276,7 +272,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="brand">
         <div class="brandmark">
-          <div class="logo-chip lg"><img src="valence-logo.jpeg" alt="VALENCE"></div>
+          <div class="logo-chip lg"><img src="valence-logo.png" alt="VALENCE"></div>
           <span class="brand-word lg">VALENCE</span>
         </div>
       </div>
@@ -300,7 +296,7 @@
     <main class="dash">
       <div class="topbar">
         <div class="brandmark">
-          <div class="logo-chip"><img src="valence-logo.jpeg" alt="VALENCE"></div>
+          <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
           <span class="brand-word">VALENCE</span>
         </div>
         <div class="profile-block">
