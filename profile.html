@@ -6,147 +6,370 @@
 <title>My Profile — VALENCE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
 <style>
   :root{
-    --black:#05070b; --navy-950:#080d16; --navy-900:#0b1220;
-    --panel:rgba(255,255,255,0.035); --border:rgba(255,255,255,0.09);
-    --gold:#cbb98d; --gold-bright:#e6d9b0; --green:#3ddc84; --red:#e5695e;
-    --text:#f2f1ec; --text-dim:#93a0b4; --text-dimmer:#5c6779;
-    --mono:'JetBrains Mono',monospace; --sans:'Inter','Segoe UI',system-ui,sans-serif;
+    --black:#050505; --near-black:#0a0a0a; --panel:#121212; --panel-2:rgba(255,255,255,0.03);
+    --border:rgba(255,255,255,0.09); --border-soft:rgba(255,255,255,0.06);
+    --gold:#cbb98d; --gold-bright:#e6d5a3; --gold-dim:rgba(203,185,141,0.14);
+    --red:#e2694f; --green:#3ddc84;
+    --text:#f2f1ec; --text-dim:#9a9fa8; --text-dimmer:#666b74;
+    --serif:'Playfair Display', Georgia, serif; --sans:'Inter','Segoe UI',system-ui,sans-serif;
   }
   *{box-sizing:border-box;}
-  body{ margin:0; background:var(--black); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+  body{
+    margin:0; background:var(--black); color:var(--text); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
   a{ color:inherit; text-decoration:none; }
+  button{ font-family:var(--sans); }
 
-  header{
+  /* ---------- top nav ---------- */
+  .topnav{
     display:flex; align-items:center; justify-content:space-between;
-    padding:18px 30px; border-bottom:1px solid var(--border);
-    background:linear-gradient(180deg,var(--navy-900),var(--black));
+    padding:22px 44px; border-bottom:1px solid var(--border-soft);
+    background:var(--black); position:relative; z-index:40;
   }
-  .logo-chip img{ display:block; height:30px; width:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
-  .brandmark{ display:flex; align-items:center; gap:10px; }
-  .brand-word{ font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:15px; }
-  .back-link{ font-size:12.5px; font-family:var(--mono); color:var(--text-dim); }
-  .back-link:hover{ color:var(--gold-bright); }
-
-  main{
-    max-width:520px; margin:0 auto; padding:50px 24px 80px;
-    background:radial-gradient(900px 340px at 50% -10%, rgba(203,185,141,0.10), transparent 60%);
+  .logo{
+    font-family:var(--serif); font-size:26px; letter-spacing:0.14em; font-weight:600;
+    color:var(--gold); background:linear-gradient(180deg,var(--gold-bright),var(--gold));
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
   }
-  h1{ font-size:24px; font-weight:800; margin:0 0 30px; }
-
-  .avatar-section{ display:flex; flex-direction:column; align-items:center; gap:16px; margin-bottom:38px; }
-  .avatar-big{
-    width:112px; height:112px; border-radius:50%; background:linear-gradient(145deg,#3a4a63,#1b2534);
-    background-size:cover; background-position:center;
-    display:flex; align-items:center; justify-content:center;
-    font-size:38px; font-weight:700; color:var(--text); border:2px solid var(--border);
+  .topnav-links{ display:flex; align-items:center; gap:38px; }
+  .topnav-links a{
+    font-size:12.5px; letter-spacing:0.1em; font-weight:600; color:#cfd2d8;
+    text-transform:uppercase;
   }
-  .upload-btn{
-    font-size:12.5px; font-weight:600; color:var(--gold-bright); background:none; cursor:pointer;
-    border:1px solid rgba(203,185,141,0.4); border-radius:999px; padding:9px 18px; font-family:var(--sans);
+  .topnav-links a:hover{ color:var(--gold-bright); }
+  .topnav-right{ display:flex; align-items:center; gap:22px; }
+  .icon-btn{
+    background:none; border:none; color:var(--text); cursor:pointer; display:flex;
+    align-items:center; justify-content:center; padding:2px; opacity:0.9;
   }
-  .upload-btn:hover{ background:rgba(203,185,141,0.1); border-color:var(--gold); }
-  .upload-status{ font-size:11.5px; color:var(--text-dimmer); font-family:var(--mono); min-height:16px; }
-  .upload-status.error{ color:var(--red); }
-  .upload-status.success{ color:var(--green); }
-  input[type=file]{ display:none; }
+  .icon-btn:hover{ opacity:1; color:var(--gold-bright); }
+  .icon-btn svg{ width:19px; height:19px; }
 
-  .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:16px; }
-  .field{ margin-bottom:16px; }
-  .field:last-child{ margin-bottom:0; }
-  .field label{ display:block; font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; color:var(--text-dimmer); margin-bottom:6px; }
-  .field .value{ font-size:14.5px; font-weight:600; }
-
-  .logout-btn{
-    display:block; width:100%; margin-top:10px; font-size:12.5px; font-weight:600; color:var(--text-dim);
-    background:none; border:1px solid var(--border); border-radius:999px; padding:10px; cursor:pointer; font-family:var(--sans);
+  .avatar-menu{ position:relative; display:flex; align-items:center; gap:6px; cursor:pointer; }
+  .avatar-ring{
+    width:38px; height:38px; border-radius:50%; border:1.5px solid var(--gold);
+    padding:2px; display:flex; align-items:center; justify-content:center;
   }
-  .logout-btn:hover{ color:var(--text); border-color:var(--gold); }
+  .avatar-ring .avatar-img{
+    width:100%; height:100%; border-radius:50%; background:linear-gradient(145deg,#3a4a63,#1b2534);
+    background-size:cover; background-position:center; display:flex; align-items:center;
+    justify-content:center; font-size:12px; font-weight:700; color:var(--text);
+  }
+  .chev{ width:13px; height:13px; color:var(--text-dim); transition:transform 0.18s ease; }
+  .avatar-menu.open .chev{ transform:rotate(180deg); }
 
-  .loading{ color:var(--text-dim); font-size:14px; padding:60px 30px; }
+  .dropdown{
+    position:absolute; top:calc(100% + 14px); right:0; width:230px;
+    background:#111214; border:1px solid var(--border); border-radius:12px;
+    padding:8px; box-shadow:0 18px 48px rgba(0,0,0,0.55); opacity:0; pointer-events:none;
+    transform:translateY(-6px); transition:opacity 0.16s ease, transform 0.16s ease;
+  }
+  .avatar-menu.open .dropdown{ opacity:1; pointer-events:auto; transform:translateY(0); }
+  .dropdown a{
+    display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:8px;
+    font-size:13.5px; font-weight:600; color:var(--text-dim);
+  }
+  .dropdown a svg{ width:16px; height:16px; opacity:0.85; flex-shrink:0; }
+  .dropdown a:hover{ background:var(--panel-2); color:var(--text); }
+  .dropdown a.active{ background:var(--gold-dim); color:var(--gold-bright); }
+  .dropdown a.active svg{ opacity:1; }
+  .dropdown .divider{ height:1px; background:var(--border-soft); margin:6px 4px; }
+  .dropdown a.logout{ color:var(--red); }
+  .dropdown a.logout:hover{ background:rgba(226,105,79,0.1); }
+
+  /* ---------- page ---------- */
+  main.page{ padding:44px 44px 80px; max-width:1320px; margin:0 auto; }
+  h1.title{ font-family:var(--serif); font-weight:600; font-size:34px; margin:0 0 8px; }
+  .subtitle{ color:var(--text-dim); font-size:14.5px; margin:0 0 34px; }
+
+  .layout{ display:grid; grid-template-columns:260px 1fr; gap:26px; align-items:start; }
+
+  /* ---------- side menu ---------- */
+  .side-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:10px; }
+  .side-item{
+    display:flex; align-items:center; gap:12px; padding:13px 14px; border-radius:9px;
+    font-size:14px; font-weight:600; color:var(--text-dim); border-left:2px solid transparent;
+  }
+  .side-item svg{ width:17px; height:17px; flex-shrink:0; opacity:0.85; }
+  .side-item:hover{ background:var(--panel-2); color:var(--text); }
+  .side-item.active{
+    background:linear-gradient(90deg, rgba(203,185,141,0.16), rgba(203,185,141,0.04));
+    color:var(--gold-bright); border-left:2px solid var(--gold);
+  }
+  .side-item.active svg{ opacity:1; }
+  .side-divider{ height:1px; background:var(--border-soft); margin:8px 10px; }
+  .side-item.logout{ color:var(--red); }
+  .side-item.logout:hover{ background:rgba(226,105,79,0.1); }
+
+  /* ---------- profile card ---------- */
+  .profile-card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:34px 38px; }
+
+  .profile-head{ display:flex; gap:26px; align-items:center; padding-bottom:26px; border-bottom:1px solid var(--border-soft); }
+  .avatar-large-wrap{ position:relative; flex-shrink:0; }
+  .avatar-large{
+    width:132px; height:132px; border-radius:50%; border:2px solid var(--gold);
+    padding:3px;
+  }
+  .avatar-large .img{
+    width:100%; height:100%; border-radius:50%; background:linear-gradient(145deg,#3a4a63,#1b2534) center/cover;
+    display:flex; align-items:center; justify-content:center; font-size:34px; font-weight:700; color:var(--text);
+  }
+  .avatar-edit-btn{
+    position:absolute; right:2px; bottom:2px; width:32px; height:32px; border-radius:50%;
+    background:#1c1d20; border:1px solid var(--border); display:flex; align-items:center;
+    justify-content:center; cursor:pointer; color:var(--text);
+  }
+  .avatar-edit-btn:hover{ border-color:var(--gold); color:var(--gold-bright); }
+  .avatar-edit-btn svg{ width:14px; height:14px; }
+
+  .profile-id .name{ font-family:var(--serif); font-size:28px; font-weight:600; margin:0 0 6px; }
+  .profile-id .member-since{ color:var(--text-dim); font-size:13.5px; margin:0; }
+
+  .contact-rows{ padding:20px 0 24px; border-bottom:1px solid var(--border-soft); display:flex; flex-direction:column; gap:14px; }
+  .contact-row{ display:flex; align-items:center; gap:12px; font-size:14.5px; font-weight:600; }
+  .contact-row svg{ width:17px; height:17px; color:var(--text-dim); flex-shrink:0; }
+
+  .section-label{ font-size:15px; font-weight:700; margin:26px 0 6px; }
+
+  .info-list{ display:flex; flex-direction:column; }
+  .info-row{
+    display:flex; align-items:center; justify-content:space-between; padding:16px 4px;
+    border-bottom:1px solid var(--border-soft); cursor:pointer;
+  }
+  .info-row:last-child{ border-bottom:none; }
+  .info-row:hover .info-value{ color:var(--gold-bright); }
+  .info-label{ color:var(--text-dim); font-size:13.5px; font-weight:600; width:150px; flex-shrink:0; }
+  .info-value{ font-size:14.5px; font-weight:600; flex:1; }
+  .info-value input{
+    background:none; border:none; border-bottom:1px solid var(--gold); color:var(--text);
+    font-size:14.5px; font-weight:600; font-family:var(--sans); padding:2px 0; width:100%; outline:none;
+  }
+  .info-chevron{ width:16px; height:16px; color:var(--text-dimmer); flex-shrink:0; }
+
+  .edit-actions{ display:flex; justify-content:center; margin-top:28px; gap:12px; }
+  .btn-outline{
+    display:inline-flex; align-items:center; gap:8px; background:none; cursor:pointer;
+    border:1px solid var(--gold); color:var(--gold-bright); border-radius:9px; padding:11px 22px;
+    font-size:13.5px; font-weight:700; font-family:var(--sans);
+  }
+  .btn-outline:hover{ background:rgba(203,185,141,0.1); }
+  .btn-outline svg{ width:14px; height:14px; }
+  .btn-solid{
+    display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:1px solid var(--gold);
+    background:var(--gold); color:#1a1608; border-radius:9px; padding:11px 22px;
+    font-size:13.5px; font-weight:700;
+  }
+  .btn-solid:hover{ background:var(--gold-bright); }
+  .btn-ghost{
+    background:none; border:1px solid var(--border); color:var(--text-dim); border-radius:9px;
+    padding:11px 22px; font-size:13.5px; font-weight:700; cursor:pointer;
+  }
+  .btn-ghost:hover{ color:var(--text); border-color:var(--text-dim); }
+
+  .save-msg{ text-align:center; font-size:12.5px; color:var(--green); margin-top:14px; height:14px; }
+  .avatar-file-input{ display:none; }
+
+  @media (max-width:900px){
+    .topnav{ padding:16px 18px; }
+    .topnav-links{ display:none; }
+    main.page{ padding:26px 18px 60px; }
+    .layout{ grid-template-columns:1fr; }
+    .profile-card{ padding:22px; }
+    .profile-head{ flex-direction:column; text-align:center; }
+    .info-row{ flex-wrap:wrap; gap:4px; }
+  }
 </style>
 </head>
 <body>
 
-<div id="loading" class="loading">Loading your profile…</div>
+<div id="loading" style="color:var(--text-dim); font-size:14px; padding:60px 44px;">Loading your profile…</div>
 
 <div id="content" style="display:none;">
-  <header>
-    <div class="brandmark">
-      <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
-      <span class="brand-word">VALENCE</span>
+
+  <header class="topnav">
+    <a href="dashboard.html" class="logo">VALENCE</a>
+    <nav class="topnav-links">
+      <a href="collection.html">Collections</a>
+      <a href="vault.html">Vault</a>
+      <a href="verify-authenticity.html">Authenticate</a>
+      <a href="story.html">Story</a>
+      <a href="support.html">Support</a>
+    </nav>
+    <div class="topnav-right">
+      <button class="icon-btn" aria-label="Search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      </button>
+      <button class="icon-btn" aria-label="Bag">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l-1 14H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg>
+      </button>
+      <div class="avatar-menu" id="avatar-menu">
+        <div class="avatar-ring">
+          <div class="avatar-img" id="avatar-initial-top">—</div>
+        </div>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+
+        <div class="dropdown">
+          <a href="profile.html" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>My Profile</a>
+          <a href="orders.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l-1 14H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg>My Orders</a>
+          <a href="collection.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1.5"/><path d="M8 7V5a4 4 0 018 0v2"/></svg>My Products</a>
+          <a href="wishlist.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.6-10-9.3C0.3 8 2 4.5 5.4 4c2-.3 3.7.7 6.6 3.5C14.9 4.7 16.6 3.7 18.6 4c3.4.5 5.1 4 3.4 7.7C19.5 16.4 12 21 12 21z"/></svg>Wishlist</a>
+          <a href="settings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Settings</a>
+          <div class="divider"></div>
+          <a href="#" class="logout" id="dropdown-logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>Logout</a>
+        </div>
+      </div>
     </div>
-    <a class="back-link" href="dashboard.html">&larr; BACK TO DASHBOARD</a>
   </header>
 
-  <main>
-    <h1>My Profile</h1>
+  <main class="page">
+    <h1 class="title">My Profile</h1>
+    <p class="subtitle">Manage your account and preferences.</p>
 
-    <div class="avatar-section">
-      <div class="avatar-big" id="avatar-big">—</div>
-      <button class="upload-btn" id="upload-btn">Change Photo</button>
-      <input type="file" id="file-input" accept="image/*">
-      <div class="upload-status" id="upload-status"></div>
+    <div class="layout">
+      <aside class="side-card">
+        <a href="profile.html" class="side-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Profile</a>
+        <a href="orders.html" class="side-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l-1 14H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg>Orders</a>
+        <a href="collection.html" class="side-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1.5"/><path d="M8 7V5a4 4 0 018 0v2"/></svg>My Products</a>
+        <a href="wishlist.html" class="side-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.6-10-9.3C0.3 8 2 4.5 5.4 4c2-.3 3.7.7 6.6 3.5C14.9 4.7 16.6 3.7 18.6 4c3.4.5 5.1 4 3.4 7.7C19.5 16.4 12 21 12 21z"/></svg>Wishlist</a>
+        <a href="settings.html" class="side-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Settings</a>
+        <div class="side-divider"></div>
+        <a href="#" class="side-item logout" id="side-logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>Logout</a>
+      </aside>
+
+      <section class="profile-card">
+        <div class="profile-head">
+          <div class="avatar-large-wrap">
+            <div class="avatar-large">
+              <div class="img" id="avatar-large-img">—</div>
+            </div>
+            <button class="avatar-edit-btn" id="avatar-edit-btn" aria-label="Change photo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+            </button>
+            <input type="file" accept="image/*" class="avatar-file-input" id="avatar-file-input">
+          </div>
+          <div class="profile-id">
+            <p class="name" id="profile-name">—</p>
+            <p class="member-since" id="member-since">Member since —</p>
+          </div>
+        </div>
+
+        <div class="contact-rows">
+          <div class="contact-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>
+            <span id="contact-email">—</span>
+          </div>
+          <div class="contact-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3 19.5 19.5 0 01-6-6 19.8 19.8 0 01-3-8.7A2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .3 2 .6 3a2 2 0 01-.5 2.1L8 10a16 16 0 006 6l1.2-1.2a2 2 0 012.1-.5c1 .3 2 .5 3 .6a2 2 0 011.7 2z"/></svg>
+            <span id="contact-phone">—</span>
+          </div>
+        </div>
+
+        <h2 class="section-label">Personal Information</h2>
+        <div class="info-list" id="info-list">
+          <div class="info-row" data-field="full_name">
+            <div class="info-label">Full Name</div>
+            <div class="info-value" id="value-full_name">—</div>
+            <svg class="info-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="info-row" data-field="email">
+            <div class="info-label">Email Address</div>
+            <div class="info-value" id="value-email">—</div>
+            <svg class="info-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="info-row" data-field="phone">
+            <div class="info-label">Phone Number</div>
+            <div class="info-value" id="value-phone">—</div>
+            <svg class="info-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+          <div class="info-row" data-field="password">
+            <div class="info-label">Password</div>
+            <div class="info-value" id="value-password">••••••••••••</div>
+            <svg class="info-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+
+        <div class="edit-actions" id="view-actions">
+          <button class="btn-outline" id="edit-profile-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
+            Edit Profile
+          </button>
+        </div>
+        <div class="edit-actions" id="edit-actions" style="display:none;">
+          <button class="btn-solid" id="save-profile-btn">Save Changes</button>
+          <button class="btn-ghost" id="cancel-profile-btn">Cancel</button>
+        </div>
+        <div class="save-msg" id="save-msg"></div>
+      </section>
     </div>
-
-    <div class="card">
-      <div class="field">
-        <label>USERNAME</label>
-        <div class="value" id="p-username">—</div>
-      </div>
-      <div class="field">
-        <label>EMAIL</label>
-        <div class="value" id="p-email">—</div>
-      </div>
-      <div class="field">
-        <label>PHONE</label>
-        <div class="value" id="p-phone">—</div>
-      </div>
-    </div>
-
-    <button class="logout-btn" id="logout-btn">Log Out</button>
   </main>
 </div>
 
 <script>
   let currentUser = null;
+  let currentMeta = {};
 
-  function setAvatarDisplay(url, initial){
-    const el = document.getElementById('avatar-big');
-    if (url) {
-      el.style.backgroundImage = `url("${url}")`;
-      el.textContent = '';
-    } else {
-      el.style.backgroundImage = 'none';
-      el.textContent = initial;
-    }
+  function initials(name){
+    return (name || '').trim().split(/\s+/).slice(0,2).map(w => w.charAt(0).toUpperCase()).join('') || 'U';
   }
 
-  (async () => {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+  function formatMemberSince(iso){
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  }
 
+  function applyAvatar(url, name){
+    const els = [document.getElementById('avatar-initial-top'), document.getElementById('avatar-large-img')];
+    els.forEach(el => {
+      if (url) {
+        el.style.backgroundImage = `url("${url}")`;
+        el.style.backgroundSize = 'cover';
+        el.style.backgroundPosition = 'center';
+        el.textContent = '';
+      } else {
+        el.style.backgroundImage = 'none';
+        el.textContent = initials(name);
+      }
+    });
+  }
+
+  function renderProfile(){
+    const fullName = currentMeta.full_name || currentMeta.username || (currentUser.email ? currentUser.email.split('@')[0] : 'Member');
+    const phone = currentMeta.phone || currentUser.phone || 'Not set';
+    const email = currentUser.email || 'Not set';
+
+    document.getElementById('profile-name').textContent = fullName;
+    document.getElementById('member-since').textContent = `Member since ${formatMemberSince(currentUser.created_at)}`;
+    document.getElementById('contact-email').textContent = email;
+    document.getElementById('contact-phone').textContent = phone;
+
+    document.getElementById('value-full_name').textContent = fullName;
+    document.getElementById('value-email').textContent = email;
+    document.getElementById('value-phone').textContent = phone;
+
+    applyAvatar(currentMeta.avatar_url, fullName);
+  }
+
+  async function loadProfile(){
+    const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) {
       window.location.href = 'index.html';
       return;
     }
-
     currentUser = session.user;
-    const meta = currentUser.user_metadata || {};
-    const displayName = meta.username || (currentUser.email ? currentUser.email.split('@')[0] : 'Member');
-
-    document.getElementById('p-username').textContent = displayName;
-    document.getElementById('p-email').textContent = currentUser.email || '—';
-    document.getElementById('p-phone').textContent = meta.phone || currentUser.phone || '—';
-
-    setAvatarDisplay(meta.avatar_url, displayName.charAt(0).toUpperCase());
-
+    currentMeta = currentUser.user_metadata || {};
+    renderProfile();
     document.getElementById('loading').style.display = 'none';
     document.getElementById('content').style.display = 'block';
-  })();
+  }
+
+  loadProfile();
 
   supabaseClient.auth.onAuthStateChange((event, session) => {
     if (event === 'SIGNED_OUT' || !session) {
@@ -154,54 +377,128 @@
     }
   });
 
-  document.getElementById('logout-btn').addEventListener('click', async () => {
+  async function logout(e){
+    e.preventDefault();
     await supabaseClient.auth.signOut();
     window.location.href = 'index.html';
+  }
+  document.getElementById('side-logout').addEventListener('click', logout);
+  document.getElementById('dropdown-logout').addEventListener('click', logout);
+
+  // avatar dropdown toggle
+  const avatarMenu = document.getElementById('avatar-menu');
+  avatarMenu.addEventListener('click', (e) => {
+    avatarMenu.classList.toggle('open');
+    e.stopPropagation();
+  });
+  document.addEventListener('click', () => avatarMenu.classList.remove('open'));
+
+  // ---- edit mode ----
+  const editBtn = document.getElementById('edit-profile-btn');
+  const saveBtn = document.getElementById('save-profile-btn');
+  const cancelBtn = document.getElementById('cancel-profile-btn');
+  const viewActions = document.getElementById('view-actions');
+  const editActions = document.getElementById('edit-actions');
+  const saveMsg = document.getElementById('save-msg');
+
+  function enterEditMode(){
+    const fullName = currentMeta.full_name || currentMeta.username || '';
+    const phone = currentMeta.phone || currentUser.phone || '';
+    const email = currentUser.email || '';
+
+    document.getElementById('value-full_name').innerHTML = `<input type="text" id="edit-full_name" value="${fullName.replace(/"/g,'&quot;')}">`;
+    document.getElementById('value-email').innerHTML = `<input type="email" id="edit-email" value="${email.replace(/"/g,'&quot;')}">`;
+    document.getElementById('value-phone').innerHTML = `<input type="tel" id="edit-phone" value="${phone.replace(/"/g,'&quot;')}">`;
+
+    viewActions.style.display = 'none';
+    editActions.style.display = 'flex';
+    saveMsg.textContent = '';
+  }
+
+  function exitEditMode(){
+    renderProfile();
+    viewActions.style.display = 'flex';
+    editActions.style.display = 'none';
+  }
+
+  editBtn.addEventListener('click', enterEditMode);
+  cancelBtn.addEventListener('click', exitEditMode);
+
+  // Password row -> trigger a reset email instead of exposing the value
+  document.querySelector('[data-field="password"]').addEventListener('click', async () => {
+    if (!currentUser?.email) return;
+    saveMsg.style.color = 'var(--green)';
+    saveMsg.textContent = 'Sending password reset email…';
+    const { error } = await supabaseClient.auth.resetPasswordForEmail(currentUser.email);
+    saveMsg.textContent = error ? `Error: ${error.message}` : 'Password reset email sent.';
   });
 
-  const fileInput = document.getElementById('file-input');
-  const statusEl = document.getElementById('upload-status');
+  saveBtn.addEventListener('click', async () => {
+    const newFullName = document.getElementById('edit-full_name').value.trim();
+    const newEmail = document.getElementById('edit-email').value.trim();
+    const newPhone = document.getElementById('edit-phone').value.trim();
 
-  document.getElementById('upload-btn').addEventListener('click', () => fileInput.click());
+    saveBtn.disabled = true;
+    saveMsg.style.color = 'var(--text-dim)';
+    saveMsg.textContent = 'Saving…';
 
-  fileInput.addEventListener('change', async () => {
-    const file = fileInput.files[0];
+    const updates = { data: { full_name: newFullName, phone: newPhone } };
+    if (newEmail && newEmail !== currentUser.email) updates.email = newEmail;
+
+    const { data, error } = await supabaseClient.auth.updateUser(updates);
+
+    saveBtn.disabled = false;
+    if (error) {
+      saveMsg.style.color = 'var(--red)';
+      saveMsg.textContent = `Error: ${error.message}`;
+      return;
+    }
+
+    currentUser = data.user;
+    currentMeta = currentUser.user_metadata || {};
+    saveMsg.style.color = 'var(--green)';
+    saveMsg.textContent = updates.email
+      ? 'Saved. Check your new email to confirm the change.'
+      : 'Profile updated.';
+    exitEditMode();
+  });
+
+  // ---- avatar upload (expects a public "avatars" storage bucket) ----
+  document.getElementById('avatar-edit-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('avatar-file-input').click();
+  });
+
+  document.getElementById('avatar-file-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
     if (!file || !currentUser) return;
 
-    statusEl.className = 'upload-status';
-    statusEl.textContent = 'Uploading…';
+    saveMsg.style.color = 'var(--text-dim)';
+    saveMsg.textContent = 'Uploading photo…';
 
-    try {
-      const ext = file.name.split('.').pop();
-      const path = `${currentUser.id}/avatar.${ext}`;
-
-      // Requires a public Supabase Storage bucket named "avatars"
-      const { error: uploadError } = await supabaseClient
-        .storage
-        .from('avatars')
-        .upload(path, file, { upsert: true, cacheControl: '3600' });
-
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrlData } = supabaseClient
-        .storage
-        .from('avatars')
-        .getPublicUrl(path);
-
-      const publicUrl = `${publicUrlData.publicUrl}?t=${Date.now()}`;
-
-      const { error: updateError } = await supabaseClient.auth.updateUser({
-        data: { avatar_url: publicUrl }
-      });
-      if (updateError) throw updateError;
-
-      setAvatarDisplay(publicUrl, '');
-      statusEl.className = 'upload-status success';
-      statusEl.textContent = 'Photo updated.';
-    } catch (err) {
-      statusEl.className = 'upload-status error';
-      statusEl.textContent = err.message || 'Upload failed. Try again.';
+    const path = `${currentUser.id}/${Date.now()}-${file.name}`;
+    const { error: uploadError } = await supabaseClient.storage.from('avatars').upload(path, file, { upsert: true });
+    if (uploadError) {
+      saveMsg.style.color = 'var(--red)';
+      saveMsg.textContent = `Upload failed: ${uploadError.message}`;
+      return;
     }
+
+    const { data: publicUrlData } = supabaseClient.storage.from('avatars').getPublicUrl(path);
+    const avatarUrl = publicUrlData.publicUrl;
+
+    const { data, error } = await supabaseClient.auth.updateUser({ data: { avatar_url: avatarUrl } });
+    if (error) {
+      saveMsg.style.color = 'var(--red)';
+      saveMsg.textContent = `Error: ${error.message}`;
+      return;
+    }
+
+    currentUser = data.user;
+    currentMeta = currentUser.user_metadata || {};
+    renderProfile();
+    saveMsg.style.color = 'var(--green)';
+    saveMsg.textContent = 'Photo updated.';
   });
 </script>
 </body>
