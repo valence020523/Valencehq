@@ -304,21 +304,21 @@
       avatarEls.forEach(el => { el.textContent = initial; });
     }
 
-    // Collection items — reads from a `collection_items` table.
-    // Expected columns: id, user_id, name, image_url, status ('verified').
-    // Adjust table/column names to match your schema.
+    // Collection items — reads from the `products` table (the same one
+    // claim.html registers items into). Filters on owner_id, which
+    // claim_product() now stamps from the authenticated session at
+    // registration time (see owner-id-patch.sql).
     const countEl = document.getElementById('item-count');
     try {
       const { data: items, error } = await supabaseClient
-        .from('collection_items')
-        .select('*')
-        .eq('status', 'verified')
-        .eq('user_id', user.id)
-        .order('name', { ascending: true });
+        .from('products')
+        .select('qr_code, product_name, image_url, owner_id')
+        .eq('owner_id', user.id)
+        .order('product_name', { ascending: true });
 
       if (error) throw error;
 
-      allItems = items || [];
+      allItems = (items || []).map(p => ({ name: p.product_name || p.qr_code, image_url: p.image_url }));
       countEl.textContent = `${allItems.length} verified item${allItems.length === 1 ? '' : 's'}`;
       renderItems();
     } catch (err) {

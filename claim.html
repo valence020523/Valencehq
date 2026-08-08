@@ -200,6 +200,16 @@
       return;
     }
 
+    // Registering an item now links it to your account, so you must be
+    // signed in before we even look the item up. Bounce to login and
+    // bring the person straight back here afterward.
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+      const returnTo = `claim.html${window.location.search}`;
+      window.location.href = `index.html?redirect=${encodeURIComponent(returnTo)}`;
+      return;
+    }
+
     try {
       const { data, error } = await supabaseClient
         .from('products')
@@ -328,6 +338,7 @@
           serial_mismatch: 'That serial number doesn\u2019t match this item. Double-check the tag.',
           not_found: 'This item could not be found.',
           missing_name: 'Enter your name.',
+          not_logged_in: 'Your session expired — please sign in again and retry.',
         };
         registerMsg.textContent = (data && messages[data.error]) || 'Could not complete registration.';
         registerMsg.classList.add('error');
