@@ -541,7 +541,8 @@
   // NOTE: adjust table/column names to match your schema. Expected columns
   // on `products`: qr_code, product_name, collection_name, image_url, size,
   // color, batch_number, release_date, manufactured_at, item_number,
-  // edition_name, edition_total, owner_name, registered_at, security_hash.
+  // edition_name, edition_total, owner_name, owner_id, registered_at,
+  // security_hash.
   async function verifyCode(code, rawScanned) {
     showStage(lookupStage);
 
@@ -561,7 +562,20 @@
 
       if (data) {
         const status = data.owner_name ? 'valid' : 'unclaimed';
-        renderResult(status, { code, ...data }, null, rawScanned);
+        // Only the actual registered account sees the personalized "you
+        // are the owner" experience — never inferred from just having an
+        // owner_name on file, since anyone can scan a public QR code.
+        let isOwnerViewing = false;
+        if (status === 'valid' && data.owner_id) {
+          try {
+            const { data: sessionData } = await supabaseClient.auth.getSession();
+            const currentUserId = sessionData?.session?.user?.id || null;
+            isOwnerViewing = !!currentUserId && currentUserId === data.owner_id;
+          } catch (sessionErr) {
+            console.error('Session check failed', sessionErr);
+          }
+        }
+        renderResult(status, { code, ...data, _isOwnerViewing: isOwnerViewing }, null, rawScanned);
       } else {
         renderResult('invalid', { code }, 'This code does not match any known Valence product.', rawScanned);
       }
@@ -739,6 +753,89 @@
     return html;
   }
 
+  // ================= Branch B-public: Genesis collection, claimed, but the
+  // current viewer is NOT the verified owner (anonymous, or logged in as
+  // someone else). Shows the same public-registry information anyone can
+  // see, without the personalized "you are the owner" framing or any
+  // owner-exclusive content (Founder Status, Exclusive Access). =================
+  function renderValidGenesisPublic(data) {
+    const itemName = data.product_name || 'Valence Item';
+    const collectionName = data.collection_name || 'Genesis Vault';
+    const editionBadge = editionBadgeFor(data);
+    const tierLabel = data.edition_name || 'Founder Edition';
+
+    headerRight.innerHTML = DEFAULT_HEADER_RIGHT;
+
+    let html = `
+      <div class="hero-card">
+        <div class="hero-col-text">
+          <div class="hero-ring-row">
+            <svg class="hero-ring" viewBox="0 0 104 104" fill="none" stroke="var(--mint)" stroke-width="2">
+              <path d="M35 53l11 11 21-24" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="52" cy="52" r="42" stroke-width="1.6" opacity="0.9"/>
+            </svg>
+            <div>
+              <div class="hero-headline" style="font-size:26px;">AUTHENTIC</div>
+              <div class="hero-eyebrow" style="margin:4px 0 0; color:var(--text-dimmer); letter-spacing:0.16em;">VERIFIED BY VALENCE</div>
+            </div>
+          </div>
+          <div class="hero-body">This product is 100% authentic and verified in the VALENCE registry.</div>
+          <div class="hero-divider"></div>
+          <div class="hero-info-box" style="border-color:rgba(143,214,172,0.3);">
+            ${icons.star}
+            <span style="color:var(--mint);">THIS IS A GENESIS VAULT FOUNDER EDITION PIECE.</span>
+          </div>
+          <div class="hero-note">Genesis is VALENCE's limited Founder Edition collection of the first 100 pieces.</div>
+        </div>
+        <div class="hero-col-image">
+          ${productCardMarkup(data, itemName, tierLabel, editionBadge, false)}
+        </div>
+      </div>
+
+      <div class="section-gap">
+        <div class="two-col-grid">
+          <div class="panel-box">
+            <div class="panel-box-header">${icons.package}<span>PRODUCT DETAILS</span></div>
+            <div class="detail-row">${icons.tag}<div class="detail-row-body"><span class="detail-label">Product</span><span class="detail-value">${escapeHtml(itemName)}</span></div></div>
+            <div class="detail-row">${icons.layers}<div class="detail-row-body"><span class="detail-label">Collection</span><span class="detail-value">${escapeHtml(collectionName)}</span></div></div>
+            <div class="detail-row">${icons.ribbon}<div class="detail-row-body"><span class="detail-label">Edition</span><span class="detail-value">${escapeHtml(editionBadge ? editionBadge.replace('#', '').replace(' / ', ' of ') : '—')}</span></div></div>
+            <div class="detail-row">${icons.ruler}<div class="detail-row-body"><span class="detail-label">Size</span><span class="detail-value">${escapeHtml(data.size || '—')}</span></div></div>
+            <div class="detail-row">${icons.circle}<div class="detail-row-body"><span class="detail-label">Color</span><span class="detail-value">${escapeHtml(data.color || '—')}</span></div></div>
+          </div>
+
+          <div class="panel-box">
+            <div class="panel-box-header">${icons.person}<span>REGISTRATION DETAILS</span></div>
+            <div class="detail-row">${icons.person}<div class="detail-row-body"><span class="detail-label">Registered Owner</span><span class="detail-value">${escapeHtml(data.owner_name || '—')}</span></div></div>
+            <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Registered On</span><span class="detail-value">${escapeHtml(formatDate(data.registered_at))}</span></div></div>
+            <div class="detail-row">${icons.shieldCheck}<div class="detail-row-body"><span class="detail-label">Product Status</span><span class="detail-value status"><span class="status-dot"></span>Registered &amp; Verified</span></div></div>
+          </div>
+        </div>
+
+        <div class="panel-box" style="margin-top:14px;">
+          <div class="verify-registry-row">
+            <div class="verify-registry-top">
+              <div class="verify-seal">V</div>
+              <div class="verify-registry-text">
+                <div class="panel-box-header" style="margin-bottom:5px;"><span style="color:var(--champagne-bright);">VERIFIED IN THE VALENCE REGISTRY</span></div>
+                <div class="panel-desc">This piece has been verified against the official VALENCE database and confirmed to be an authentic original.</div>
+              </div>
+            </div>
+            <div class="qr-block">
+              <img src="${qrImageUrl(data.code)}" alt="Scan to verify again" />
+              <span>SCAN TO<br>VERIFY AGAIN</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="scan-again" id="scan-again-btn">${icons.scan}SCAN ANOTHER PRODUCT</button>
+        <a class="dash-link" href="dashboard.html">VIEW DASHBOARD</a>
+      </div>
+    `;
+    return html;
+  }
+
   // ================= Branch B: Genesis collection (valid/registered) =================
   function renderValidGenesis(data) {
     const itemName = data.product_name || 'Valence Item';
@@ -898,8 +995,10 @@
     showStage(resultStage);
 
     let html;
-    if (status === 'valid') {
-      html = isGenesisCollection(data.collection_name) ? renderValidGenesis(data) : renderValidNonGenesis(data);
+    if (status === 'valid' && isGenesisCollection(data.collection_name)) {
+      html = data._isOwnerViewing ? renderValidGenesis(data) : renderValidGenesisPublic(data);
+    } else if (status === 'valid') {
+      html = renderValidNonGenesis(data);
     } else {
       html = renderSimpleState(status, data, message, rawScanned);
     }
