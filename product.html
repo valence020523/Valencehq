@@ -324,17 +324,6 @@
       .toUpperCase();
   }
 
-  // Partially masks a registered owner's name for privacy on a public scan,
-  // e.g. "John Chibueke" -> "Jo** Ch******". Swap in an owner-auth check to
-  // show the full name when the person scanning is the registered owner.
-  function maskName(name) {
-    if (!name) return '—';
-    return name.split(' ').map(word => {
-      if (word.length <= 2) return word;
-      return word.slice(0, 2) + '*'.repeat(word.length - 2);
-    }).join(' ');
-  }
-
   function formatDate(value) {
     if (!value) return '—';
     const d = new Date(value);
@@ -400,10 +389,10 @@
     const verdictClass = valid ? 'valid' : (unclaimed ? 'unclaimed' : 'invalid');
     const verdictText = valid
       ? 'Authentic Product — Verified'
-      : (unclaimed ? 'Authentic Product — Not Yet Registered' : 'Not Verified');
+      : (unclaimed ? 'Confirm Product For Authenticity' : 'Not Verified');
     const verdictSub = valid
       ? 'MATCHED AGAINST VALENCE REGISTRY'
-      : (unclaimed ? 'GENUINE ITEM · AWAITING OWNER REGISTRATION' : 'NO REGISTRY MATCH');
+      : (unclaimed ? 'GENUINE ITEM · NOT YET CONFIRMED' : 'NO REGISTRY MATCH');
 
     let html = `
       <div class="seal-wrap">
@@ -422,7 +411,7 @@
       html += `
         <div class="panel valid">
           <div class="panel-label">REGISTRATION</div>
-          <div class="result-row"><span>REGISTERED OWNER</span><span>${escapeHtml(maskName(data.owner_name))}</span></div>
+          <div class="result-row"><span>REGISTERED OWNER</span><span>${escapeHtml(data.owner_name || '—')}</span></div>
           <div class="result-row"><span>REGISTERED ON</span><span>${escapeHtml(formatDate(data.registered_at))}</span></div>
           <div class="result-row"><span>ITEM NUMBER</span><span>${escapeHtml(String(itemNumber || '—'))}</span></div>
           <div class="result-row"><span>MANUFACTURED</span><span>${escapeHtml(formatDate(data.manufactured_at))}</span></div>
@@ -440,15 +429,15 @@
     } else if (unclaimed) {
       html += `
         <p class="unclaimed-message">
-          This item is genuine but hasn't been registered to an owner yet.
-          Ask the retailer for a one-time code, then confirm it's yours below.
+          This item hasn't been confirmed yet. Enter the retailer's one-time
+          code to confirm this is an original VALENCE product.
         </p>
         <div class="panel unclaimed">
           <div class="panel-label">PRODUCT</div>
           <div class="result-row"><span>ITEM NUMBER</span><span>${escapeHtml(String(itemNumber || '—'))}</span></div>
           <div class="result-row"><span>MANUFACTURED</span><span>${escapeHtml(formatDate(data.manufactured_at))}</span></div>
         </div>
-        <a class="claim-btn" href="claim.html?code=${encodeURIComponent(data.code)}">REGISTER THIS ITEM</a>
+        <a class="claim-btn" href="claim.html?code=${encodeURIComponent(data.code)}">CONFIRM PRODUCT FOR AUTHENTICITY</a>
       `;
 
       if (data.security_hash) {

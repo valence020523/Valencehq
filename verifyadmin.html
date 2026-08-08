@@ -56,6 +56,12 @@
   input:focus{ outline:none; border-color:var(--gold); }
   input[readonly]{ color:var(--gold-bright); font-family:var(--mono); font-size:12.5px; }
 
+  select{
+    width:100%; padding:11px 13px; border-radius:8px; border:1px solid var(--border);
+    background:rgba(255,255,255,0.03); color:var(--text); font-family:var(--sans); font-size:13.5px;
+  }
+  select:focus{ outline:none; border-color:var(--gold); }
+
   .hash-row{ display:flex; gap:8px; align-items:stretch; }
   .hash-row input{ flex:1; }
   .gen-btn{
@@ -215,6 +221,33 @@
       <h2>Retailers</h2>
       <div id="retailer-list"></div>
     </div>
+
+    <h1 style="margin-top:56px;">Assign Serial &amp; Retailer</h1>
+    <p class="sub">Generates the unique serial the customer must type at registration, and locks which retailer can issue the OTP for this specific item. Leave unassigned and any active retailer can still issue a code for it.</p>
+
+    <div class="panel">
+      <div class="section-label">PRODUCT</div>
+      <label for="assign_qr_code">QR CODE</label>
+      <div class="hash-row">
+        <input type="text" id="assign_qr_code" placeholder="VLC-0001" />
+        <button class="gen-btn" id="lookup-product-btn" type="button">LOOK UP</button>
+      </div>
+      <div class="msg" id="assign-lookup-msg"></div>
+
+      <label for="assign_retailer">RETAILER</label>
+      <select id="assign_retailer">
+        <option value="">— Select a retailer —</option>
+      </select>
+
+      <label for="assign_serial">SERIAL NUMBER</label>
+      <div class="hash-row">
+        <input type="text" id="assign_serial" placeholder="VLC-SN-XXXXXXXX" readonly />
+        <button class="gen-btn" id="gen-serial-btn" type="button">GENERATE</button>
+      </div>
+    </div>
+
+    <button class="btn" id="assign-btn" disabled>ASSIGN TO PRODUCT</button>
+    <div class="msg" id="assign-msg"></div>
   </section>
 </main>
 
@@ -559,7 +592,138 @@
         loadRetailers();
       });
     });
+
+    populateRetailerDropdown(data.filter(r => r.active));
   }
+
+  // ---------------- Assign Serial & Retailer ----------------
+
+  function populateRetailerDropdown(retailers) {
+    const select = document.getElementById('assign_retailer');
+    const currentValue = select.value;
+    select.innerHTML = '<option value="">— Select a retailer —</option>' +
+      retailers.map(r => `<option value="${escapeHtml(r.id)}">${escapeHtml(r.name || r.email || r.id)}</option>`).join('');
+    if (currentValue && retailers.some(r => r.id === currentValue)) {
+      select.value = currentValue;
+    }
+  }
+
+  let assignedProduct = null;
+
+  function refreshAssignBtnState() {
+    const assignBtn = document.getElementById('assign-btn');
+    const retailerId = document.getElementById('assign_retailer').value;
+    const serial = document.getElementById('assign_serial').value;
+    assignBtn.disabled = !(assignedProduct && retailerId && serial);
+  }
+
+  document.getElementById('assign_retailer').addEventListener('change', refreshAssignBtnState);
+
+  document.getElementById('lookup-product-btn').addEventListener('click', async () => {
+    const lookupMsg = document.getElementById('assign-lookup-msg');
+    const qrCode = fieldValue('assign_qr_code').toUpperCase();
+    lookupMsg.textContent = '';
+    lookupMsg.className = 'msg';
+    assignedProduct = null;
+    document.getElementById('assign_serial').value = '';
+    refreshAssignBtnState();
+
+    if (!qrCode) {
+      lookupMsg.textContent = 'Enter a QR code.';
+      lookupMsg.classList.add('error');
+      return;
+    }
+
+    const { data, error } = await supabaseClient
+      .from('products')
+      .select('qr_code, product_name, owner_name, serial_number, assigned_retailer_id')
+      .eq('qr_code', qrCode)
+      .maybeSingle();
+
+    if (error) {
+      lookupMsg.textContent = error.message;
+      lookupMsg.classList.add('error');
+      return;
+    }
+    if (!data) {
+      lookupMsg.textContent = 'No product found with that QR code.';
+      lookupMsg.classList.add('error');
+      return;
+    }
+    if (data.owner_name) {
+      lookupMsg.textContent = `"${data.product_name || qrCode}" is already registered to an owner — nothing to assign.`;
+      lookupMsg.classList.add('error');
+      return;
+    }
+
+    assignedProduct = data;
+    const status = data.serial_number
+      ? `Currently has serial ${data.serial_number}${data.assigned_retailer_id ? ' (assigned)' : ' (unassigned retailer)'}.`
+      : 'No serial assigned yet.';
+    lookupMsg.textContent = `Found "${data.product_name || qrCode}". ${status}`;
+    lookupMsg.classList.add('success');
+    refreshAssignBtnState();
+  });
+
+  function generateSerialNumber() {
+    const bytes = new Uint8Array(6);
+    crypto.getRandomValues(bytes);
+    const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0').toUpperCase()).join('');
+    return `VLC-SN-${hex}`;
+  }
+
+  document.getElementById('gen-serial-btn').addEventListener('click', () => {
+    document.getElementById('assign_serial').value = generateSerialNumber();
+    refreshAssignBtnState();
+  });
+
+  document.getElementById('assign-btn').addEventListener('click', async () => {
+    const assignMsg = document.getElementById('assign-msg');
+    assignMsg.textContent = '';
+    assignMsg.className = 'msg';
+
+    if (!assignedProduct) {
+      assignMsg.textContent = 'Look up a product first.';
+      assignMsg.classList.add('error');
+      return;
+    }
+    const retailerId = document.getElementById('assign_retailer').value;
+    const serial = fieldValue('assign_serial');
+    if (!retailerId || !serial) {
+      assignMsg.textContent = 'Select a retailer and generate a serial number.';
+      assignMsg.classList.add('error');
+      return;
+    }
+
+    const assignBtn = document.getElementById('assign-btn');
+    assignBtn.disabled = true;
+
+    const { error } = await supabaseClient
+      .from('products')
+      .update({ serial_number: serial, assigned_retailer_id: retailerId })
+      .eq('qr_code', assignedProduct.qr_code);
+
+    assignBtn.disabled = false;
+
+    if (error) {
+      assignMsg.textContent = error.code === '23505'
+        ? 'That serial number was just used elsewhere — click Generate for a new one and try again.'
+        : error.message;
+      assignMsg.classList.add('error');
+      return;
+    }
+
+    assignMsg.textContent = `Assigned serial ${serial} to "${assignedProduct.product_name || assignedProduct.qr_code}". Only the selected retailer can now issue an OTP for it.`;
+    assignMsg.classList.add('success');
+
+    assignedProduct = null;
+    document.getElementById('assign_qr_code').value = '';
+    document.getElementById('assign_serial').value = '';
+    document.getElementById('assign_retailer').value = '';
+    document.getElementById('assign-lookup-msg').textContent = '';
+    refreshAssignBtnState();
+    loadRecent();
+  });
 
   checkSession();
 </script>

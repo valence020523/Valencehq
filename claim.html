@@ -96,7 +96,7 @@
 
   <!-- Step 1: enter retailer OTP -->
   <div class="step" id="step-otp">
-    <h1>Enter Retailer Code</h1>
+    <h1>Confirm Product For Authenticity</h1>
     <p class="sub">Ask the retailer to generate a one-time code for this item on their Valence app, then enter it below. It's only valid for 30 seconds.</p>
     <div class="item-summary">
       <div class="name" id="otp-item-name"></div>
@@ -110,13 +110,27 @@
     </div>
   </div>
 
+  <!-- Step 1.5: authenticity confirmed, ask if they want to register -->
+  <div class="step" id="step-confirmed">
+    <svg class="success-seal" viewBox="0 0 104 104" fill="none">
+      <circle cx="52" cy="52" r="46" stroke="var(--green)" stroke-width="2.5" opacity="0.85"/>
+      <circle cx="52" cy="52" r="38" fill="rgba(127,216,160,0.18)"/>
+      <path d="M35 53l12 12 22-24" stroke="var(--green)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <div class="success-title">Authenticity Confirmed</div>
+    <div class="success-sub">This product is confirmed to be an original VALENCE product from an authorized VALENCE store.</div>
+    <p class="sub" style="text-align:center; margin-bottom:6px;">Did you purchase this product?</p>
+    <button class="btn" id="proceed-register-btn">REGISTER</button>
+    <button class="btn-secondary" id="not-now-btn" type="button">NOT NOW</button>
+  </div>
+
   <!-- Step 2: confirm + register (serial + name) -->
   <div class="step" id="step-register">
-    <h1>Confirm It's Yours</h1>
-    <p class="sub">Code verified. Confirm the serial number printed on the item's tag and enter your name to complete registration.</p>
+    <h1>Register This Product</h1>
+    <p class="sub">Enter the serial number printed on the item's tag and your name to complete registration.</p>
     <div class="panel">
-      <label for="item_number_input">SERIAL / ITEM NUMBER</label>
-      <input type="text" id="item_number_input" placeholder="VAL-0489" />
+      <label for="item_number_input">SERIAL NUMBER</label>
+      <input type="text" id="item_number_input" placeholder="VLC-SN-XXXXXXXX" />
       <label for="owner_name_input">YOUR NAME</label>
       <input type="text" id="owner_name_input" placeholder="John Chibueke" />
       <button class="btn" id="register-btn">REGISTER TO ME</button>
@@ -132,8 +146,8 @@
       <circle cx="52" cy="52" r="38" fill="rgba(127,216,160,0.18)"/>
       <path d="M35 53l12 12 22-24" stroke="var(--green)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
-    <div class="success-title">Registered</div>
-    <div class="success-sub">This item is now registered to you. Anyone who scans it going forward will see it as verified.</div>
+    <div class="success-title">Thank You For Shopping VALENCE</div>
+    <div class="success-sub">This item is now registered to you. Redirecting to its verification page…</div>
     <a class="btn" id="view-product-link" href="product.html">VIEW VERIFICATION PAGE</a>
   </div>
 
@@ -143,6 +157,7 @@
   const steps = {
     loading: document.getElementById('step-loading'),
     otp: document.getElementById('step-otp'),
+    confirmed: document.getElementById('step-confirmed'),
     register: document.getElementById('step-register'),
     success: document.getElementById('step-success'),
   };
@@ -188,7 +203,7 @@
     try {
       const { data, error } = await supabaseClient
         .from('products')
-        .select('qr_code, product_name, batch_number, item_number, edition_name, edition_total, owner_name, manufactured_at')
+        .select('qr_code, product_name, batch_number, item_number, serial_number, edition_name, edition_total, owner_name, manufactured_at')
         .eq('qr_code', code)
         .maybeSingle();
 
@@ -250,10 +265,10 @@
 
       // Carry the verified OTP forward for the final registration call.
       document.getElementById('step-register').dataset.otp = otp;
-      if (product.item_number) {
+      if (product.item_number || product.serial_number) {
         document.getElementById('item_number_input').placeholder = 'As printed on the tag';
       }
-      showStep('register');
+      showStep('confirmed');
     } catch (err) {
       console.error('OTP verification failed', err);
       otpMsg.textContent = 'Could not verify the code. Please try again.';
@@ -263,8 +278,16 @@
     }
   });
 
+  document.getElementById('proceed-register-btn').addEventListener('click', () => {
+    showStep('register');
+  });
+
+  document.getElementById('not-now-btn').addEventListener('click', () => {
+    window.location.href = `product.html?code=${encodeURIComponent(code)}`;
+  });
+
   document.getElementById('cancel-register-btn').addEventListener('click', () => {
-    showStep('otp');
+    showStep('confirmed');
   });
 
   document.getElementById('register-btn').addEventListener('click', async () => {
@@ -311,8 +334,12 @@
         return;
       }
 
-      document.getElementById('view-product-link').href = `product.html?code=${encodeURIComponent(code)}`;
+      const productUrl = `product.html?code=${encodeURIComponent(code)}`;
+      document.getElementById('view-product-link').href = productUrl;
       showStep('success');
+      setTimeout(() => {
+        window.location.href = productUrl;
+      }, 3000);
     } catch (err) {
       console.error('Registration failed', err);
       registerMsg.textContent = 'Could not complete registration. Please try again.';

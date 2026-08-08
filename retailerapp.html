@@ -289,7 +289,7 @@
       // Confirm the item exists and isn't already claimed before issuing a code.
       const { data: product, error: lookupError } = await supabaseClient
         .from('products')
-        .select('qr_code, product_name, owner_name')
+        .select('qr_code, product_name, owner_name, assigned_retailer_id')
         .eq('qr_code', qrCode)
         .maybeSingle();
 
@@ -302,6 +302,11 @@
       }
       if (product.owner_name) {
         genMsg.textContent = 'This item is already registered to an owner.';
+        genMsg.classList.add('error');
+        return;
+      }
+      if (product.assigned_retailer_id && product.assigned_retailer_id !== currentRetailer.id) {
+        genMsg.textContent = 'This item is assigned to a different retailer — you can\u2019t generate a code for it.';
         genMsg.classList.add('error');
         return;
       }
@@ -318,7 +323,12 @@
           created_by: currentRetailer.id,
         }]);
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        if (insertError.code === '42501') {
+          throw new Error('This item is assigned to a different retailer — you can\u2019t generate a code for it.');
+        }
+        throw insertError;
+      }
 
       otpItemLabel.textContent = `${product.product_name || 'Item'} · ${qrCode}`;
       otpValue.textContent = otp;

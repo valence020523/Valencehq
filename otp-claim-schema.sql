@@ -133,6 +133,24 @@ begin
 end;
 $function$;
 
+-- ---------- 1c. Product-side columns for serial + retailer assignment ----------
+-- serial_number: the unique string the admin generates and the customer
+--   must type at registration (in addition to entering the retailer's OTP).
+--   Falls back to item_number for older products that predate this feature.
+-- assigned_retailer_id: once set, only that retailer can generate an OTP
+--   for this specific product. Left null, any active retailer still can
+--   (keeps older/unassigned products working as before).
+alter table public.products add column if not exists serial_number text unique;
+alter table public.products add column if not exists assigned_retailer_id uuid references public.retailers(id);
+
+-- Admin needs UPDATE on products for the new "Assign Serial & Retailer"
+-- panel in verifyadmin.html (previously the admin panel only ever inserted
+-- new products, never updated existing ones).
+drop policy if exists "admin can update products" on public.products;
+create policy "admin can update products" on public.products
+  for update
+  using ((auth.jwt() ->> 'email') = 'mhilesjr@gmail.com');
+
 -- ---------- 2. OTP codes ----------
 create table if not exists public.otp_codes (
   id bigint generated always as identity primary key,
@@ -149,13 +167,22 @@ create index if not exists otp_codes_qr_code_idx on public.otp_codes (qr_code);
 
 alter table public.otp_codes enable row level security;
 
--- Active retailers can create OTPs for any product.
+-- Active retailers can create OTPs — but only for products that either
+-- have no assigned retailer yet, or are specifically assigned to them.
+-- This is what makes the serial-number/retailer assignment in
+-- verifyadmin.html actually enforce "only that retailer can generate a
+-- code for that product" at the database level, not just in the UI.
 drop policy if exists "active retailers can create otp" on public.otp_codes;
 create policy "active retailers can create otp" on public.otp_codes
   for insert
   with check (
     created_by = auth.uid()
     and exists (select 1 from public.retailers r where r.id = auth.uid() and r.active)
+    and exists (
+      select 1 from public.products p
+      where p.qr_code = qr_code
+        and (p.assigned_retailer_id is null or p.assigned_retailer_id = auth.uid())
+    )
   );
 
 -- Retailers can see the OTPs they personally generated (e.g. to show a
@@ -211,9 +238,11 @@ grant execute on function public.verify_otp(text, text) to anon, authenticated;
 
 -- ---------- 4. RPC: claim_product ----------
 -- Step 2 of the customer claim flow. Requires an already-verified OTP for
--- this qr_code, cross-checks the serial (item_number) the customer typed
--- against the one on file, then writes owner_name + registered_at and
--- burns the OTP. Runs as one atomic transaction.
+-- this qr_code, cross-checks the serial number the customer typed against
+-- the one on file (serial_number if the admin generated one via the
+-- "Assign Serial & Retailer" panel, otherwise falling back to item_number
+-- for older products), then writes owner_name + registered_at and burns
+-- the OTP. Runs as one atomic transaction.
 create or replace function public.claim_product(
   p_qr_code text,
   p_otp text,
@@ -227,6 +256,7 @@ as $$
 declare
   v_product record;
   v_otp record;
+  v_expected_serial text;
 begin
   if coalesce(trim(p_owner_name), '') = '' then
     return jsonb_build_object('ok', false, 'error', 'missing_name');
@@ -255,8 +285,12 @@ begin
     return jsonb_build_object('ok', false, 'error', 'otp_not_verified');
   end if;
 
-  if v_product.item_number is not null and v_product.item_number <> ''
-     and trim(p_item_number) <> v_product.item_number then
+  v_expected_serial := nullif(v_product.serial_number, '');
+  if v_expected_serial is null then
+    v_expected_serial := nullif(v_product.item_number, '');
+  end if;
+
+  if v_expected_serial is not null and trim(p_item_number) <> v_expected_serial then
     return jsonb_build_object('ok', false, 'error', 'serial_mismatch');
   end if;
 
