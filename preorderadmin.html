@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pre-Order Admin — VALENCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+  :root{
+    --black:#05070b; --navy-900:#0b1220; --gold:#cbb98d; --gold-bright:#e6d9b0;
+    --panel:rgba(255,255,255,0.035); --border:rgba(255,255,255,0.09);
+    --text:#f2f1ec; --text-dim:#93a0b4; --text-dimmer:#5c6779;
+    --mono:'JetBrains Mono',monospace; --sans:'Inter','Segoe UI',system-ui,sans-serif;
+    --green:#7fd8a0; --red:#e88a8a;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--black); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; text-decoration:none; }
+  header{
+    display:flex; align-items:center; justify-content:space-between; padding:18px 30px;
+    border-bottom:1px solid var(--border); background:linear-gradient(180deg,var(--navy-900),var(--black));
+  }
+  .logo-chip img{ display:block; height:30px; width:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
+  .brandmark{ display:flex; align-items:center; gap:10px; }
+  .brand-word{ font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:15px; }
+  .back-link{ font-size:12.5px; font-family:var(--mono); color:var(--text-dim); }
+  .back-link:hover{ color:var(--gold-bright); }
+  #signout-btn{
+    font-size:12px; font-family:var(--mono); color:var(--text-dim); background:none;
+    border:1px solid var(--border); border-radius:999px; padding:6px 14px; cursor:pointer; display:none;
+  }
+  #signout-btn:hover{ color:var(--gold-bright); border-color:var(--gold); }
+
+  main{ max-width:640px; margin:0 auto; padding:60px 24px 90px; }
+  h1{ font-size:22px; font-weight:800; margin:0 0 8px; }
+  .sub{ font-size:13.5px; color:var(--text-dim); margin:0 0 30px; }
+
+  .panel{ border:1px solid var(--border); background:var(--panel); border-radius:16px; padding:24px; }
+  .panel + .panel{ margin-top:18px; }
+  .section-label{
+    font-size:11px; font-family:var(--mono); letter-spacing:0.08em; color:var(--gold); margin:0 0 4px;
+  }
+  .section-hint{ font-size:11.5px; color:var(--text-dimmer); margin:0 0 16px; }
+  label{ display:block; font-size:11.5px; font-family:var(--mono); color:var(--text-dimmer); margin:16px 0 6px; }
+  label:first-of-type{ margin-top:0; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row > div{ flex:1; }
+  input{
+    width:100%; padding:11px 13px; border-radius:8px; border:1px solid var(--border);
+    background:rgba(255,255,255,0.03); color:var(--text); font-family:var(--sans); font-size:13.5px;
+  }
+  input:focus{ outline:none; border-color:var(--gold); }
+  input[readonly]{ color:var(--gold-bright); font-family:var(--mono); font-size:12.5px; }
+
+  select{
+    width:100%; padding:11px 13px; border-radius:8px; border:1px solid var(--border);
+    background:rgba(255,255,255,0.03); color:var(--text); font-family:var(--sans); font-size:13.5px;
+  }
+  select:focus{ outline:none; border-color:var(--gold); }
+
+  .btn{
+    margin-top:22px; width:100%; font-size:13px; font-weight:700; letter-spacing:0.03em; color:var(--black);
+    background:var(--gold-bright); border:none; border-radius:999px; padding:13px; cursor:pointer; font-family:var(--sans);
+  }
+  .btn:hover{ background:var(--gold); }
+  .btn:disabled{ opacity:0.5; cursor:default; }
+
+  .msg{ margin-top:16px; font-size:12.5px; font-family:var(--mono); }
+  .msg.error{ color:var(--red); }
+  .msg.success{ color:var(--green); }
+
+  #app-section{ display:none; }
+  #login-section{ display:block; }
+
+  .recent{ margin-top:34px; }
+  .recent h2{ font-size:13px; letter-spacing:0.05em; color:var(--text-dim); text-transform:uppercase; margin:0 0 12px; }
+  .row{
+    display:flex; justify-content:space-between; gap:12px; font-size:12.5px; padding:10px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .row span:first-child{ color:var(--text); font-family:var(--mono); }
+  .row span:last-child{ color:var(--text-dim); text-align:right; }
+  .status-pill{
+    display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:0.04em;
+    padding:2px 8px; border-radius:999px; margin-left:8px; vertical-align:middle;
+  }
+  .status-pill.pending_payment{ color:var(--gold-bright); background:rgba(203,185,141,0.12); border:1px solid rgba(203,185,141,0.35); }
+  .status-pill.paid{ color:var(--green); background:rgba(127,216,160,0.1); border:1px solid rgba(127,216,160,0.3); }
+  .status-pill.cancelled{ color:var(--red); background:rgba(232,138,138,0.1); border:1px solid rgba(232,138,138,0.3); }
+  .status-pill.active{ color:var(--green); background:rgba(127,216,160,0.1); border:1px solid rgba(127,216,160,0.3); }
+  .status-pill.inactive{ color:var(--red); background:rgba(232,138,138,0.1); border:1px solid rgba(232,138,138,0.3); }
+  .toggle-btn{
+    font-family:var(--mono); font-size:10px; color:var(--text-dim); background:none;
+    border:1px solid var(--border); border-radius:999px; padding:3px 10px; cursor:pointer; margin-left:8px;
+  }
+  .toggle-btn:hover{ color:var(--gold-bright); border-color:var(--gold); }
+
+  /* ---------- reservation cards ---------- */
+  .reservation-card{
+    border:1px solid var(--border); border-radius:12px; padding:16px; margin-top:12px;
+    display:flex; gap:14px; align-items:flex-start;
+  }
+  .receipt-thumb{
+    width:64px; height:64px; border-radius:8px; flex-shrink:0; object-fit:cover; cursor:pointer;
+    border:1px solid var(--border); background:rgba(255,255,255,0.03);
+  }
+  .receipt-thumb.pdf{
+    display:flex; align-items:center; justify-content:center; font-family:var(--mono);
+    font-size:9px; color:var(--text-dim); text-align:center; padding:4px;
+  }
+  .reservation-body{ flex:1; min-width:0; }
+  .reservation-top{ display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+  .reservation-name{ font-size:13.5px; font-weight:700; }
+  .reservation-meta{ font-size:11.5px; color:var(--text-dimmer); font-family:var(--mono); margin-top:4px; line-height:1.6; }
+  .reservation-actions{ margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
+
+  /* ---------- lightbox ---------- */
+  .lightbox-scrim{
+    position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:60; display:none;
+    align-items:center; justify-content:center; padding:24px;
+  }
+  .lightbox-scrim.open{ display:flex; }
+  .lightbox-scrim img{ max-width:100%; max-height:90vh; border-radius:8px; }
+  .lightbox-close{
+    position:absolute; top:20px; right:20px; background:none; border:1px solid var(--border);
+    border-radius:8px; width:34px; height:34px; color:var(--text); cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brandmark">
+    <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
+    <span class="brand-word">VALENCE ADMIN</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <a class="back-link" href="dashboard.html">&larr; BACK TO DASHBOARD</a>
+    <button id="signout-btn">SIGN OUT</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ---------- Login ---------- -->
+  <section id="login-section">
+    <h1>Pre-Order Admin</h1>
+    <p class="sub">Sign in with the authorized admin account.</p>
+    <div class="panel">
+      <label for="email">EMAIL</label>
+      <input type="email" id="email" autocomplete="username" />
+      <label for="password">PASSWORD</label>
+      <input type="password" id="password" autocomplete="current-password" />
+      <button class="btn" id="login-btn">SIGN IN</button>
+      <div class="msg" id="login-msg"></div>
+    </div>
+  </section>
+
+  <!-- ---------- App ---------- -->
+  <section id="app-section">
+    <h1>Pre-Order Admin</h1>
+    <p class="sub">Add items open for pre-order and review customer deposits.</p>
+
+    <!-- Add listing -->
+    <div class="panel">
+      <div class="section-label">ADD PRODUCT FOR PRE-ORDER</div>
+      <p class="section-hint">Creates a new listing customers can pre-order from preorder.html.</p>
+
+      <label for="listing_name">PRODUCT NAME</label>
+      <input type="text" id="listing_name" placeholder="Genesis Vault — Founder Edition" />
+
+      <label for="listing_image">IMAGE URL</label>
+      <input type="text" id="listing_image" placeholder="https://..." />
+
+      <div class="field-row">
+        <div>
+          <label for="listing_price">PRICE (USD)</label>
+          <input type="number" id="listing_price" min="0" step="0.01" placeholder="250.00" />
+        </div>
+        <div>
+          <label for="listing_release">RELEASE DATE</label>
+          <input type="date" id="listing_release" />
+        </div>
+      </div>
+
+      <button class="btn" id="add-listing-btn">ADD LISTING</button>
+      <div class="msg" id="add-listing-msg"></div>
+
+      <div class="recent">
+        <h2>Recent Listings</h2>
+        <div id="listings-list"></div>
+      </div>
+    </div>
+
+    <!-- Reservations -->
+    <div class="panel">
+      <div class="section-label">PRE-ORDER DEPOSITS</div>
+      <p class="section-hint">Review each customer's receipt, then mark the deposit paid or cancelled.</p>
+      <div id="reservations-list"></div>
+    </div>
+  </section>
+</main>
+
+<!-- Receipt lightbox -->
+<div class="lightbox-scrim" id="lightbox-scrim">
+  <button class="lightbox-close" id="lightbox-close-btn">&times;</button>
+  <img id="lightbox-img" src="" alt="Receipt" />
+</div>
+
+<script>
+  const loginSection = document.getElementById('login-section');
+  const appSection = document.getElementById('app-section');
+  const signoutBtn = document.getElementById('signout-btn');
+  const loginMsg = document.getElementById('login-msg');
+
+  const ADMIN_EMAIL = 'mhilesjr@gmail.com';
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function formatPrice(cents){
+    if (cents === null || cents === undefined) return '—';
+    return `$${(cents / 100).toFixed(2)}`;
+  }
+
+  function formatDate(d){
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  function showLoggedIn() {
+    loginSection.style.display = 'none';
+    appSection.style.display = 'block';
+    signoutBtn.style.display = 'inline-block';
+    loadListings();
+    loadReservations();
+  }
+
+  function showLoggedOut() {
+    loginSection.style.display = 'block';
+    appSection.style.display = 'none';
+    signoutBtn.style.display = 'none';
+  }
+
+  async function checkSession() {
+    const { data } = await supabaseClient.auth.getSession();
+    if (data.session && data.session.user?.email === ADMIN_EMAIL) {
+      showLoggedIn();
+    } else if (data.session) {
+      await supabaseClient.auth.signOut();
+      showLoggedOut();
+      loginMsg.textContent = 'This admin page is restricted to an authorized account.';
+      loginMsg.className = 'msg error';
+    } else {
+      showLoggedOut();
+    }
+  }
+
+  document.getElementById('login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    loginMsg.textContent = '';
+    loginMsg.className = 'msg';
+
+    if (!email || !password) {
+      loginMsg.textContent = 'Enter your email and password.';
+      loginMsg.classList.add('error');
+      return;
+    }
+    if (email.toLowerCase() !== ADMIN_EMAIL) {
+      loginMsg.textContent = 'This admin page is restricted to an authorized account.';
+      loginMsg.classList.add('error');
+      return;
+    }
+
+    const { error, data } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      loginMsg.textContent = error.message;
+      loginMsg.classList.add('error');
+      return;
+    }
+    if (data.user?.email !== ADMIN_EMAIL) {
+      await supabaseClient.auth.signOut();
+      loginMsg.textContent = 'This admin page is restricted to an authorized account.';
+      loginMsg.classList.add('error');
+      return;
+    }
+    showLoggedIn();
+  });
+
+  signoutBtn.addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    showLoggedOut();
+  });
+
+  // ---------------- Add listing ----------------
+  document.getElementById('add-listing-btn').addEventListener('click', async () => {
+    const msgEl = document.getElementById('add-listing-msg');
+    msgEl.textContent = '';
+    msgEl.className = 'msg';
+
+    const name = document.getElementById('listing_name').value.trim();
+    const imageUrl = document.getElementById('listing_image').value.trim();
+    const priceDollars = parseFloat(document.getElementById('listing_price').value);
+    const releaseDate = document.getElementById('listing_release').value;
+
+    if (!name) {
+      msgEl.textContent = 'Enter a product name.';
+      msgEl.classList.add('error');
+      return;
+    }
+    if (!priceDollars || priceDollars <= 0) {
+      msgEl.textContent = 'Enter a valid price.';
+      msgEl.classList.add('error');
+      return;
+    }
+
+    const btn = document.getElementById('add-listing-btn');
+    btn.disabled = true;
+
+    try {
+      const { error } = await supabaseClient
+        .from('preorder_listings')
+        .insert([{
+          name,
+          image_url: imageUrl || null,
+          price_cents: Math.round(priceDollars * 100),
+          release_date: releaseDate || null,
+          active: true,
+        }]);
+
+      if (error) throw error;
+
+      msgEl.textContent = 'Listing added.';
+      msgEl.classList.add('success');
+      document.getElementById('listing_name').value = '';
+      document.getElementById('listing_image').value = '';
+      document.getElementById('listing_price').value = '';
+      document.getElementById('listing_release').value = '';
+      loadListings();
+    } catch (err) {
+      console.error('Add listing failed:', err);
+      msgEl.textContent = 'Could not add listing. Please try again.';
+      msgEl.classList.add('error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  async function loadListings() {
+    const el = document.getElementById('listings-list');
+    el.innerHTML = '<div class="row"><span>Loading…</span></div>';
+
+    const { data, error } = await supabaseClient
+      .from('preorder_listings')
+      .select('id, name, price_cents, release_date, active')
+      .order('created_at', { ascending: false })
+      .limit(15);
+
+    if (error) {
+      el.innerHTML = '<div class="row"><span>Could not load listings.</span></div>';
+      return;
+    }
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="row"><span>No listings yet.</span></div>';
+      return;
+    }
+
+    el.innerHTML = data.map(l => `
+      <div class="row">
+        <span>${escapeHtml(l.name)}</span>
+        <span>
+          ${formatPrice(l.price_cents)} · ${formatDate(l.release_date)}
+          <span class="status-pill ${l.active ? 'active' : 'inactive'}">${l.active ? 'ACTIVE' : 'INACTIVE'}</span>
+          <button class="toggle-btn" data-id="${l.id}" data-active="${l.active}">${l.active ? 'DEACTIVATE' : 'ACTIVATE'}</button>
+        </span>
+      </div>
+    `).join('');
+
+    el.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        const isActive = btn.dataset.active === 'true';
+        btn.disabled = true;
+        const { error } = await supabaseClient
+          .from('preorder_listings')
+          .update({ active: !isActive })
+          .eq('id', id);
+        if (!error) loadListings();
+        else btn.disabled = false;
+      });
+    });
+  }
+
+  // ---------------- Reservations ----------------
+  async function loadReservations() {
+    const el = document.getElementById('reservations-list');
+    el.innerHTML = '<div class="row"><span>Loading…</span></div>';
+
+    const { data, error } = await supabaseClient
+      .from('preorder_reservations')
+      .select('id, full_name, deposit_amount_cents, payment_method, receipt_path, status, created_at, preorder_listings(name, price_cents)')
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error('Load reservations failed:', error);
+      el.innerHTML = '<div class="row"><span>Could not load pre-orders.</span></div>';
+      return;
+    }
+    if (!data || !data.length) {
+      el.innerHTML = '<div class="row"><span>No pre-orders yet.</span></div>';
+      return;
+    }
+
+    el.innerHTML = '';
+    for (const r of data) {
+      const card = document.createElement('div');
+      card.className = 'reservation-card';
+
+      const isPdf = (r.receipt_path || '').toLowerCase().endsWith('.pdf');
+      const thumbEl = document.createElement(isPdf ? 'div' : 'img');
+      thumbEl.className = 'receipt-thumb' + (isPdf ? ' pdf' : '');
+      if (isPdf) {
+        thumbEl.textContent = 'PDF RECEIPT';
+      } else {
+        thumbEl.alt = 'Receipt';
+      }
+
+      card.innerHTML = `
+        <div class="reservation-body">
+          <div class="reservation-top">
+            <div class="reservation-name">${escapeHtml(r.full_name)}</div>
+            <span class="status-pill ${r.status}">${r.status.replace('_', ' ').toUpperCase()}</span>
+          </div>
+          <div class="reservation-meta">
+            ${escapeHtml(r.preorder_listings?.name || 'Unknown item')}<br>
+            Deposit: ${formatPrice(r.deposit_amount_cents)} via ${escapeHtml(r.payment_method.replace('_', ' '))}<br>
+            ${formatDate(r.created_at)}
+          </div>
+          <div class="reservation-actions">
+            <button class="toggle-btn" data-action="paid" data-id="${r.id}" ${r.status === 'paid' ? 'disabled' : ''}>MARK PAID</button>
+            <button class="toggle-btn" data-action="cancelled" data-id="${r.id}" ${r.status === 'cancelled' ? 'disabled' : ''}>CANCEL</button>
+          </div>
+        </div>
+      `;
+
+      card.prepend(thumbEl);
+      el.appendChild(card);
+
+      // Receipts live in a private bucket, so fetch a short-lived signed
+      // URL per receipt rather than relying on a public path.
+      if (r.receipt_path) {
+        supabaseClient.storage.from('receipts').createSignedUrl(r.receipt_path, 300).then(({ data: signed, error: signErr }) => {
+          if (signErr || !signed) return;
+          if (isPdf) {
+            thumbEl.addEventListener('click', () => window.open(signed.signedUrl, '_blank'));
+          } else {
+            thumbEl.src = signed.signedUrl;
+            thumbEl.addEventListener('click', () => openLightbox(signed.signedUrl));
+          }
+        });
+      }
+
+      card.querySelectorAll('.toggle-btn[data-action]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const status = btn.dataset.action;
+          const id = btn.dataset.id;
+          card.querySelectorAll('.toggle-btn').forEach(b => b.disabled = true);
+          const { error: updateError } = await supabaseClient
+            .from('preorder_reservations')
+            .update({ status })
+            .eq('id', id);
+          if (!updateError) loadReservations();
+          else card.querySelectorAll('.toggle-btn').forEach(b => b.disabled = false);
+        });
+      });
+    }
+  }
+
+  // ---------------- Lightbox ----------------
+  const lightboxScrim = document.getElementById('lightbox-scrim');
+  const lightboxImg = document.getElementById('lightbox-img');
+  function openLightbox(url) {
+    lightboxImg.src = url;
+    lightboxScrim.classList.add('open');
+  }
+  document.getElementById('lightbox-close-btn').addEventListener('click', () => lightboxScrim.classList.remove('open'));
+  lightboxScrim.addEventListener('click', (e) => { if (e.target === lightboxScrim) lightboxScrim.classList.remove('open'); });
+
+  checkSession();
+</script>
+</body>
+</html>
