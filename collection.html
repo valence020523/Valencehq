@@ -101,42 +101,25 @@
   .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px; }
   .eyebrow{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.12em; color:var(--text-dimmer); margin-bottom:8px; font-weight:700; }
 
-  /* ---------- filter tabs ---------- */
-  .filter-row{ display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap; }
-  .filter-tab{
-    font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:0.06em;
-    color:var(--text-dim); background:var(--panel); border:1px solid var(--border);
-    border-radius:999px; padding:8px 14px; cursor:pointer;
-  }
-  .filter-tab:hover{ color:var(--text); border-color:var(--gold); }
-  .filter-tab.active{ background:rgba(203,185,141,0.14); color:var(--gold-bright); border-color:rgba(203,185,141,0.28); }
-
-  /* ---------- collection grid ---------- */
-  .collection-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  /* ---------- collection grid (fixed 2 per row) ---------- */
+  .collection-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
   .item-card{ padding:0; overflow:hidden; display:flex; flex-direction:column; }
   .item-swatch{
-    height:140px; position:relative; display:flex; align-items:center; justify-content:center;
+    height:220px; position:relative; display:flex; align-items:center; justify-content:center;
     background:linear-gradient(200deg,#1a2233,#0a0e16 60%); overflow:hidden;
   }
   .item-swatch img{ width:100%; height:100%; object-fit:cover; display:block; }
-  .item-swatch svg{ width:30px; height:30px; color:var(--gold); opacity:0.7; }
+  .item-swatch svg{ width:36px; height:36px; color:var(--gold); opacity:0.7; }
   .item-badge{
-    position:absolute; top:10px; right:10px; display:flex; align-items:center; gap:5px;
-    font-family:var(--mono); font-size:9.5px; font-weight:700; letter-spacing:0.06em;
-    padding:4px 8px; border-radius:999px; backdrop-filter:blur(6px);
+    position:absolute; top:12px; right:12px; display:flex; align-items:center; gap:5px;
+    font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:0.06em;
+    padding:5px 10px; border-radius:999px; backdrop-filter:blur(6px);
+    background:rgba(61,220,132,0.16); color:var(--green); border:1px solid rgba(61,220,132,0.35);
   }
-  .item-badge.verified{ background:rgba(61,220,132,0.16); color:var(--green); border:1px solid rgba(61,220,132,0.35); }
-  .item-badge.pending{ background:rgba(203,185,141,0.14); color:var(--gold-bright); border:1px solid rgba(203,185,141,0.3); }
   .item-badge .dot{ width:5px; height:5px; border-radius:50%; background:currentColor; }
   .item-body{ padding:14px 16px 16px; display:flex; flex-direction:column; gap:6px; }
   .item-name{ font-size:14px; font-weight:700; }
   .item-meta{ font-size:11px; color:var(--text-dimmer); font-family:var(--mono); font-weight:600; display:flex; justify-content:space-between; gap:8px; }
-  .item-actions{ display:flex; gap:8px; margin-top:8px; }
-  .btn-outline{
-    background:none; cursor:pointer; border:1px solid rgba(203,185,141,0.4); color:var(--gold-bright);
-    border-radius:8px; padding:8px 12px; font-size:11.5px; font-weight:700; font-family:var(--sans); flex:1; text-align:center;
-  }
-  .btn-outline:hover{ background:rgba(203,185,141,0.1); border-color:var(--gold); }
 
   /* ---------- empty state ---------- */
   .empty-state{
@@ -168,11 +151,8 @@
     main.dash{ padding:18px 16px 44px; }
     .topbar{ display:none; }
     h1.title{ font-size:19px; }
-    .collection-grid{ grid-template-columns:1fr 1fr; gap:12px; }
-    .item-swatch{ height:110px; }
-  }
-  @media (max-width:560px){
-    .collection-grid{ grid-template-columns:1fr; }
+    .collection-grid{ gap:12px; }
+    .item-swatch{ height:150px; }
   }
 </style>
 </head>
@@ -256,12 +236,6 @@
         </div>
       </div>
 
-      <div class="filter-row">
-        <button class="filter-tab active" data-filter="all">ALL ITEMS</button>
-        <button class="filter-tab" data-filter="verified">VERIFIED</button>
-        <button class="filter-tab" data-filter="pending">PENDING VERIFICATION</button>
-      </div>
-
       <div class="collection-grid" id="collection-grid">
         <!-- items injected here -->
       </div>
@@ -274,28 +248,16 @@
   const emptyIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1.5"/><path d="M8 7V5a4 4 0 018 0v2"/><path d="M3 12h18"/></svg>`;
 
   function itemCardHTML(item){
-    const verified = item.status === 'verified';
-    const badge = verified
-      ? `<div class="item-badge verified"><span class="dot"></span>VERIFIED</div>`
-      : `<div class="item-badge pending"><span class="dot"></span>PENDING</div>`;
     const swatch = item.image_url
       ? `<img src="${item.image_url}" alt="${item.name}">`
       : itemIcon;
-    const acquired = item.acquired_at
-      ? new Date(item.acquired_at).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' })
-      : '—';
+    const badge = `<div class="item-badge"><span class="dot"></span>VERIFIED</div>`;
 
     return `
-      <div class="card item-card" data-status="${item.status}">
+      <div class="card item-card">
         <div class="item-swatch">${swatch}${badge}</div>
         <div class="item-body">
           <div class="item-name">${item.name}</div>
-          <div class="item-meta"><span>SERIAL</span><span>${item.serial_number || '—'}</span></div>
-          <div class="item-meta"><span>ACQUIRED</span><span>${acquired}</span></div>
-          <div class="item-actions">
-            <a class="btn-outline" href="verify-authenticity.html${item.serial_number ? '?serial=' + encodeURIComponent(item.serial_number) : ''}">Verify</a>
-            <a class="btn-outline" href="market.html">View in Market</a>
-          </div>
         </div>
       </div>`;
   }
@@ -304,29 +266,20 @@
     return `
       <div class="empty-state">
         ${emptyIcon}
-        <h3>No items yet</h3>
-        <p>Items you purchase, pre-order, or receive at events will appear here once they're registered to your account.</p>
+        <h3>No verified items yet</h3>
+        <p>Items verified under your name will appear here.</p>
         <a class="btn-outline" href="market.html">Explore Market</a>
       </div>`;
   }
 
   let allItems = [];
 
-  function renderItems(filter){
+  function renderItems(){
     const grid = document.getElementById('collection-grid');
-    const filtered = filter === 'all' ? allItems : allItems.filter(i => i.status === filter);
-    grid.innerHTML = filtered.length
-      ? filtered.map(itemCardHTML).join('')
+    grid.innerHTML = allItems.length
+      ? allItems.map(itemCardHTML).join('')
       : emptyStateHTML();
   }
-
-  document.querySelectorAll('.filter-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      renderItems(tab.dataset.filter);
-    });
-  });
 
   (async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -351,27 +304,28 @@
       avatarEls.forEach(el => { el.textContent = initial; });
     }
 
-    // Collection items — reads from a `collection_items` table keyed by user_id.
-    // Expected columns: id, user_id, name, serial_number, status ('verified' | 'pending'),
-    // image_url, acquired_at. Adjust the table/column names to match your schema.
+    // Collection items — reads from a `collection_items` table.
+    // Expected columns: id, user_id, name, image_url, status ('verified').
+    // Adjust table/column names to match your schema.
     const countEl = document.getElementById('item-count');
     try {
       const { data: items, error } = await supabaseClient
         .from('collection_items')
         .select('*')
+        .eq('status', 'verified')
         .eq('user_id', user.id)
-        .order('acquired_at', { ascending: false });
+        .order('name', { ascending: true });
 
       if (error) throw error;
 
       allItems = items || [];
-      countEl.textContent = `${allItems.length} item${allItems.length === 1 ? '' : 's'} in your collection`;
-      renderItems('all');
+      countEl.textContent = `${allItems.length} verified item${allItems.length === 1 ? '' : 's'}`;
+      renderItems();
     } catch (err) {
       console.error('Failed to load collection:', err);
       allItems = [];
       countEl.textContent = 'Unable to load items';
-      renderItems('all');
+      renderItems();
     }
 
     document.getElementById('loading').style.display = 'none';
