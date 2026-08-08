@@ -24,6 +24,7 @@
     --text:#f3f1ea; --text-dim:#8b93a1; --text-dimmer:#565f6d;
     --mono:'JetBrains Mono',monospace; --sans:'Inter','Segoe UI',system-ui,sans-serif;
     --serif:'Cormorant Garamond',Georgia,serif; --script:'Dancing Script',cursive;
+    --content-max:1040px;
   }
   *{box-sizing:border-box;}
   html,body{ height:100%; }
@@ -33,9 +34,11 @@
   button{ font-family:inherit; }
 
   header{
-    display:flex; align-items:center; justify-content:space-between; padding:16px 22px;
     border-bottom:1px solid var(--border); background:linear-gradient(180deg,var(--navy-900),var(--black));
-    position:sticky; top:0; z-index:20; gap:10px;
+    position:sticky; top:0; z-index:20; padding:16px 22px;
+  }
+  .header-inner{
+    max-width:var(--content-max); margin:0 auto; display:flex; align-items:center; justify-content:space-between; gap:10px;
   }
   .brandmark{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
   .logo-chip img{ display:block; height:26px; width:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
@@ -62,7 +65,7 @@
   .owner-pill-name{ font-family:var(--serif); font-size:13px; font-weight:600; color:var(--text); }
   .owner-pill svg{ width:11px; height:11px; color:var(--text-dimmer); flex-shrink:0; }
 
-  main{ max-width:480px; margin:0 auto; padding:0 0 40px; min-height:calc(100vh - 63px); }
+  main{ max-width:var(--content-max); margin:0 auto; padding:0 0 40px; min-height:calc(100vh - 63px); }
 
   /* ---------------- Camera / scanning stage ---------------- */
   #scan-stage{ padding:26px 20px 0; }
@@ -138,6 +141,7 @@
     font-family:var(--mono); font-size:10px; letter-spacing:0.2em; font-weight:600; margin-bottom:8px;
   }
   .hero-eyebrow.mint{ color:var(--mint); }
+  .hero-col-text, .hero-col-image{ min-width:0; }
   .hero-headline{
     font-family:var(--serif); font-weight:600; font-size:34px; line-height:1.08; letter-spacing:0.01em;
     text-transform:uppercase;
@@ -203,7 +207,8 @@
 
   /* ================= DETAIL PANELS (shared building blocks) ================= */
   .panel-box{ border:1px solid var(--border); border-radius:14px; padding:18px 16px; background:var(--panel-raised); }
-  .panel-box + .panel-box{ margin-top:14px; }
+  .section-gap > .panel-box + .panel-box{ margin-top:14px; }
+  .two-col-grid{ display:grid; grid-template-columns:1fr; gap:14px; }
   .panel-box-header{ display:flex; align-items:center; gap:9px; margin-bottom:14px; }
   .panel-box-header svg{ width:15px; height:15px; color:var(--champagne-bright); flex-shrink:0; }
   .panel-box-header span{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; font-weight:600; color:var(--champagne-bright); }
@@ -249,7 +254,8 @@
   .panel-cta.outline:hover{ border-color:var(--champagne); }
 
   /* seal + qr verification panel */
-  .verify-registry-row{ display:flex; align-items:center; gap:16px; }
+  .verify-registry-row{ }
+  .verify-registry-top{ display:flex; align-items:center; gap:16px; margin-bottom:16px; }
   .verify-seal{
     width:52px; height:52px; border-radius:50%; border:1px solid var(--hero-border); flex-shrink:0;
     display:flex; align-items:center; justify-content:center; background:var(--panel-solid);
@@ -260,6 +266,7 @@
   .qr-block img{ width:64px; height:64px; border-radius:6px; background:#fff; padding:4px; }
   .qr-block span{ display:block; margin-top:6px; font-family:var(--mono); font-size:8.5px; letter-spacing:0.08em; color:var(--text-dimmer); }
 
+  .hanger-panel-row{ }
   .hanger-row{ display:flex; gap:12px; align-items:flex-start; }
   .hanger-row svg{ width:18px; height:18px; color:var(--champagne-bright); flex-shrink:0; margin-top:2px; }
 
@@ -310,28 +317,62 @@
 
   /* ---------------- Site footer ---------------- */
   footer{
-    max-width:480px; margin:0 auto; padding:28px 22px 34px; border-top:1px solid var(--border);
+    max-width:var(--content-max); margin:0 auto; padding:28px 22px 34px; border-top:1px solid var(--border);
     display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center;
   }
   .footer-word{ font-family:var(--sans); font-weight:800; letter-spacing:0.22em; font-size:12px; color:var(--champagne-bright); }
   .footer-tag{ font-family:var(--mono); font-size:9.5px; letter-spacing:0.08em; color:var(--text-dimmer); margin-top:6px; line-height:1.6; }
   .footer-mark img{ height:20px; width:auto; opacity:0.7; }
   .footer-meta{ font-family:var(--mono); font-size:9.5px; letter-spacing:0.06em; color:var(--text-dimmer); line-height:1.9; }
+
+  /* ================= Desktop breakpoint: match the reference composition ================= */
+  @media (min-width: 860px){
+    main{ padding:0 32px 60px; }
+    #result-stage{ padding:32px 0 0; }
+    footer{ flex-direction:row; justify-content:space-between; text-align:left; padding:32px 32px 40px; }
+    .footer-brand-block{ text-align:left; }
+    .footer-meta{ text-align:right; }
+
+    .hero-card{ padding:40px; display:grid; grid-template-columns:1.05fr 0.95fr; gap:44px; align-items:start; }
+    .hero-col-image .product-card{ margin-top:0; }
+    .hero-headline{ font-size:44px; }
+    .hero-eyebrow{ font-size:11px; }
+    .hero-body{ font-size:14px; max-width:none; }
+    .hero-ring{ width:76px; height:76px; }
+    .product-card{ aspect-ratio:4/4.6; }
+
+    .two-col-grid{ grid-template-columns:1fr 1fr; gap:18px; }
+
+    .verify-registry-row{ display:flex; align-items:center; gap:24px; }
+    .verify-registry-top{ margin-bottom:0; flex:1; }
+    .qr-block{ margin-left:auto; }
+
+    .hanger-panel-row{ display:flex; align-items:center; gap:24px; }
+    .hanger-panel-row .hanger-row{ flex:1; }
+    .hanger-panel-row .panel-cta{ margin-top:0; width:auto; white-space:nowrap; padding:12px 22px; }
+
+    .icon-grid{ grid-template-columns:repeat(5, 1fr); gap:20px 16px; }
+    .benefits-grid{ grid-template-columns:repeat(4, 1fr); }
+
+    .action-row{ max-width:420px; }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <a class="brandmark" href="verify-authenticity.html">
-    <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
-    <span class="brand-word">VALENCE</span>
-  </a>
-  <div id="header-right">
-    <div class="registry-pill">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <div class="registry-pill-text">
-        <div class="registry-pill-title">AUTHENTICITY REGISTRY</div>
-        <div class="registry-pill-sub">SECURE &bull; VERIFIED &bull; TRUSTED</div>
+  <div class="header-inner">
+    <a class="brandmark" href="verify-authenticity.html">
+      <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
+      <span class="brand-word">VALENCE</span>
+    </a>
+    <div id="header-right">
+      <div class="registry-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="registry-pill-text">
+          <div class="registry-pill-title">AUTHENTICITY REGISTRY</div>
+          <div class="registry-pill-sub">SECURE &bull; VERIFIED &bull; TRUSTED</div>
+        </div>
       </div>
     </div>
   </div>
@@ -372,7 +413,7 @@
 </main>
 
 <footer>
-  <div>
+  <div class="footer-brand-block">
     <div class="footer-word">VALENCE</div>
     <div class="footer-tag">MORE THAN CLOTHING.<br>IT'S A LEGACY.</div>
   </div>
@@ -614,70 +655,79 @@
 
     let html = `
       <div class="hero-card">
-        <div class="hero-ring-row">
-          <svg class="hero-ring" viewBox="0 0 104 104" fill="none" stroke="var(--champagne-bright)" stroke-width="2">
-            <path d="M35 53l11 11 21-24" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="52" cy="52" r="42" stroke-width="1.6" opacity="0.9"/>
-          </svg>
-          <div>
-            <div class="hero-headline" style="font-size:26px;">AUTHENTIC</div>
-            <div class="hero-eyebrow" style="margin:4px 0 0; color:var(--text-dimmer); letter-spacing:0.16em;">VERIFIED BY VALENCE</div>
+        <div class="hero-col-text">
+          <div class="hero-ring-row">
+            <svg class="hero-ring" viewBox="0 0 104 104" fill="none" stroke="var(--champagne-bright)" stroke-width="2">
+              <path d="M35 53l11 11 21-24" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="52" cy="52" r="42" stroke-width="1.6" opacity="0.9"/>
+            </svg>
+            <div>
+              <div class="hero-headline" style="font-size:26px;">AUTHENTIC</div>
+              <div class="hero-eyebrow" style="margin:4px 0 0; color:var(--text-dimmer); letter-spacing:0.16em;">VERIFIED BY VALENCE</div>
+            </div>
           </div>
+          <div class="hero-body">This product is 100% authentic and verified in the VALENCE registry.</div>
+          <div class="hero-divider"></div>
+          <div class="hero-info-box">
+            ${icons.info}
+            <span>THIS PRODUCT IS NOT PART OF THE GENESIS VAULT COLLECTION.</span>
+          </div>
+          <div class="hero-note">You are viewing details for a VALENCE product from a different collection.</div>
         </div>
-        <div class="hero-body">This product is 100% authentic and verified in the VALENCE registry.</div>
-        <div class="hero-divider"></div>
-        <div class="hero-info-box">
-          ${icons.info}
-          <span>THIS PRODUCT IS NOT PART OF THE GENESIS VAULT COLLECTION.</span>
+        <div class="hero-col-image">
+          ${productCardMarkup(data, itemName, collectionName, editionBadge, false)}
         </div>
-        <div class="hero-note">You are viewing details for a VALENCE product from a different collection.</div>
-        ${productCardMarkup(data, itemName, collectionName, editionBadge, false)}
       </div>
 
       <div class="section-gap">
-        <div class="panel-box">
-          <div class="panel-box-header">${icons.package}<span>PRODUCT DETAILS</span></div>
-          <div class="detail-row">${icons.tag}<div class="detail-row-body"><span class="detail-label">Product</span><span class="detail-value">${escapeHtml(itemName)}</span></div></div>
-          <div class="detail-row">${icons.layers}<div class="detail-row-body"><span class="detail-label">Collection</span><span class="detail-value">${escapeHtml(collectionName)}</span></div></div>
-          <div class="detail-row">${icons.ribbon}<div class="detail-row-body"><span class="detail-label">Edition</span><span class="detail-value">${escapeHtml(editionBadge ? editionBadge.replace('#', '').replace(' / ', ' of ') : '—')}</span></div></div>
-          <div class="detail-row">${icons.ruler}<div class="detail-row-body"><span class="detail-label">Size</span><span class="detail-value">${escapeHtml(data.size || '—')}</span></div></div>
-          <div class="detail-row">${icons.circle}<div class="detail-row-body"><span class="detail-label">Color</span><span class="detail-value">${escapeHtml(data.color || '—')}</span></div></div>
-          <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Release Date</span><span class="detail-value">${escapeHtml(formatDate(data.release_date))}</span></div></div>
+        <div class="two-col-grid">
+          <div class="panel-box">
+            <div class="panel-box-header">${icons.package}<span>PRODUCT DETAILS</span></div>
+            <div class="detail-row">${icons.tag}<div class="detail-row-body"><span class="detail-label">Product</span><span class="detail-value">${escapeHtml(itemName)}</span></div></div>
+            <div class="detail-row">${icons.layers}<div class="detail-row-body"><span class="detail-label">Collection</span><span class="detail-value">${escapeHtml(collectionName)}</span></div></div>
+            <div class="detail-row">${icons.ribbon}<div class="detail-row-body"><span class="detail-label">Edition</span><span class="detail-value">${escapeHtml(editionBadge ? editionBadge.replace('#', '').replace(' / ', ' of ') : '—')}</span></div></div>
+            <div class="detail-row">${icons.ruler}<div class="detail-row-body"><span class="detail-label">Size</span><span class="detail-value">${escapeHtml(data.size || '—')}</span></div></div>
+            <div class="detail-row">${icons.circle}<div class="detail-row-body"><span class="detail-label">Color</span><span class="detail-value">${escapeHtml(data.color || '—')}</span></div></div>
+            <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Release Date</span><span class="detail-value">${escapeHtml(formatDate(data.release_date))}</span></div></div>
+          </div>
+
+          <div class="panel-box">
+            <div class="panel-box-header">${icons.person}<span>REGISTRATION DETAILS</span></div>
+            <div class="detail-row">${icons.person}<div class="detail-row-body"><span class="detail-label">Registered Owner</span><span class="detail-value">${escapeHtml(data.owner_name || '—')}</span></div></div>
+            <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Registered On</span><span class="detail-value">${escapeHtml(formatDate(data.registered_at))}</span></div></div>
+            <div class="detail-row">${icons.shieldCheck}<div class="detail-row-body"><span class="detail-label">Ownership ID</span><span class="detail-value mono mint">${escapeHtml(data.security_hash || '—')}</span></div></div>
+            <div class="detail-row">${icons.shieldCheck}<div class="detail-row-body"><span class="detail-label">Product Status</span><span class="detail-value status"><span class="status-dot"></span>Registered &amp; Verified</span></div></div>
+            <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Manufactured On</span><span class="detail-value">${escapeHtml(formatDate(data.manufactured_at))}</span></div></div>
+          </div>
         </div>
 
-        <div class="panel-box">
-          <div class="panel-box-header">${icons.person}<span>REGISTRATION DETAILS</span></div>
-          <div class="detail-row">${icons.person}<div class="detail-row-body"><span class="detail-label">Registered Owner</span><span class="detail-value">${escapeHtml(data.owner_name || '—')}</span></div></div>
-          <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Registered On</span><span class="detail-value">${escapeHtml(formatDate(data.registered_at))}</span></div></div>
-          <div class="detail-row">${icons.shieldCheck}<div class="detail-row-body"><span class="detail-label">Ownership ID</span><span class="detail-value mono mint">${escapeHtml(data.security_hash || '—')}</span></div></div>
-          <div class="detail-row">${icons.shieldCheck}<div class="detail-row-body"><span class="detail-label">Product Status</span><span class="detail-value status"><span class="status-dot"></span>Registered &amp; Verified</span></div></div>
-          <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Manufactured On</span><span class="detail-value">${escapeHtml(formatDate(data.manufactured_at))}</span></div></div>
-        </div>
-
-        <div class="panel-box">
+        <div class="panel-box" style="margin-top:14px;">
           <div class="verify-registry-row">
-            <div class="verify-seal">V</div>
-            <div class="verify-registry-text">
-              <div class="panel-box-header" style="margin-bottom:5px;"><span style="color:var(--champagne-bright);">VERIFIED IN THE VALENCE REGISTRY</span></div>
-              <div class="panel-desc">This piece has been verified against the official VALENCE database and confirmed to be an authentic original.</div>
+            <div class="verify-registry-top">
+              <div class="verify-seal">V</div>
+              <div class="verify-registry-text">
+                <div class="panel-box-header" style="margin-bottom:5px;"><span style="color:var(--champagne-bright);">VERIFIED IN THE VALENCE REGISTRY</span></div>
+                <div class="panel-desc">This piece has been verified against the official VALENCE database and confirmed to be an authentic original.</div>
+              </div>
             </div>
-          </div>
-          <div class="panel-inner-divider"></div>
-          <div class="qr-block" style="margin:0 auto;">
-            <img src="${qrImageUrl(data.code)}" alt="Scan to verify again" />
-            <span>SCAN TO<br>VERIFY AGAIN</span>
+            <div class="qr-block">
+              <img src="${qrImageUrl(data.code)}" alt="Scan to verify again" />
+              <span>SCAN TO<br>VERIFY AGAIN</span>
+            </div>
           </div>
         </div>
 
-        <div class="panel-box">
-          <div class="hanger-row">
-            ${icons.hanger}
-            <div>
-              <div class="panel-box-header" style="margin-bottom:5px;"><span style="color:var(--champagne-bright);">NOT A GENESIS PRODUCT</span></div>
-              <div class="panel-desc">Genesis is our limited Founder Edition collection of the first 100 pieces. This product belongs to another VALENCE collection.</div>
+        <div class="panel-box" style="margin-top:14px;">
+          <div class="hanger-panel-row">
+            <div class="hanger-row">
+              ${icons.hanger}
+              <div>
+                <div class="panel-box-header" style="margin-bottom:5px;"><span style="color:var(--champagne-bright);">NOT A GENESIS PRODUCT</span></div>
+                <div class="panel-desc">Genesis is our limited Founder Edition collection of the first 100 pieces. This product belongs to another VALENCE collection.</div>
+              </div>
             </div>
+            <a class="panel-cta outline" href="verify-authenticity.html">LEARN ABOUT GENESIS ${icons.arrow}</a>
           </div>
-          <a class="panel-cta outline" href="verify-authenticity.html">LEARN ABOUT GENESIS ${icons.arrow}</a>
         </div>
       </div>
 
@@ -711,39 +761,45 @@
 
     let html = `
       <div class="hero-card">
-        <div class="hero-eyebrow mint">YOU ARE THE OWNER</div>
-        <div class="hero-headline">AUTHENTIC &amp;<span class="accent">OWNED</span></div>
-        <div class="hero-body">This product is 100% authentic and registered to you.</div>
-        <div class="hero-signature">
-          <div class="hero-signature-word">Valence</div>
-          <div class="hero-signature-caption">VALENCE TEAM</div>
+        <div class="hero-col-text">
+          <div class="hero-eyebrow mint">YOU ARE THE OWNER</div>
+          <div class="hero-headline">AUTHENTIC &amp;<span class="accent">OWNED</span></div>
+          <div class="hero-body">This product is 100% authentic and registered to you.</div>
+          <div class="hero-signature">
+            <div class="hero-signature-word">Valence</div>
+            <div class="hero-signature-caption">VALENCE TEAM</div>
+          </div>
         </div>
-        ${productCardMarkup(data, itemName, tierLabel, editionBadge, true)}
+        <div class="hero-col-image">
+          ${productCardMarkup(data, itemName, tierLabel, editionBadge, true)}
+        </div>
       </div>
 
       <div class="section-gap">
-        <div class="panel-box">
-          <div class="hanger-row" style="margin-bottom:0;">
-            ${icons.lock}
-            <div>
-              <div class="panel-box-header" style="margin-bottom:5px;"><span>OWNERSHIP CERTIFICATE</span></div>
-              <div class="panel-desc">You are the official owner of this piece from the ${escapeHtml(collectionName)}.</div>
+        <div class="two-col-grid">
+          <div class="panel-box">
+            <div class="hanger-row" style="margin-bottom:0;">
+              ${icons.lock}
+              <div>
+                <div class="panel-box-header" style="margin-bottom:5px;"><span>OWNERSHIP CERTIFICATE</span></div>
+                <div class="panel-desc">You are the official owner of this piece from the ${escapeHtml(collectionName)}.</div>
+              </div>
             </div>
+            <div class="panel-inner-divider"></div>
+            <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Registered On</span><span class="detail-value">${escapeHtml(formatDate(data.registered_at))}</span></div></div>
+            <div class="detail-row">${icons.shieldCheck}<div class="detail-row-body"><span class="detail-label">Ownership ID</span><span class="detail-value mono mint">${escapeHtml(data.security_hash || '—')}</span></div></div>
           </div>
-          <div class="panel-inner-divider"></div>
-          <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Registered On</span><span class="detail-value">${escapeHtml(formatDate(data.registered_at))}</span></div></div>
-          <div class="detail-row">${icons.shieldCheck}<div class="detail-row-body"><span class="detail-label">Ownership ID</span><span class="detail-value mono mint">${escapeHtml(data.security_hash || '—')}</span></div></div>
+
+          <div class="panel-box">
+            <div class="founder-badge-icon">${icons.star}</div>
+            <div class="panel-box-header" style="margin:10px 0 0;"><span>FOUNDER STATUS</span></div>
+            <div class="founder-heading">Genesis Founder</div>
+            <div class="panel-desc">As one of the first 100 founders, you are part of VALENCE history.</div>
+            <a class="panel-cta" href="dashboard.html">VIEW FOUNDER BENEFITS ${icons.arrow}</a>
+          </div>
         </div>
 
-        <div class="panel-box">
-          <div class="founder-badge-icon">${icons.star}</div>
-          <div class="panel-box-header" style="margin:10px 0 0;"><span>FOUNDER STATUS</span></div>
-          <div class="founder-heading">Genesis Founder</div>
-          <div class="panel-desc">As one of the first 100 founders, you are part of VALENCE history.</div>
-          <a class="panel-cta" href="dashboard.html">VIEW FOUNDER BENEFITS ${icons.arrow}</a>
-        </div>
-
-        <div class="panel-box">
+        <div class="panel-box" style="margin-top:14px;">
           <div class="panel-box-header"><span>YOUR PRODUCT DETAILS</span></div>
           <div class="icon-grid">
             <div class="icon-grid-item">${icons.package}<div class="icon-grid-label">PRODUCT</div><div class="icon-grid-value">${escapeHtml(itemName)}</div></div>
@@ -754,7 +810,7 @@
           </div>
         </div>
 
-        <div class="panel-box">
+        <div class="panel-box" style="margin-top:14px;">
           <div class="panel-box-header"><span>EXCLUSIVE ACCESS</span></div>
           <div class="panel-desc">As the owner, you unlock exclusive benefits and experiences.</div>
           <div class="benefits-grid">
