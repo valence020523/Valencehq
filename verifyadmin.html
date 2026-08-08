@@ -148,7 +148,13 @@
       <input type="text" id="qr_code" placeholder="VLC-0001" />
 
       <label for="product_name">PRODUCT NAME</label>
-      <input type="text" id="product_name" placeholder="Genesis Hoodie — Size L" />
+      <input type="text" id="product_name" placeholder="Genesis Hoodie" />
+
+      <label for="collection_name">COLLECTION</label>
+      <input type="text" id="collection_name" placeholder="Genesis Vault" />
+
+      <label for="image_url">PRODUCT PHOTO URL (optional)</label>
+      <input type="text" id="image_url" placeholder="https://.../genesis-hoodie.jpg" />
 
       <label for="batch_number">BATCH NUMBER</label>
       <input type="text" id="batch_number" placeholder="BATCH-2026-01" />
@@ -166,8 +172,8 @@
 
       <div class="field-row">
         <div>
-          <label for="edition_name">EDITION NAME</label>
-          <input type="text" id="edition_name" placeholder="Genesis Vault — Limited Edition" />
+          <label for="edition_name">EDITION TIER</label>
+          <input type="text" id="edition_name" placeholder="Founder Edition" />
         </div>
         <div>
           <label for="edition_total">EDITION TOTAL</label>
@@ -350,6 +356,8 @@
   document.getElementById('add-btn').addEventListener('click', async () => {
     const qr_code = fieldValue('qr_code');
     const product_name = fieldValue('product_name');
+    const collection_name = fieldValue('collection_name');
+    const image_url = fieldValue('image_url');
     const batch_number = fieldValue('batch_number');
     const manufactured_at = document.getElementById('manufactured_at').value || null;
 
@@ -380,6 +388,8 @@
       .insert([{
         qr_code,
         product_name,
+        collection_name: collection_name || null,
+        image_url: image_url || null,
         batch_number,
         manufactured_at,
         item_number: item_number || null,
@@ -401,7 +411,7 @@
     addMsg.textContent = `Added "${qr_code}" successfully (unclaimed).`;
     addMsg.classList.add('success');
 
-    ['qr_code','product_name','batch_number','manufactured_at',
+    ['qr_code','product_name','collection_name','image_url','batch_number','manufactured_at',
      'item_number','edition_name','edition_total','security_hash'].forEach(id => {
       document.getElementById(id).value = '';
     });

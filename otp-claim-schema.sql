@@ -143,6 +143,14 @@ $function$;
 alter table public.products add column if not exists serial_number text unique;
 alter table public.products add column if not exists assigned_retailer_id uuid references public.retailers(id);
 
+-- ---------- 1d. Product presentation fields ----------
+-- collection_name: the product line, e.g. "Genesis Vault" (distinct from
+--   edition_name, which is the tier label, e.g. "Founder Edition").
+-- image_url: link to a hosted product photo. Left null shows a placeholder
+--   on the verification page rather than a broken image.
+alter table public.products add column if not exists collection_name text;
+alter table public.products add column if not exists image_url text;
+
 -- Admin needs UPDATE on products for the new "Assign Serial & Retailer"
 -- panel in verifyadmin.html (previously the admin panel only ever inserted
 -- new products, never updated existing ones).

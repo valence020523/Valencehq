@@ -17,6 +17,7 @@
     --gold:var(--champagne); --gold-bright:var(--champagne-bright);
     --platinum:#d7dade; --platinum-dim:#9aa1a8; --platinum-glow:rgba(215,218,222,0.14);
     --garnet:#b9847a; --garnet-dim:#8c6058; --garnet-glow:rgba(185,132,122,0.14);
+    --secure-green:#7fae8f;
     --panel:rgba(255,255,255,0.025); --panel-solid:#0b0d12;
     --border:rgba(255,255,255,0.08); --hairline:rgba(203,185,141,0.18);
     --text:#f3f1ea; --text-dim:#8b93a1; --text-dimmer:#565f6d;
@@ -27,6 +28,7 @@
   html,body{ height:100%; }
   body{ margin:0; background:var(--black); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
   a{ color:inherit; text-decoration:none; }
+  svg{ display:block; }
 
   header{
     display:flex; align-items:center; justify-content:space-between; padding:16px 22px;
@@ -36,10 +38,14 @@
   .brandmark{ display:flex; align-items:center; gap:10px; }
   .logo-chip img{ display:block; height:26px; width:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
   .brand-word{ font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:13px; }
-  .back-link{ font-size:12px; font-family:var(--mono); color:var(--text-dim); }
-  .back-link:hover{ color:var(--gold-bright); }
+  .registry-pill{
+    display:flex; align-items:center; gap:7px; font-family:var(--mono); font-size:9.5px;
+    letter-spacing:0.12em; color:var(--champagne-bright); border:1px solid var(--hairline);
+    border-radius:999px; padding:7px 12px; white-space:nowrap;
+  }
+  .registry-pill svg{ width:12px; height:12px; flex-shrink:0; }
 
-  main{ max-width:480px; margin:0 auto; padding:0 0 60px; min-height:calc(100vh - 63px); }
+  main{ max-width:480px; margin:0 auto; padding:0 0 40px; min-height:calc(100vh - 63px); }
 
   /* ---------------- Camera / scanning stage ---------------- */
   #scan-stage{ padding:26px 20px 0; }
@@ -54,7 +60,6 @@
   }
   #qr-reader{ width:100%; height:100%; }
   #qr-reader video{ width:100% !important; height:100% !important; object-fit:cover; }
-  /* html5-qrcode injects its own controls; keep them unobtrusive */
   #qr-reader__dashboard_section_csr button{
     font-family:var(--sans); font-size:12px; font-weight:600; color:var(--black);
     background:var(--gold-bright); border:none; border-radius:8px; padding:8px 14px; cursor:pointer;
@@ -104,136 +109,172 @@
   #lookup-stage p{ font-family:var(--mono); font-size:12.5px; color:var(--text-dim); }
 
   /* ---------------- Result / reveal stage ---------------- */
-  #result-stage{ padding:34px 20px 0; }
+  #result-stage{ padding:38px 20px 0; }
   #result-stage.hidden{ display:none; }
 
-  .seal-wrap{ display:flex; flex-direction:column; align-items:center; margin-bottom:26px; }
-  .seal{ width:96px; height:96px; }
-  .seal-ring{ transform-origin:52px 52px; }
-  .seal.valid .seal-ring{ animation:ring-in 0.8s cubic-bezier(.2,.8,.2,1) both; filter:drop-shadow(0 0 7px var(--platinum-glow)); }
-  .seal.valid .seal-check{
-    stroke-dasharray:34; stroke-dashoffset:34;
-    animation:check-in 0.4s 0.6s ease-out forwards;
-  }
-  .seal.invalid .seal-ring{ filter:drop-shadow(0 0 7px var(--garnet-glow)); }
-  .seal.invalid .seal-x{
-    stroke-dasharray:24; stroke-dashoffset:24;
-    animation:check-in 0.35s 0.4s ease-out forwards;
-  }
-  .seal.unclaimed .seal-ring{ animation:ring-in 0.8s cubic-bezier(.2,.8,.2,1) both; filter:drop-shadow(0 0 7px rgba(203,185,141,0.22)); }
-  .seal.unclaimed .seal-dot{
-    stroke-dasharray:20; stroke-dashoffset:20;
-    animation:check-in 0.35s 0.5s ease-out forwards;
-  }
+  /* ---- Hero: ring, verdict headline, product identity ---- */
+  .hero{ display:flex; flex-direction:column; align-items:center; text-align:center; }
+  .hero-ring-wrap{ width:88px; height:88px; margin-bottom:20px; }
+  .hero-ring{ transform-origin:52px 52px; }
+  .hero-ring-wrap.valid svg{ filter:drop-shadow(0 0 10px var(--platinum-glow)); }
+  .hero-ring-wrap.unclaimed svg{ filter:drop-shadow(0 0 10px rgba(203,185,141,0.28)); }
+  .hero-ring-wrap.invalid svg{ filter:drop-shadow(0 0 10px var(--garnet-glow)); }
+  .hero-ring-wrap svg{ animation:ring-in 0.8s cubic-bezier(.2,.8,.2,1) both; }
+  .hero-mark{ stroke-dasharray:40; stroke-dashoffset:40; animation:check-in 0.4s 0.55s ease-out forwards; }
   @keyframes ring-in{ from{ opacity:0; transform:scale(0.7); } to{ opacity:1; transform:scale(1); } }
   @keyframes check-in{ to{ stroke-dashoffset:0; } }
 
-  .verdict{
-    font-family:var(--serif); font-style:italic; font-weight:600;
-    font-size:23px; letter-spacing:0.01em; margin-top:16px;
+  .hero-title{
+    font-family:var(--sans); font-weight:700; font-size:22px;
+    letter-spacing:0.34em; text-indent:0.34em; text-transform:uppercase;
   }
-  .verdict.valid{ color:var(--platinum); }
-  .verdict.invalid{ color:var(--garnet); }
-  .verdict.unclaimed{ color:var(--champagne-bright); }
-  .verdict-sub{
-    font-family:var(--mono); font-size:10px; color:var(--text-dimmer);
-    margin-top:8px; letter-spacing:0.22em; font-weight:500;
+  .hero-title.valid{ color:var(--platinum); }
+  .hero-title.unclaimed{ color:var(--champagne-bright); }
+  .hero-title.invalid{ color:var(--garnet); }
+  .hero-sub{
+    font-family:var(--mono); font-size:10px; letter-spacing:0.2em; color:var(--text-dimmer);
+    margin-top:8px; font-weight:500;
+  }
+  .hero-divider{ width:34px; height:1px; background:var(--hairline); margin:22px 0; }
+
+  .hero-product-name{
+    font-family:var(--serif); font-weight:600; font-size:32px; letter-spacing:0.02em;
+    text-transform:uppercase; line-height:1.15;
+  }
+  .hero-tier{
+    font-family:var(--mono); font-size:11px; letter-spacing:0.18em; color:var(--champagne-bright);
+    margin-top:10px; font-weight:500;
+  }
+  .hero-edition-badge{
+    font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:0.08em; color:var(--champagne-bright);
+    border:1px solid var(--hairline); border-radius:6px; padding:8px 18px; margin-top:18px;
+  }
+  .hero-collection{
+    font-family:var(--mono); font-size:10px; letter-spacing:0.16em; color:var(--text-dimmer);
+    margin-top:14px; font-weight:500;
   }
 
-  .item-name{
-    text-align:center; font-family:var(--serif); font-weight:600; font-size:30px;
-    margin:24px 0 12px; line-height:1.25; letter-spacing:0.005em;
-  }
-  .edition-pill{
-    display:block; width:fit-content; margin:0 auto 32px; font-family:var(--mono); font-size:10.5px;
-    letter-spacing:0.1em; color:var(--champagne-bright); background:transparent;
-    border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline); padding:7px 0;
-  }
-
-  .unclaimed-message{
-    text-align:center; font-size:13px; line-height:1.65; color:var(--text-dim); margin:0 0 26px; padding:0 8px;
+  .unclaimed-message, .invalid-message{
+    text-align:center; font-size:13px; line-height:1.65; color:var(--text-dim); margin:24px 0 0; padding:0 8px;
   }
   .claim-btn{
     display:block; text-align:center; font-size:12.5px; font-weight:600; letter-spacing:0.09em; color:var(--black);
     background:var(--champagne-bright); border:none; border-radius:999px; padding:14px; cursor:pointer; font-family:var(--sans);
-    margin-top:6px; text-transform:uppercase;
+    margin-top:22px; text-transform:uppercase;
   }
   .claim-btn:hover{ background:var(--champagne); }
 
-  /* Specs list — a passport-style data page: no boxed card, just a
-     hairline top/bottom frame and quiet dividers between rows. */
-  .specs{ border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline); margin-bottom:18px; }
-  .specs-label{
-    font-family:var(--mono); font-size:9.5px; letter-spacing:0.16em; color:var(--text-dimmer);
-    padding:16px 2px 4px; font-weight:500;
+  /* ---- Product image card ---- */
+  .product-card{
+    position:relative; margin-top:32px; border-radius:16px; overflow:hidden;
+    border:1px solid var(--border); background:var(--panel-solid); aspect-ratio:4/3.4;
   }
-  .spec-row{
-    display:flex; justify-content:space-between; align-items:baseline; gap:14px;
-    padding:13px 2px; border-bottom:1px solid rgba(255,255,255,0.05);
+  .product-card-watermark{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-weight:600; font-size:220px; color:rgba(255,255,255,0.025);
+    line-height:1; user-select:none; pointer-events:none;
   }
-  .spec-row:last-child{ border-bottom:none; padding-bottom:17px; }
-  .spec-row span:first-child{
-    color:var(--text-dimmer); font-family:var(--mono); font-size:10px; letter-spacing:0.1em; font-weight:500;
+  .product-card-ring{
+    position:absolute; top:50%; right:8%; width:150px; height:150px; transform:translateY(-50%);
+    border:1px solid rgba(203,185,141,0.08); border-radius:50%; pointer-events:none;
   }
-  .spec-row span:last-child{ color:var(--text); text-align:right; font-family:var(--serif); font-size:16px; font-weight:600; }
+  .product-card-ring::before{
+    content:''; position:absolute; inset:14px; border:1px solid rgba(203,185,141,0.06); border-radius:50%;
+  }
+  .product-card img{ position:relative; width:100%; height:100%; object-fit:cover; display:block; }
+  .product-card-empty{
+    position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:10px;
+  }
+  .product-card-empty svg{ width:34px; height:34px; opacity:0.35; }
+  .product-card-empty span{
+    position:relative; font-family:var(--mono); font-size:10px; letter-spacing:0.14em; color:var(--text-dimmer);
+  }
+  .product-card-badge{
+    position:absolute; top:14px; left:14px; z-index:2; display:flex; align-items:center; gap:7px;
+    font-family:var(--mono); font-size:9.5px; letter-spacing:0.1em; color:var(--champagne-bright);
+    background:rgba(5,6,8,0.55); backdrop-filter:blur(4px); border-radius:8px; padding:7px 10px;
+  }
+  .product-card-badge svg{ width:12px; height:12px; }
 
-  /* Security hash strip — the signature element: a faint holographic
-     shimmer sweeps across it, echoing a foil authentication sticker. */
-  /* Security token — styled as an etched plate rather than a plain box:
-     a faint brushed-metal texture, double hairline top/bottom like a
-     plaque, and an engraved text treatment on the value itself. */
-  .hash-strip{
-    position:relative; margin:24px 0 4px; padding:16px 4px; overflow:hidden;
-    border-top:1px solid var(--hairline); border-bottom:1px solid var(--hairline);
-    text-align:center;
+  /* ---- Authenticity-verified explainer strip ---- */
+  .verify-panel{
+    display:flex; gap:14px; align-items:flex-start; margin-top:24px; padding:18px 4px 22px;
+    border-bottom:1px solid var(--hairline);
   }
-  .hash-strip::before{
-    content:''; position:absolute; inset:0; opacity:0.5;
-    background:repeating-linear-gradient(115deg, rgba(255,255,255,0.025) 0px, rgba(255,255,255,0.025) 1px, transparent 1px, transparent 3px);
+  .verify-panel svg{ width:22px; height:22px; flex-shrink:0; margin-top:2px; }
+  .verify-panel.valid svg{ color:var(--platinum); }
+  .verify-panel.unclaimed svg{ color:var(--champagne-bright); }
+  .verify-panel.invalid svg{ color:var(--garnet); }
+  .verify-title{
+    font-family:var(--mono); font-size:11px; letter-spacing:0.12em; font-weight:600; margin-bottom:5px;
   }
-  .hash-strip::after{
-    content:''; position:absolute; inset:0;
-    background:linear-gradient(115deg, transparent 30%, rgba(203,185,141,0.1) 48%, rgba(255,255,255,0.05) 50%, rgba(203,185,141,0.1) 52%, transparent 70%);
-    background-size:260% 100%; animation:shimmer 4.5s ease-in-out infinite;
-  }
-  @keyframes shimmer{ 0%{ background-position:130% 0; } 100%{ background-position:-30% 0; } }
-  .hash-label{
-    position:relative; font-family:var(--mono); font-size:9px; letter-spacing:0.2em;
-    color:var(--text-dimmer); margin-bottom:8px; font-weight:500;
-  }
-  .hash-value{
-    position:relative; font-family:var(--mono); font-size:14px; letter-spacing:0.14em;
-    color:var(--champagne-bright); word-break:break-all; font-weight:600;
-    text-shadow:0 1px 0 rgba(0,0,0,0.65), 0 -1px 0 rgba(255,255,255,0.06);
-  }
+  .verify-panel.valid .verify-title{ color:var(--platinum); }
+  .verify-panel.unclaimed .verify-title{ color:var(--champagne-bright); }
+  .verify-panel.invalid .verify-title{ color:var(--garnet); }
+  .verify-desc{ font-size:12.5px; line-height:1.6; color:var(--text-dim); }
 
-  .invalid-message{
-    text-align:center; font-size:13px; line-height:1.6; color:var(--text-dim); margin:0 0 22px; padding:0 6px;
+  /* ---- Two-column icon data grid ---- */
+  .data-grid{
+    display:grid; grid-template-columns:1fr 1fr; column-gap:18px;
+    padding:20px 0; border-bottom:1px solid var(--hairline);
   }
+  .data-item{ display:flex; gap:10px; align-items:flex-start; padding:9px 0; }
+  .data-item svg{ width:15px; height:15px; flex-shrink:0; margin-top:3px; color:var(--bronze); }
+  .data-label{ font-family:var(--mono); font-size:9px; letter-spacing:0.12em; color:var(--text-dimmer); margin-bottom:3px; }
+  .data-value{ font-family:var(--serif); font-size:15px; font-weight:600; color:var(--text); line-height:1.3; }
 
-  .action-row{ display:flex; gap:10px; margin-top:30px; }
+  /* ---- Security status row ---- */
+  .security-row{ display:flex; align-items:center; gap:12px; padding:18px 0; }
+  .security-row svg{ width:18px; height:18px; flex-shrink:0; color:var(--champagne-bright); }
+  .security-row .sec-body{ flex:1; }
+  .sec-title{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; font-weight:600; color:var(--text); margin-bottom:3px; }
+  .sec-desc{ font-size:11.5px; color:var(--text-dimmer); line-height:1.5; }
+  .secure-pill{
+    display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:9.5px; letter-spacing:0.1em;
+    color:var(--secure-green); border:1px solid rgba(127,174,143,0.3); border-radius:999px; padding:6px 11px;
+    white-space:nowrap;
+  }
+  .secure-dot{ width:5px; height:5px; border-radius:50%; background:var(--secure-green); }
+
+  .action-row{ display:flex; gap:10px; margin-top:26px; }
   .scan-again, .dash-link{
-    flex:1; text-align:center; font-size:12px; font-weight:600; font-family:var(--sans);
+    flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
+    text-align:center; font-size:12px; font-weight:600; font-family:var(--sans);
     letter-spacing:0.1em; text-transform:uppercase; border-radius:999px; padding:13px; cursor:pointer;
   }
+  .scan-again svg, .dash-link svg{ width:13px; height:13px; }
   .scan-again{ color:var(--black); background:var(--champagne-bright); border:1px solid var(--champagne-bright); }
   .scan-again:hover{ background:var(--champagne); border-color:var(--champagne); }
   .dash-link{ color:var(--text-dim); background:transparent; border:1px solid var(--border); }
   .dash-link:hover{ border-color:var(--bronze); color:var(--champagne-bright); }
 
-  .debug-block{ margin-top:16px; padding:12px; border:1px dashed var(--border); border-radius:10px; }
+  .debug-block{ margin-top:20px; padding:12px; border:1px dashed var(--border); border-radius:10px; }
   .debug-block .dt{ font-family:var(--mono); font-size:10.5px; color:var(--text-dimmer); margin-bottom:6px; }
   .debug-block .dv{ font-family:var(--mono); font-size:11px; color:var(--text); word-break:break-all; margin-bottom:8px; }
+
+  /* ---------------- Site footer ---------------- */
+  footer{
+    max-width:480px; margin:0 auto; padding:28px 22px 34px; border-top:1px solid var(--border);
+    display:flex; flex-direction:column; align-items:center; gap:16px; text-align:center;
+  }
+  .footer-word{ font-family:var(--sans); font-weight:800; letter-spacing:0.22em; font-size:12px; color:var(--champagne-bright); }
+  .footer-tag{ font-family:var(--mono); font-size:9.5px; letter-spacing:0.08em; color:var(--text-dimmer); margin-top:6px; line-height:1.6; }
+  .footer-mark img{ height:20px; width:auto; opacity:0.7; }
+  .footer-meta{ font-family:var(--mono); font-size:9.5px; letter-spacing:0.06em; color:var(--text-dimmer); line-height:1.9; }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="brandmark">
+  <a class="brandmark" href="verify-authenticity.html">
     <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
     <span class="brand-word">VALENCE</span>
+  </a>
+  <div class="registry-pill">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    AUTHENTICITY REGISTRY
   </div>
-  <a class="back-link" href="verify-authenticity.html">&larr; BACK</a>
 </header>
 
 <main>
@@ -269,6 +310,18 @@
   <div id="result-stage" class="hidden"></div>
 
 </main>
+
+<footer>
+  <div>
+    <div class="footer-word">VALENCE</div>
+    <div class="footer-tag">MORE THAN CLOTHING.<br>IT'S A LEGACY.</div>
+  </div>
+  <div class="footer-mark"><img src="valence-logo.png" alt=""></div>
+  <div class="footer-meta">
+    <div>VALENCEHQ.COM</div>
+    <div>© 2026 VALENCE. ALL RIGHTS RESERVED.</div>
+  </div>
+</footer>
 
 <script>
   const scanStage = document.getElementById('scan-stage');
@@ -372,14 +425,14 @@
 
   // --- Look up the scanned code in Supabase and render the reveal ---
   // NOTE: adjust table/column names to match your schema. Expected columns
-  // on `products`: qr_code, product_name, batch_number, manufactured_at,
-  // item_number, edition_name, edition_total, owner_name, registered_at,
-  // security_hash.
+  // on `products`: qr_code, product_name, collection_name, batch_number,
+  // manufactured_at, item_number, edition_name, edition_total, image_url,
+  // owner_name, registered_at, security_hash.
   async function verifyCode(code, rawScanned) {
     showStage(lookupStage);
 
     if (typeof supabaseClient === 'undefined') {
-      renderResult(false, { code }, 'Verification service is not configured.', rawScanned);
+      renderResult('invalid', { code }, 'Verification service is not configured.', rawScanned);
       return;
     }
 
@@ -400,8 +453,40 @@
       }
     } catch (err) {
       console.error('Verification lookup failed', err);
-      renderResult(false, { code }, 'Could not reach the verification service. Please try again.', rawScanned);
+      renderResult('invalid', { code }, 'Could not reach the verification service. Please try again.', rawScanned);
     }
+  }
+
+  // ---------------- Icon set (all inline, single-color via currentColor) ----------------
+  const icons = {
+    shieldCheck: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    person: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-4 4-6 7-6s5.8 2 7 6" stroke-linecap="round"/></svg>',
+    package: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4.5 7.5L12 12l7.5-4.5M12 12v9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="5.5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4" stroke-linecap="round"/></svg>',
+    ribbon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="9" r="5.2"/><path d="M9 13.5L7.5 21l4.5-2.5 4.5 2.5-1.5-7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    shieldStar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M12 8.3l1 2 2.2.3-1.6 1.5.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.5 2.2-.3z" stroke-linejoin="round"/></svg>',
+    lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="10.5" width="14" height="9" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>',
+    scan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20 16l-5-4.5-4 3.5-2.5-2L3.5 17" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5" stroke-linecap="round"/></svg>',
+    dot: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M12 9v7" stroke-linecap="round"/><circle cx="12" cy="18.4" r="0.6" fill="currentColor" stroke="none"/></svg>',
+  };
+
+  function heroRingSvg(kind) {
+    // kind: 'valid' | 'unclaimed' | 'invalid'
+    const stroke = kind === 'valid' ? 'var(--platinum)' : kind === 'invalid' ? 'var(--garnet)' : 'var(--champagne-bright)';
+    const mark = kind === 'valid'
+      ? '<path class="hero-mark" d="M35 53l11 11 21-24" stroke-linecap="round" stroke-linejoin="round"/>'
+      : kind === 'invalid'
+        ? '<path class="hero-mark" d="M40 40l22 22M62 40l-22 22" stroke-linecap="round"/>'
+        : '<path class="hero-mark" d="M52 34v23" stroke-linecap="round"/><circle cx="52" cy="65" r="2" fill="' + stroke + '" stroke="none"/>';
+    return `
+      <svg class="hero-ring" viewBox="0 0 104 104" fill="none" stroke="${stroke}" stroke-width="2">
+        ${mark}
+        <circle cx="52" cy="52" r="42" stroke-width="1.4" opacity="0.9"/>
+      </svg>
+    `;
   }
 
   function renderResult(status, data, message, rawScanned) {
@@ -409,135 +494,137 @@
 
     const valid = status === 'valid';
     const unclaimed = status === 'unclaimed';
+    const invalid = !valid && !unclaimed;
 
     const itemName = data.product_name || 'Valence Item';
-    const editionName = data.edition_name;
+    const collectionName = data.collection_name;
+    const editionName = data.edition_name; // e.g. "Founder Edition"
     const editionTotal = data.edition_total;
     const itemNumber = data.item_number || data.code;
-    const editionText = editionName
-      ? `${editionName}${editionTotal ? ` · ${itemNumber} of ${editionTotal}` : ''}`
-      : (data.batch_number ? `Batch ${data.batch_number}` : null);
+    const editionBadge = editionTotal
+      ? `#${String(itemNumber).padStart(3, '0')} / ${editionTotal}`
+      : (itemNumber ? `#${itemNumber}` : null);
 
-    const sealSvg = valid ? sealValidSvg() : (unclaimed ? sealUnclaimedSvg() : sealInvalidSvg());
-    const verdictClass = valid ? 'valid' : (unclaimed ? 'unclaimed' : 'invalid');
-    const verdictText = valid
-      ? 'Authentic Product — Verified'
-      : (unclaimed ? 'Confirm Product For Authenticity' : 'Not Verified');
-    const verdictSub = valid
-      ? 'MATCHED AGAINST VALENCE REGISTRY'
-      : (unclaimed ? 'GENUINE ITEM · NOT YET CONFIRMED' : 'NO REGISTRY MATCH');
+    const heroKind = valid ? 'valid' : (unclaimed ? 'unclaimed' : 'invalid');
+    const heroTitle = valid ? 'AUTHENTIC' : (unclaimed ? 'UNCONFIRMED' : 'NOT VERIFIED');
+    const heroSub = valid ? 'VERIFIED BY VALENCE' : (unclaimed ? 'AWAITING CUSTOMER CONFIRMATION' : 'NO REGISTRY MATCH');
 
     let html = `
-      <div class="seal-wrap">
-        ${sealSvg}
-        <div class="verdict ${verdictClass}">${verdictText}</div>
-        <div class="verdict-sub">${verdictSub}</div>
-      </div>
+      <div class="hero">
+        <div class="hero-ring-wrap ${heroKind}">${heroRingSvg(heroKind)}</div>
+        <div class="hero-title ${heroKind}">${heroTitle}</div>
+        <div class="hero-sub">${heroSub}</div>
     `;
 
     if (valid || unclaimed) {
-      html += `<div class="item-name">${escapeHtml(itemName)}</div>`;
-      if (editionText) html += `<div class="edition-pill">${escapeHtml(editionText)}</div>`;
+      html += `
+        <div class="hero-divider"></div>
+        <div class="hero-product-name">${escapeHtml(itemName)}</div>
+      `;
+      if (editionName) html += `<div class="hero-tier">${escapeHtml(editionName.toUpperCase())}</div>`;
+      if (editionBadge) html += `<div class="hero-edition-badge">${escapeHtml(editionBadge)}</div>`;
+      if (collectionName) html += `<div class="hero-collection">${escapeHtml(collectionName.toUpperCase())}</div>`;
     }
 
+    if (unclaimed) {
+      html += `<p class="unclaimed-message">This item hasn't been confirmed yet. Enter the retailer's one-time code to confirm this is an original VALENCE product.</p>`;
+      html += `<a class="claim-btn" href="claim.html?code=${encodeURIComponent(data.code)}">CONFIRM PRODUCT FOR AUTHENTICITY</a>`;
+    } else if (invalid) {
+      html += `<p class="invalid-message">${escapeHtml(message || 'This code could not be verified.')}</p>`;
+    }
+
+    html += `</div>`; // close .hero
+
+    // Product image card (valid + unclaimed only — no product identity for invalid codes)
+    if (valid || unclaimed) {
+      html += `<div class="product-card">`;
+      html += `<div class="product-card-badge">${icons.lock}<span>OFFICIAL PRODUCT</span></div>`;
+      html += `<div class="product-card-watermark">V</div><div class="product-card-ring"></div>`;
+      if (data.image_url) {
+        html += `<img src="${escapeHtml(data.image_url)}" alt="${escapeHtml(itemName)}" />`;
+      } else {
+        html += `<div class="product-card-empty">${icons.image}<span>PHOTO NOT YET UPLOADED</span></div>`;
+      }
+      html += `</div>`;
+    }
+
+    // Authenticity explainer strip
+    const verifyTitle = valid ? 'AUTHENTICITY VERIFIED' : (unclaimed ? 'AWAITING CONFIRMATION' : 'NOT VERIFIED');
+    const verifyDesc = valid
+      ? 'This product has been verified against the official VALENCE registry.'
+      : (unclaimed
+        ? 'This product exists in the VALENCE registry but hasn\u2019t been confirmed as authentic by its owner yet.'
+        : 'This code does not match any record in the VALENCE registry.');
+    const verifyIcon = valid ? icons.shieldCheck : (unclaimed ? icons.dot : icons.x);
+    html += `
+      <div class="verify-panel ${heroKind}">
+        ${verifyIcon}
+        <div>
+          <div class="verify-title">${verifyTitle}</div>
+          <div class="verify-desc">${verifyDesc}</div>
+        </div>
+      </div>
+    `;
+
+    // Two-column data grid
     if (valid) {
       html += `
-        <div class="specs">
-          <div class="specs-label">REGISTRATION</div>
-          <div class="spec-row"><span>REGISTERED OWNER</span><span>${escapeHtml(data.owner_name || '—')}</span></div>
-          <div class="spec-row"><span>REGISTERED ON</span><span>${escapeHtml(formatDate(data.registered_at))}</span></div>
-          <div class="spec-row"><span>ITEM NUMBER</span><span>${escapeHtml(String(itemNumber || '—'))}</span></div>
-          <div class="spec-row"><span>MANUFACTURED</span><span>${escapeHtml(formatDate(data.manufactured_at))}</span></div>
+        <div class="data-grid">
+          <div class="data-item">${icons.shieldCheck}<div><div class="data-label">PRODUCT</div><div class="data-value">${escapeHtml(itemName)}</div></div></div>
+          <div class="data-item">${icons.person}<div><div class="data-label">REGISTERED OWNER</div><div class="data-value">${escapeHtml(data.owner_name || '—')}</div></div></div>
+          <div class="data-item">${icons.package}<div><div class="data-label">COLLECTION</div><div class="data-value">${escapeHtml(collectionName || '—')}</div></div></div>
+          <div class="data-item">${icons.calendar}<div><div class="data-label">REGISTERED ON</div><div class="data-value">${escapeHtml(formatDate(data.registered_at))}</div></div></div>
+          <div class="data-item">${icons.ribbon}<div><div class="data-label">EDITION</div><div class="data-value">${escapeHtml(editionBadge || '—')}</div></div></div>
+          <div class="data-item">${icons.shieldStar}<div><div class="data-label">MANUFACTURED ON</div><div class="data-value">${escapeHtml(formatDate(data.manufactured_at))}</div></div></div>
         </div>
       `;
-
-      if (data.security_hash) {
-        html += `
-          <div class="hash-strip">
-            <div class="hash-label">SECURITY TOKEN</div>
-            <div class="hash-value">${escapeHtml(data.security_hash)}</div>
-          </div>
-        `;
-      }
     } else if (unclaimed) {
       html += `
-        <p class="unclaimed-message">
-          This item hasn't been confirmed yet. Enter the retailer's one-time
-          code to confirm this is an original VALENCE product.
-        </p>
-        <div class="specs">
-          <div class="specs-label">PRODUCT</div>
-          <div class="spec-row"><span>ITEM NUMBER</span><span>${escapeHtml(String(itemNumber || '—'))}</span></div>
-          <div class="spec-row"><span>MANUFACTURED</span><span>${escapeHtml(formatDate(data.manufactured_at))}</span></div>
+        <div class="data-grid">
+          <div class="data-item">${icons.shieldCheck}<div><div class="data-label">PRODUCT</div><div class="data-value">${escapeHtml(itemName)}</div></div></div>
+          <div class="data-item">${icons.package}<div><div class="data-label">COLLECTION</div><div class="data-value">${escapeHtml(collectionName || '—')}</div></div></div>
+          <div class="data-item">${icons.ribbon}<div><div class="data-label">EDITION</div><div class="data-value">${escapeHtml(editionBadge || '—')}</div></div></div>
+          <div class="data-item">${icons.shieldStar}<div><div class="data-label">MANUFACTURED ON</div><div class="data-value">${escapeHtml(formatDate(data.manufactured_at))}</div></div></div>
         </div>
-        <a class="claim-btn" href="claim.html?code=${encodeURIComponent(data.code)}">CONFIRM PRODUCT FOR AUTHENTICITY</a>
       `;
+    }
 
-      if (data.security_hash) {
-        html += `
-          <div class="hash-strip">
-            <div class="hash-label">SECURITY TOKEN</div>
-            <div class="hash-value">${escapeHtml(data.security_hash)}</div>
+    // Security status row (valid + unclaimed only)
+    if (valid || unclaimed) {
+      html += `
+        <div class="security-row">
+          ${icons.shieldCheck}
+          <div class="sec-body">
+            <div class="sec-title">SECURITY STATUS</div>
+            <div class="sec-desc">Protected by VALENCE registry verification${data.security_hash ? ` · token ${escapeHtml(data.security_hash)}` : ''}.</div>
           </div>
-        `;
-      }
-    } else {
-      html += `<p class="invalid-message">${escapeHtml(message || 'This code could not be verified.')}</p>`;
+          <div class="secure-pill"><span class="secure-dot"></span>SECURE</div>
+        </div>
+      `;
+    }
 
-      if (rawScanned) {
-        const codeVal = data.code || '';
-        const charCodes = Array.from(codeVal).map(ch => ch.charCodeAt(0).toString(16).padStart(4, '0')).join(' ');
-        html += `
-          <div class="debug-block">
-            <div class="dt">DEBUG — RAW SCANNED TEXT</div>
-            <div class="dv">${escapeHtml(rawScanned)}</div>
-            <div class="dt">EXTRACTED CODE CHAR CODES (hex)</div>
-            <div class="dv">${escapeHtml(charCodes)}</div>
-          </div>
-        `;
-      }
+    if (invalid && rawScanned) {
+      const codeVal = data.code || '';
+      const charCodes = Array.from(codeVal).map(ch => ch.charCodeAt(0).toString(16).padStart(4, '0')).join(' ');
+      html += `
+        <div class="debug-block">
+          <div class="dt">DEBUG — RAW SCANNED TEXT</div>
+          <div class="dv">${escapeHtml(rawScanned)}</div>
+          <div class="dt">EXTRACTED CODE CHAR CODES (hex)</div>
+          <div class="dv">${escapeHtml(charCodes)}</div>
+        </div>
+      `;
     }
 
     html += `
       <div class="action-row">
-        <button class="scan-again" id="scan-again-btn">SCAN ANOTHER</button>
-        <a class="dash-link" href="dashboard.html">DASHBOARD</a>
+        <button class="scan-again" id="scan-again-btn">${icons.scan}SCAN ANOTHER</button>
+        <a class="dash-link" href="dashboard.html">VIEW DASHBOARD${icons.arrow}</a>
       </div>
     `;
 
     resultStage.innerHTML = html;
     document.getElementById('scan-again-btn').addEventListener('click', startScan);
-  }
-
-  function sealValidSvg() {
-    return `
-      <svg class="seal valid" viewBox="0 0 104 104" fill="none">
-        <circle class="seal-ring" cx="52" cy="52" r="45" stroke="var(--platinum)" stroke-width="1.25" opacity="0.9"/>
-        <circle cx="52" cy="52" r="38" fill="var(--platinum-glow)"/>
-        <path class="seal-check" d="M36 53l11 11 21-23" stroke="var(--platinum)" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    `;
-  }
-
-  function sealUnclaimedSvg() {
-    return `
-      <svg class="seal unclaimed" viewBox="0 0 104 104" fill="none">
-        <circle class="seal-ring" cx="52" cy="52" r="45" stroke="var(--champagne-bright)" stroke-width="1.25" opacity="0.9"/>
-        <circle cx="52" cy="52" r="38" fill="rgba(203,185,141,0.09)"/>
-        <path class="seal-dot" d="M52 35v21" stroke="var(--champagne-bright)" stroke-width="2.75" stroke-linecap="round"/>
-        <circle cx="52" cy="65" r="1.8" fill="var(--champagne-bright)"/>
-      </svg>
-    `;
-  }
-
-  function sealInvalidSvg() {
-    return `
-      <svg class="seal invalid" viewBox="0 0 104 104" fill="none">
-        <circle class="seal-ring" cx="52" cy="52" r="45" stroke="var(--garnet)" stroke-width="1.25" opacity="0.9"/>
-        <circle cx="52" cy="52" r="38" fill="var(--garnet-glow)"/>
-        <path class="seal-x" d="M42 42l20 20M62 42l-20 20" stroke="var(--garnet)" stroke-width="2.75" stroke-linecap="round"/>
-      </svg>
-    `;
   }
 
   // --- Entry point ---
