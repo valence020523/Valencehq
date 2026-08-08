@@ -47,6 +47,7 @@
   }
   input.otp-input{ font-family:var(--mono); font-size:20px; letter-spacing:0.25em; text-align:center; }
   input:focus{ outline:none; border-color:var(--gold); }
+  input[readonly]{ color:var(--gold-bright); font-family:var(--mono); font-size:12.5px; background:rgba(255,255,255,0.02); }
 
   .btn{
     margin-top:22px; width:100%; font-size:13px; font-weight:700; letter-spacing:0.03em; color:var(--black);
@@ -127,12 +128,12 @@
   <!-- Step 2: confirm + register (serial + name) -->
   <div class="step" id="step-register">
     <h1>Register This Product</h1>
-    <p class="sub">Enter the serial number printed on the item's tag and your name to complete registration.</p>
+    <p class="sub">Enter the serial number printed on the item's tag to complete registration to your account.</p>
     <div class="panel">
       <label for="item_number_input">SERIAL NUMBER</label>
       <input type="text" id="item_number_input" placeholder="VLC-SN-XXXXXXXX" />
-      <label for="owner_name_input">YOUR NAME</label>
-      <input type="text" id="owner_name_input" placeholder="John Chibueke" />
+      <label for="owner_name_input">REGISTERING AS</label>
+      <input type="text" id="owner_name_input" readonly />
       <button class="btn" id="register-btn">REGISTER TO ME</button>
       <button class="btn-secondary" id="cancel-register-btn" type="button">CANCEL</button>
       <div class="msg" id="register-msg"></div>
@@ -187,6 +188,7 @@
   }
 
   let product = null;
+  let accountName = null;
 
   async function init() {
     if (!code) {
@@ -206,9 +208,16 @@
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (!session) {
       const returnTo = `claim.html${window.location.search}`;
-      window.location.href = `index.html?redirect=${encodeURIComponent(returnTo)}`;
+      window.location.href = `login.html?redirect=${encodeURIComponent(returnTo)}`;
       return;
     }
+
+    // Your account only has a username (signup collects no separate "name"
+    // field), so that's what gets stamped as owner_name — no free-text
+    // entry needed at claim time.
+    const meta = session.user.user_metadata || {};
+    accountName = meta.username || (session.user.email ? session.user.email.split('@')[0] : 'Member');
+    document.getElementById('owner_name_input').value = accountName;
 
     try {
       const { data, error } = await supabaseClient
@@ -303,18 +312,13 @@
   document.getElementById('register-btn').addEventListener('click', async () => {
     const registerMsg = document.getElementById('register-msg');
     const itemNumber = document.getElementById('item_number_input').value.trim();
-    const ownerName = document.getElementById('owner_name_input').value.trim();
+    const ownerName = accountName;
     const otp = document.getElementById('step-register').dataset.otp;
     registerMsg.textContent = '';
     registerMsg.className = 'msg';
 
     if (!itemNumber) {
       registerMsg.textContent = 'Enter the serial number printed on the tag.';
-      registerMsg.classList.add('error');
-      return;
-    }
-    if (!ownerName) {
-      registerMsg.textContent = 'Enter your name.';
       registerMsg.classList.add('error');
       return;
     }
