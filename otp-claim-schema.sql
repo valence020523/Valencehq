@@ -150,6 +150,9 @@ alter table public.products add column if not exists assigned_retailer_id uuid r
 --   on the verification page rather than a broken image.
 alter table public.products add column if not exists collection_name text;
 alter table public.products add column if not exists image_url text;
+alter table public.products add column if not exists size text;
+alter table public.products add column if not exists color text;
+alter table public.products add column if not exists release_date date;
 
 -- Admin needs UPDATE on products for the new "Assign Serial & Retailer"
 -- panel in verifyadmin.html (previously the admin panel only ever inserted

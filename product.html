@@ -6,7 +6,7 @@
 <title>Verifying — VALENCE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500;1,600&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js?v=2"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -17,33 +17,50 @@
     --gold:var(--champagne); --gold-bright:var(--champagne-bright);
     --platinum:#d7dade; --platinum-dim:#9aa1a8; --platinum-glow:rgba(215,218,222,0.14);
     --garnet:#b9847a; --garnet-dim:#8c6058; --garnet-glow:rgba(185,132,122,0.14);
-    --secure-green:#7fae8f;
-    --panel:rgba(255,255,255,0.025); --panel-solid:#0b0d12;
+    --mint:#8fd6ac; --mint-dim:#6fa889;
+    --panel:rgba(255,255,255,0.025); --panel-solid:#0b0d12; --panel-raised:#0e1015;
     --border:rgba(255,255,255,0.08); --hairline:rgba(203,185,141,0.18);
+    --hero-border:rgba(203,185,141,0.32);
     --text:#f3f1ea; --text-dim:#8b93a1; --text-dimmer:#565f6d;
     --mono:'JetBrains Mono',monospace; --sans:'Inter','Segoe UI',system-ui,sans-serif;
-    --serif:'Cormorant Garamond',Georgia,serif;
+    --serif:'Cormorant Garamond',Georgia,serif; --script:'Dancing Script',cursive;
   }
   *{box-sizing:border-box;}
   html,body{ height:100%; }
   body{ margin:0; background:var(--black); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
   a{ color:inherit; text-decoration:none; }
   svg{ display:block; }
+  button{ font-family:inherit; }
 
   header{
     display:flex; align-items:center; justify-content:space-between; padding:16px 22px;
     border-bottom:1px solid var(--border); background:linear-gradient(180deg,var(--navy-900),var(--black));
-    position:sticky; top:0; z-index:20;
+    position:sticky; top:0; z-index:20; gap:10px;
   }
-  .brandmark{ display:flex; align-items:center; gap:10px; }
+  .brandmark{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
   .logo-chip img{ display:block; height:26px; width:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
   .brand-word{ font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:13px; }
+
   .registry-pill{
-    display:flex; align-items:center; gap:7px; font-family:var(--mono); font-size:9.5px;
-    letter-spacing:0.12em; color:var(--champagne-bright); border:1px solid var(--hairline);
-    border-radius:999px; padding:7px 12px; white-space:nowrap;
+    display:flex; align-items:center; gap:8px; border:1px solid var(--hairline);
+    border-radius:999px; padding:7px 12px;
   }
-  .registry-pill svg{ width:12px; height:12px; flex-shrink:0; }
+  .registry-pill svg{ width:14px; height:14px; flex-shrink:0; color:var(--champagne-bright); }
+  .registry-pill-text{ line-height:1.35; }
+  .registry-pill-title{ font-family:var(--mono); font-size:9.5px; letter-spacing:0.1em; color:var(--champagne-bright); font-weight:600; }
+  .registry-pill-sub{ font-family:var(--mono); font-size:7.5px; letter-spacing:0.14em; color:var(--text-dimmer); }
+
+  .owner-pill{ display:flex; align-items:center; gap:9px; }
+  .owner-avatar{
+    width:32px; height:32px; border-radius:50%; flex-shrink:0;
+    background:linear-gradient(150deg,var(--champagne),var(--bronze));
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif); font-weight:700; font-size:12.5px; color:var(--black);
+  }
+  .owner-pill-text{ line-height:1.3; text-align:right; }
+  .owner-pill-title{ font-family:var(--mono); font-size:8.5px; letter-spacing:0.1em; color:var(--champagne-bright); font-weight:600; }
+  .owner-pill-name{ font-family:var(--serif); font-size:13px; font-weight:600; color:var(--text); }
+  .owner-pill svg{ width:11px; height:11px; color:var(--text-dimmer); flex-shrink:0; }
 
   main{ max-width:480px; margin:0 auto; padding:0 0 40px; min-height:calc(100vh - 63px); }
 
@@ -109,139 +126,167 @@
   #lookup-stage p{ font-family:var(--mono); font-size:12.5px; color:var(--text-dim); }
 
   /* ---------------- Result / reveal stage ---------------- */
-  #result-stage{ padding:38px 20px 0; }
+  #result-stage{ padding:20px 18px 0; }
   #result-stage.hidden{ display:none; }
 
-  /* ---- Hero: ring, verdict headline, product identity ---- */
-  .hero{ display:flex; flex-direction:column; align-items:center; text-align:center; }
-  .hero-ring-wrap{ width:88px; height:88px; margin-bottom:20px; }
-  .hero-ring{ transform-origin:52px 52px; }
-  .hero-ring-wrap.valid svg{ filter:drop-shadow(0 0 10px var(--platinum-glow)); }
-  .hero-ring-wrap.unclaimed svg{ filter:drop-shadow(0 0 10px rgba(203,185,141,0.28)); }
-  .hero-ring-wrap.invalid svg{ filter:drop-shadow(0 0 10px var(--garnet-glow)); }
-  .hero-ring-wrap svg{ animation:ring-in 0.8s cubic-bezier(.2,.8,.2,1) both; }
-  .hero-mark{ stroke-dasharray:40; stroke-dashoffset:40; animation:check-in 0.4s 0.55s ease-out forwards; }
-  @keyframes ring-in{ from{ opacity:0; transform:scale(0.7); } to{ opacity:1; transform:scale(1); } }
-  @keyframes check-in{ to{ stroke-dashoffset:0; } }
+  /* ================= HERO CARD (both branches) ================= */
+  .hero-card{
+    border:1px solid var(--hero-border); border-radius:18px; padding:26px 20px;
+    background:radial-gradient(120% 100% at 50% 0%, rgba(203,185,141,0.05), transparent 55%), var(--panel-solid);
+  }
+  .hero-eyebrow{
+    font-family:var(--mono); font-size:10px; letter-spacing:0.2em; font-weight:600; margin-bottom:8px;
+  }
+  .hero-eyebrow.mint{ color:var(--mint); }
+  .hero-headline{
+    font-family:var(--serif); font-weight:600; font-size:34px; line-height:1.08; letter-spacing:0.01em;
+    text-transform:uppercase;
+  }
+  .hero-headline .accent{ color:var(--champagne-bright); display:block; }
+  .hero-body{ font-size:13px; line-height:1.65; color:var(--text-dim); margin-top:14px; max-width:34ch; }
+  .hero-divider{ width:34px; height:1px; background:var(--hairline); margin:18px 0; }
 
-  .hero-title{
-    font-family:var(--sans); font-weight:700; font-size:22px;
-    letter-spacing:0.34em; text-indent:0.34em; text-transform:uppercase;
-  }
-  .hero-title.valid{ color:var(--platinum); }
-  .hero-title.unclaimed{ color:var(--champagne-bright); }
-  .hero-title.invalid{ color:var(--garnet); }
-  .hero-sub{
-    font-family:var(--mono); font-size:10px; letter-spacing:0.2em; color:var(--text-dimmer);
-    margin-top:8px; font-weight:500;
-  }
-  .hero-divider{ width:34px; height:1px; background:var(--hairline); margin:22px 0; }
+  .hero-ring-row{ display:flex; align-items:center; gap:16px; margin-bottom:16px; }
+  .hero-ring{ width:64px; height:64px; flex-shrink:0; filter:drop-shadow(0 0 8px rgba(203,185,141,0.25)); }
 
-  .hero-product-name{
-    font-family:var(--serif); font-weight:600; font-size:32px; letter-spacing:0.02em;
-    text-transform:uppercase; line-height:1.15;
-  }
-  .hero-tier{
-    font-family:var(--mono); font-size:11px; letter-spacing:0.18em; color:var(--champagne-bright);
-    margin-top:10px; font-weight:500;
-  }
-  .hero-edition-badge{
-    font-family:var(--mono); font-size:13px; font-weight:700; letter-spacing:0.08em; color:var(--champagne-bright);
-    border:1px solid var(--hairline); border-radius:6px; padding:8px 18px; margin-top:18px;
-  }
-  .hero-collection{
-    font-family:var(--mono); font-size:10px; letter-spacing:0.16em; color:var(--text-dimmer);
-    margin-top:14px; font-weight:500;
-  }
+  .hero-signature{ display:flex; flex-direction:column; margin-top:22px; }
+  .hero-signature-word{ font-family:var(--script); font-size:30px; color:var(--champagne-bright); line-height:1; }
+  .hero-signature-caption{ font-family:var(--mono); font-size:9px; letter-spacing:0.16em; color:var(--text-dimmer); margin-top:6px; }
 
-  .unclaimed-message, .invalid-message{
-    text-align:center; font-size:13px; line-height:1.65; color:var(--text-dim); margin:24px 0 0; padding:0 8px;
+  .hero-info-box{
+    display:flex; gap:11px; align-items:flex-start; border:1px solid var(--hairline); border-radius:10px;
+    padding:13px 14px; margin-top:18px;
   }
-  .claim-btn{
-    display:block; text-align:center; font-size:12.5px; font-weight:600; letter-spacing:0.09em; color:var(--black);
-    background:var(--champagne-bright); border:none; border-radius:999px; padding:14px; cursor:pointer; font-family:var(--sans);
-    margin-top:22px; text-transform:uppercase;
-  }
-  .claim-btn:hover{ background:var(--champagne); }
+  .hero-info-box svg{ width:15px; height:15px; flex-shrink:0; margin-top:1px; color:var(--champagne-bright); }
+  .hero-info-box span{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.06em; line-height:1.6; color:var(--champagne-bright); font-weight:500; }
+  .hero-note{ font-size:12px; line-height:1.6; color:var(--text-dimmer); margin-top:14px; }
 
-  /* ---- Product image card ---- */
+  /* ---- product image + overlay name card ---- */
   .product-card{
-    position:relative; margin-top:32px; border-radius:16px; overflow:hidden;
-    border:1px solid var(--border); background:var(--panel-solid); aspect-ratio:4/3.4;
+    position:relative; margin-top:22px; border-radius:14px; overflow:hidden;
+    border:1px solid var(--border); background:var(--panel-solid); aspect-ratio:1/1.05;
   }
   .product-card-watermark{
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    font-family:var(--serif); font-weight:600; font-size:220px; color:rgba(255,255,255,0.025);
+    font-family:var(--serif); font-weight:600; font-size:210px; color:rgba(255,255,255,0.025);
     line-height:1; user-select:none; pointer-events:none;
   }
   .product-card-ring{
-    position:absolute; top:50%; right:8%; width:150px; height:150px; transform:translateY(-50%);
-    border:1px solid rgba(203,185,141,0.08); border-radius:50%; pointer-events:none;
+    position:absolute; top:50%; right:6%; width:160px; height:160px; transform:translateY(-50%);
+    border:1px solid rgba(203,185,141,0.09); border-radius:50%; pointer-events:none;
   }
-  .product-card-ring::before{
-    content:''; position:absolute; inset:14px; border:1px solid rgba(203,185,141,0.06); border-radius:50%;
-  }
+  .product-card-ring::before{ content:''; position:absolute; inset:16px; border:1px solid rgba(203,185,141,0.07); border-radius:50%; }
   .product-card img{ position:relative; width:100%; height:100%; object-fit:cover; display:block; }
   .product-card-empty{
     position:relative; width:100%; height:100%; display:flex; align-items:center; justify-content:center;
     flex-direction:column; gap:10px;
   }
   .product-card-empty svg{ width:34px; height:34px; opacity:0.35; }
-  .product-card-empty span{
-    position:relative; font-family:var(--mono); font-size:10px; letter-spacing:0.14em; color:var(--text-dimmer);
-  }
+  .product-card-empty span{ position:relative; font-family:var(--mono); font-size:10px; letter-spacing:0.14em; color:var(--text-dimmer); }
   .product-card-badge{
-    position:absolute; top:14px; left:14px; z-index:2; display:flex; align-items:center; gap:7px;
-    font-family:var(--mono); font-size:9.5px; letter-spacing:0.1em; color:var(--champagne-bright);
-    background:rgba(5,6,8,0.55); backdrop-filter:blur(4px); border-radius:8px; padding:7px 10px;
+    position:absolute; top:12px; right:12px; z-index:2; display:flex; align-items:center; gap:6px;
+    font-family:var(--mono); font-size:9.5px; letter-spacing:0.08em; color:var(--mint);
+    background:rgba(5,6,8,0.6); backdrop-filter:blur(4px); border-radius:8px; padding:6px 10px;
   }
   .product-card-badge svg{ width:12px; height:12px; }
-
-  /* ---- Authenticity-verified explainer strip ---- */
-  .verify-panel{
-    display:flex; gap:14px; align-items:flex-start; margin-top:24px; padding:18px 4px 22px;
-    border-bottom:1px solid var(--hairline);
+  .product-card-name{
+    position:absolute; left:10px; right:10px; bottom:10px; z-index:2;
+    border:1px solid var(--hero-border); border-radius:10px; padding:14px 16px;
+    background:rgba(5,6,8,0.72); backdrop-filter:blur(6px); text-align:center;
   }
-  .verify-panel svg{ width:22px; height:22px; flex-shrink:0; margin-top:2px; }
-  .verify-panel.valid svg{ color:var(--platinum); }
-  .verify-panel.unclaimed svg{ color:var(--champagne-bright); }
-  .verify-panel.invalid svg{ color:var(--garnet); }
-  .verify-title{
-    font-family:var(--mono); font-size:11px; letter-spacing:0.12em; font-weight:600; margin-bottom:5px;
+  .product-card-name .pname{ font-family:var(--serif); font-weight:600; font-size:21px; text-transform:uppercase; line-height:1.15; }
+  .product-card-name .ptier{ font-family:var(--mono); font-size:9.5px; letter-spacing:0.14em; color:var(--champagne-bright); margin-top:6px; font-weight:600; }
+  .product-card-name .pedition{
+    display:inline-block; margin-top:10px; font-family:var(--mono); font-size:12px; font-weight:700;
+    letter-spacing:0.06em; color:var(--champagne-bright); border:1px solid var(--hairline); border-radius:6px; padding:5px 14px;
   }
-  .verify-panel.valid .verify-title{ color:var(--platinum); }
-  .verify-panel.unclaimed .verify-title{ color:var(--champagne-bright); }
-  .verify-panel.invalid .verify-title{ color:var(--garnet); }
-  .verify-desc{ font-size:12.5px; line-height:1.6; color:var(--text-dim); }
 
-  /* ---- Two-column icon data grid ---- */
-  .data-grid{
-    display:grid; grid-template-columns:1fr 1fr; column-gap:18px;
-    padding:20px 0; border-bottom:1px solid var(--hairline);
+  /* ================= DETAIL PANELS (shared building blocks) ================= */
+  .panel-box{ border:1px solid var(--border); border-radius:14px; padding:18px 16px; background:var(--panel-raised); }
+  .panel-box + .panel-box{ margin-top:14px; }
+  .panel-box-header{ display:flex; align-items:center; gap:9px; margin-bottom:14px; }
+  .panel-box-header svg{ width:15px; height:15px; color:var(--champagne-bright); flex-shrink:0; }
+  .panel-box-header span{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; font-weight:600; color:var(--champagne-bright); }
+
+  .detail-row{ display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+  .detail-row:last-child{ border-bottom:none; padding-bottom:2px; }
+  .detail-row svg{ width:14px; height:14px; color:var(--bronze); flex-shrink:0; margin-top:2px; }
+  .detail-row-body{ flex:1; display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .detail-label{ font-size:11px; color:var(--text-dimmer); }
+  .detail-value{ font-family:var(--serif); font-size:15px; font-weight:600; color:var(--text); text-align:right; }
+  .detail-value.mono{ font-family:var(--mono); font-size:12px; letter-spacing:0.03em; }
+  .detail-value.mint{ color:var(--mint); }
+  .detail-value.status{ display:flex; align-items:center; gap:6px; }
+  .status-dot{ width:6px; height:6px; border-radius:50%; background:var(--mint); flex-shrink:0; }
+
+  /* icon-grid variant (Product Details, Your Product Details) */
+  .icon-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px 14px; }
+  .icon-grid-item svg{ width:16px; height:16px; color:var(--bronze); margin-bottom:8px; }
+  .icon-grid-label{ font-family:var(--mono); font-size:9px; letter-spacing:0.1em; color:var(--text-dimmer); margin-bottom:4px; }
+  .icon-grid-value{ font-family:var(--serif); font-size:15px; font-weight:600; color:var(--text); }
+
+  .panel-desc{ font-size:12px; line-height:1.6; color:var(--text-dim); }
+  .panel-inner-divider{ height:1px; background:rgba(255,255,255,0.06); margin:14px 0; }
+
+  .founder-badge-icon{
+    width:38px; height:38px; border-radius:50%; border:1px solid var(--hero-border);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    background:radial-gradient(circle, rgba(203,185,141,0.12), transparent 70%);
   }
-  .data-item{ display:flex; gap:10px; align-items:flex-start; padding:9px 0; }
-  .data-item svg{ width:15px; height:15px; flex-shrink:0; margin-top:3px; color:var(--bronze); }
-  .data-label{ font-family:var(--mono); font-size:9px; letter-spacing:0.12em; color:var(--text-dimmer); margin-bottom:3px; }
-  .data-value{ font-family:var(--serif); font-size:15px; font-weight:600; color:var(--text); line-height:1.3; }
+  .founder-badge-icon svg{ width:17px; height:17px; color:var(--champagne-bright); }
+  .founder-heading{ font-family:var(--serif); font-size:19px; font-weight:600; margin:8px 0 6px; }
 
-  /* ---- Security status row ---- */
-  .security-row{ display:flex; align-items:center; gap:12px; padding:18px 0; }
-  .security-row svg{ width:18px; height:18px; flex-shrink:0; color:var(--champagne-bright); }
-  .security-row .sec-body{ flex:1; }
-  .sec-title{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; font-weight:600; color:var(--text); margin-bottom:3px; }
-  .sec-desc{ font-size:11.5px; color:var(--text-dimmer); line-height:1.5; }
-  .secure-pill{
-    display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:9.5px; letter-spacing:0.1em;
-    color:var(--secure-green); border:1px solid rgba(127,174,143,0.3); border-radius:999px; padding:6px 11px;
-    white-space:nowrap;
+  .panel-cta{
+    display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:14px;
+    font-family:var(--sans); font-size:11.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--black); background:var(--champagne-bright); border:none; border-radius:999px; padding:12px; cursor:pointer;
   }
-  .secure-dot{ width:5px; height:5px; border-radius:50%; background:var(--secure-green); }
+  .panel-cta:hover{ background:var(--champagne); }
+  .panel-cta svg{ width:12px; height:12px; }
+  .panel-cta.outline{
+    color:var(--champagne-bright); background:transparent; border:1px solid var(--hairline);
+  }
+  .panel-cta.outline:hover{ border-color:var(--champagne); }
 
-  .action-row{ display:flex; gap:10px; margin-top:26px; }
+  /* seal + qr verification panel */
+  .verify-registry-row{ display:flex; align-items:center; gap:16px; }
+  .verify-seal{
+    width:52px; height:52px; border-radius:50%; border:1px solid var(--hero-border); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; background:var(--panel-solid);
+    font-family:var(--serif); font-weight:700; font-size:20px; color:var(--champagne-bright);
+  }
+  .verify-registry-text{ flex:1; }
+  .qr-block{ text-align:center; flex-shrink:0; }
+  .qr-block img{ width:64px; height:64px; border-radius:6px; background:#fff; padding:4px; }
+  .qr-block span{ display:block; margin-top:6px; font-family:var(--mono); font-size:8.5px; letter-spacing:0.08em; color:var(--text-dimmer); }
+
+  .hanger-row{ display:flex; gap:12px; align-items:flex-start; }
+  .hanger-row svg{ width:18px; height:18px; color:var(--champagne-bright); flex-shrink:0; margin-top:2px; }
+
+  /* benefits grid (Genesis exclusive access) */
+  .benefits-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:14px; }
+  .benefit-card{ border:1px solid var(--border); border-radius:10px; padding:14px 12px; }
+  .benefit-card svg{ width:18px; height:18px; color:var(--champagne-bright); margin-bottom:9px; }
+  .benefit-card-title{ font-size:12.5px; font-weight:700; margin-bottom:4px; }
+  .benefit-card-desc{ font-size:10.5px; line-height:1.5; color:var(--text-dimmer); }
+
+  .section-gap{ margin-top:14px; }
+
+  .unclaimed-message, .invalid-message{
+    text-align:center; font-size:13px; line-height:1.65; color:var(--text-dim); margin:14px 0 0; padding:0 4px;
+  }
+  .claim-btn{
+    display:block; text-align:center; font-size:12.5px; font-weight:700; letter-spacing:0.09em; color:var(--black);
+    background:var(--champagne-bright); border:none; border-radius:999px; padding:14px; cursor:pointer; font-family:var(--sans);
+    margin-top:18px; text-transform:uppercase; width:100%;
+  }
+  .claim-btn:hover{ background:var(--champagne); }
+
+  .action-row{ display:flex; gap:10px; margin-top:20px; }
   .scan-again, .dash-link{
     flex:1; display:flex; align-items:center; justify-content:center; gap:7px;
-    text-align:center; font-size:12px; font-weight:600; font-family:var(--sans);
-    letter-spacing:0.1em; text-transform:uppercase; border-radius:999px; padding:13px; cursor:pointer;
+    text-align:center; font-size:11.5px; font-weight:700; font-family:var(--sans);
+    letter-spacing:0.08em; text-transform:uppercase; border-radius:999px; padding:13px; cursor:pointer;
   }
   .scan-again svg, .dash-link svg{ width:13px; height:13px; }
   .scan-again{ color:var(--black); background:var(--champagne-bright); border:1px solid var(--champagne-bright); }
@@ -252,6 +297,16 @@
   .debug-block{ margin-top:20px; padding:12px; border:1px dashed var(--border); border-radius:10px; }
   .debug-block .dt{ font-family:var(--mono); font-size:10.5px; color:var(--text-dimmer); margin-bottom:6px; }
   .debug-block .dv{ font-family:var(--mono); font-size:11px; color:var(--text); word-break:break-all; margin-bottom:8px; }
+
+  /* ---- generic hero for unclaimed / invalid states ---- */
+  .simple-hero{ display:flex; flex-direction:column; align-items:center; text-align:center; padding:16px 4px 0; }
+  .simple-ring-wrap{ width:80px; height:80px; margin-bottom:18px; }
+  .simple-ring-wrap svg{ animation:ring-in 0.8s cubic-bezier(.2,.8,.2,1) both; }
+  .simple-mark{ stroke-dasharray:40; stroke-dashoffset:40; animation:check-in 0.4s 0.55s ease-out forwards; }
+  @keyframes ring-in{ from{ opacity:0; transform:scale(0.7); } to{ opacity:1; transform:scale(1); } }
+  @keyframes check-in{ to{ stroke-dashoffset:0; } }
+  .simple-title{ font-family:var(--sans); font-weight:700; font-size:20px; letter-spacing:0.3em; text-indent:0.3em; text-transform:uppercase; }
+  .simple-sub{ font-family:var(--mono); font-size:10px; letter-spacing:0.18em; color:var(--text-dimmer); margin-top:8px; }
 
   /* ---------------- Site footer ---------------- */
   footer{
@@ -271,9 +326,14 @@
     <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
     <span class="brand-word">VALENCE</span>
   </a>
-  <div class="registry-pill">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    AUTHENTICITY REGISTRY
+  <div id="header-right">
+    <div class="registry-pill">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="registry-pill-text">
+        <div class="registry-pill-title">AUTHENTICITY REGISTRY</div>
+        <div class="registry-pill-sub">SECURE &bull; VERIFIED &bull; TRUSTED</div>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -329,6 +389,9 @@
   const resultStage = document.getElementById('result-stage');
   const scanNote = document.getElementById('scan-note');
   const cancelBtn = document.getElementById('cancel-scan');
+  const headerRight = document.getElementById('header-right');
+
+  const DEFAULT_HEADER_RIGHT = headerRight.innerHTML;
 
   let html5QrCode = null;
   let isScanning = false;
@@ -340,6 +403,7 @@
 
   async function startScan() {
     scanNote.textContent = '';
+    headerRight.innerHTML = DEFAULT_HEADER_RIGHT;
     showStage(scanStage);
     try {
       if (typeof Html5Qrcode === 'undefined') {
@@ -423,11 +487,20 @@
     return div.innerHTML;
   }
 
+  function initials(name) {
+    if (!name) return 'V';
+    return name.trim().split(/\s+/).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+  }
+
+  function isGenesisCollection(collectionName) {
+    return (collectionName || '').toLowerCase().includes('genesis');
+  }
+
   // --- Look up the scanned code in Supabase and render the reveal ---
   // NOTE: adjust table/column names to match your schema. Expected columns
-  // on `products`: qr_code, product_name, collection_name, batch_number,
-  // manufactured_at, item_number, edition_name, edition_total, image_url,
-  // owner_name, registered_at, security_hash.
+  // on `products`: qr_code, product_name, collection_name, image_url, size,
+  // color, batch_number, release_date, manufactured_at, item_number,
+  // edition_name, edition_total, owner_name, registered_at, security_hash.
   async function verifyCode(code, rawScanned) {
     showStage(lookupStage);
 
@@ -464,146 +537,286 @@
     package: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9L12 3z"/><path d="M4.5 7.5L12 12l7.5-4.5M12 12v9" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="5.5" width="16" height="15" rx="2"/><path d="M4 10h16M8 3v4M16 3v4" stroke-linecap="round"/></svg>',
     ribbon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="9" r="5.2"/><path d="M9 13.5L7.5 21l4.5-2.5 4.5 2.5-1.5-7.5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    shieldStar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M12 8.3l1 2 2.2.3-1.6 1.5.4 2.2-2-1.1-2 1.1.4-2.2-1.6-1.5 2.2-.3z" stroke-linejoin="round"/></svg>',
+    tag: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 12.5L12.5 20 4 11.5V4h7.5L20 12.5z" stroke-linejoin="round"/><circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/></svg>',
+    layers: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 4l8 4.5-8 4.5-8-4.5L12 4z" stroke-linejoin="round"/><path d="M4 13l8 4.5 8-4.5M4 17l8 4.5 8-4.5" stroke-linejoin="round"/></svg>',
+    ruler: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="9" width="18" height="6" rx="1.2" transform="rotate(-8 12 12)"/><path d="M7 9.8l.6 2M11 9.3l.6 2M15 8.8l.6 2" stroke-linecap="round"/></svg>',
+    circle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="7.5"/></svg>',
+    hanger: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="5" r="1.4"/><path d="M12 6.4v2M12 8.4c0 0 -1 .3 -1 1.4s2 1.4 2 1.4l7 4.4c.6.4.4 1.4-.3 1.4H4.3c-.7 0-.9-1-.3-1.4l7-4.4c0 0 2-.3 2-1.4s-1-1.4-1-1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="10.5" width="14" height="9" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>',
+    star: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 4.5l2.1 4.4 4.8.6-3.5 3.4.9 4.8-4.3-2.3-4.3 2.3.9-4.8-3.5-3.4 4.8-.6z" stroke-linejoin="round"/></svg>',
+    ticket: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4V8z"/><path d="M14 6v12" stroke-dasharray="2 2"/></svg>',
+    gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="9.5" width="16" height="10" rx="1.2"/><path d="M4 13h16M12 9.5V20" /><path d="M12 9.5c-1.2-3-6-3-6 0M12 9.5c1.2-3 6-3 6 0" stroke-linecap="round"/></svg>',
+    certificate: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="4" width="17" height="12" rx="1.5"/><circle cx="9" cy="17.5" r="2.3"/><path d="M7.2 19.3L6 22l3-1.4 3 1.4-1.2-2.7M7 8h6M7 11h4" stroke-linecap="round"/></svg>',
+    people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="2.6"/><circle cx="17" cy="9" r="2.2"/><path d="M3.5 19c.9-3.2 3-5 5.5-5s4.6 1.8 5.5 5M14.8 14.3c1.8.4 3 1.8 3.7 4.2" stroke-linecap="round"/></svg>',
     scan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="7" height="7" rx="1.2"/><rect x="13" y="4" width="7" height="7" rx="1.2"/><rect x="4" y="13" width="7" height="7" rx="1.2"/><rect x="13" y="13" width="7" height="7" rx="1.2"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5" stroke-linecap="round"/><circle cx="12" cy="8" r="0.7" fill="currentColor" stroke="none"/></svg>',
     image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20 16l-5-4.5-4 3.5-2.5-2L3.5 17" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5" stroke-linecap="round"/></svg>',
     dot: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M12 9v7" stroke-linecap="round"/><circle cx="12" cy="18.4" r="0.6" fill="currentColor" stroke="none"/></svg>',
+    chevronDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   };
 
-  function heroRingSvg(kind) {
-    // kind: 'valid' | 'unclaimed' | 'invalid'
+  function simpleRingSvg(kind) {
     const stroke = kind === 'valid' ? 'var(--platinum)' : kind === 'invalid' ? 'var(--garnet)' : 'var(--champagne-bright)';
     const mark = kind === 'valid'
-      ? '<path class="hero-mark" d="M35 53l11 11 21-24" stroke-linecap="round" stroke-linejoin="round"/>'
+      ? '<path class="simple-mark" d="M35 53l11 11 21-24" stroke-linecap="round" stroke-linejoin="round"/>'
       : kind === 'invalid'
-        ? '<path class="hero-mark" d="M40 40l22 22M62 40l-22 22" stroke-linecap="round"/>'
-        : '<path class="hero-mark" d="M52 34v23" stroke-linecap="round"/><circle cx="52" cy="65" r="2" fill="' + stroke + '" stroke="none"/>';
-    return `
-      <svg class="hero-ring" viewBox="0 0 104 104" fill="none" stroke="${stroke}" stroke-width="2">
-        ${mark}
-        <circle cx="52" cy="52" r="42" stroke-width="1.4" opacity="0.9"/>
-      </svg>
-    `;
+        ? '<path class="simple-mark" d="M40 40l22 22M62 40l-22 22" stroke-linecap="round"/>'
+        : '<path class="simple-mark" d="M52 34v23" stroke-linecap="round"/><circle cx="52" cy="65" r="2" fill="' + stroke + '" stroke="none"/>';
+    return `<svg viewBox="0 0 104 104" fill="none" stroke="${stroke}" stroke-width="2">${mark}<circle cx="52" cy="52" r="42" stroke-width="1.4" opacity="0.9"/></svg>`;
   }
 
-  function renderResult(status, data, message, rawScanned) {
-    showStage(resultStage);
+  function qrImageUrl(code) {
+    const verifyUrl = `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, '')}product.html?code=${encodeURIComponent(code)}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=140x140&bgcolor=ffffff&color=050608&margin=0&data=${encodeURIComponent(verifyUrl)}`;
+  }
 
-    const valid = status === 'valid';
-    const unclaimed = status === 'unclaimed';
-    const invalid = !valid && !unclaimed;
+  function productCardMarkup(data, itemName, tierLabel, editionBadge, verifiedBadge) {
+    let html = `<div class="product-card">`;
+    if (verifiedBadge) {
+      html += `<div class="product-card-badge">${icons.shieldCheck}<span>VERIFIED</span></div>`;
+    }
+    html += `<div class="product-card-watermark">V</div><div class="product-card-ring"></div>`;
+    if (data.image_url) {
+      html += `<img src="${escapeHtml(data.image_url)}" alt="${escapeHtml(itemName)}" />`;
+    } else {
+      html += `<div class="product-card-empty">${icons.image}<span>PHOTO NOT YET UPLOADED</span></div>`;
+    }
+    html += `
+      <div class="product-card-name">
+        <div class="pname">${escapeHtml(itemName)}</div>
+        ${tierLabel ? `<div class="ptier">${escapeHtml(tierLabel.toUpperCase())}</div>` : ''}
+        ${editionBadge ? `<div class="pedition">${escapeHtml(editionBadge)}</div>` : ''}
+      </div>
+    `;
+    html += `</div>`;
+    return html;
+  }
 
-    const itemName = data.product_name || 'Valence Item';
-    const collectionName = data.collection_name;
-    const editionName = data.edition_name; // e.g. "Founder Edition"
-    const editionTotal = data.edition_total;
+  function editionBadgeFor(data) {
     const itemNumber = data.item_number || data.code;
-    const editionBadge = editionTotal
-      ? `#${String(itemNumber).padStart(3, '0')} / ${editionTotal}`
-      : (itemNumber ? `#${itemNumber}` : null);
+    if (data.edition_total) {
+      const padded = /^\d+$/.test(String(itemNumber)) ? String(itemNumber).padStart(4, '0') : itemNumber;
+      return `#${padded} / ${data.edition_total}`;
+    }
+    return itemNumber ? `#${itemNumber}` : null;
+  }
 
-    const heroKind = valid ? 'valid' : (unclaimed ? 'unclaimed' : 'invalid');
-    const heroTitle = valid ? 'AUTHENTIC' : (unclaimed ? 'UNCONFIRMED' : 'NOT VERIFIED');
-    const heroSub = valid ? 'VERIFIED BY VALENCE' : (unclaimed ? 'AWAITING CUSTOMER CONFIRMATION' : 'NO REGISTRY MATCH');
+  // ================= Branch A: NOT Genesis collection (valid/registered) =================
+  function renderValidNonGenesis(data) {
+    const itemName = data.product_name || 'Valence Item';
+    const collectionName = data.collection_name || 'Uncategorized';
+    const editionBadge = editionBadgeFor(data);
+
+    headerRight.innerHTML = DEFAULT_HEADER_RIGHT;
 
     let html = `
-      <div class="hero">
-        <div class="hero-ring-wrap ${heroKind}">${heroRingSvg(heroKind)}</div>
-        <div class="hero-title ${heroKind}">${heroTitle}</div>
-        <div class="hero-sub">${heroSub}</div>
+      <div class="hero-card">
+        <div class="hero-ring-row">
+          <svg class="hero-ring" viewBox="0 0 104 104" fill="none" stroke="var(--champagne-bright)" stroke-width="2">
+            <path d="M35 53l11 11 21-24" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="52" cy="52" r="42" stroke-width="1.6" opacity="0.9"/>
+          </svg>
+          <div>
+            <div class="hero-headline" style="font-size:26px;">AUTHENTIC</div>
+            <div class="hero-eyebrow" style="margin:4px 0 0; color:var(--text-dimmer); letter-spacing:0.16em;">VERIFIED BY VALENCE</div>
+          </div>
+        </div>
+        <div class="hero-body">This product is 100% authentic and verified in the VALENCE registry.</div>
+        <div class="hero-divider"></div>
+        <div class="hero-info-box">
+          ${icons.info}
+          <span>THIS PRODUCT IS NOT PART OF THE GENESIS VAULT COLLECTION.</span>
+        </div>
+        <div class="hero-note">You are viewing details for a VALENCE product from a different collection.</div>
+        ${productCardMarkup(data, itemName, collectionName, editionBadge, false)}
+      </div>
+
+      <div class="section-gap">
+        <div class="panel-box">
+          <div class="panel-box-header">${icons.package}<span>PRODUCT DETAILS</span></div>
+          <div class="detail-row">${icons.tag}<div class="detail-row-body"><span class="detail-label">Product</span><span class="detail-value">${escapeHtml(itemName)}</span></div></div>
+          <div class="detail-row">${icons.layers}<div class="detail-row-body"><span class="detail-label">Collection</span><span class="detail-value">${escapeHtml(collectionName)}</span></div></div>
+          <div class="detail-row">${icons.ribbon}<div class="detail-row-body"><span class="detail-label">Edition</span><span class="detail-value">${escapeHtml(editionBadge ? editionBadge.replace('#', '').replace(' / ', ' of ') : '—')}</span></div></div>
+          <div class="detail-row">${icons.ruler}<div class="detail-row-body"><span class="detail-label">Size</span><span class="detail-value">${escapeHtml(data.size || '—')}</span></div></div>
+          <div class="detail-row">${icons.circle}<div class="detail-row-body"><span class="detail-label">Color</span><span class="detail-value">${escapeHtml(data.color || '—')}</span></div></div>
+          <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Release Date</span><span class="detail-value">${escapeHtml(formatDate(data.release_date))}</span></div></div>
+        </div>
+
+        <div class="panel-box">
+          <div class="panel-box-header">${icons.person}<span>REGISTRATION DETAILS</span></div>
+          <div class="detail-row">${icons.person}<div class="detail-row-body"><span class="detail-label">Registered Owner</span><span class="detail-value">${escapeHtml(data.owner_name || '—')}</span></div></div>
+          <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Registered On</span><span class="detail-value">${escapeHtml(formatDate(data.registered_at))}</span></div></div>
+          <div class="detail-row">${icons.shieldCheck}<div class="detail-row-body"><span class="detail-label">Ownership ID</span><span class="detail-value mono mint">${escapeHtml(data.security_hash || '—')}</span></div></div>
+          <div class="detail-row">${icons.shieldCheck}<div class="detail-row-body"><span class="detail-label">Product Status</span><span class="detail-value status"><span class="status-dot"></span>Registered &amp; Verified</span></div></div>
+          <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Manufactured On</span><span class="detail-value">${escapeHtml(formatDate(data.manufactured_at))}</span></div></div>
+        </div>
+
+        <div class="panel-box">
+          <div class="verify-registry-row">
+            <div class="verify-seal">V</div>
+            <div class="verify-registry-text">
+              <div class="panel-box-header" style="margin-bottom:5px;"><span style="color:var(--champagne-bright);">VERIFIED IN THE VALENCE REGISTRY</span></div>
+              <div class="panel-desc">This piece has been verified against the official VALENCE database and confirmed to be an authentic original.</div>
+            </div>
+          </div>
+          <div class="panel-inner-divider"></div>
+          <div class="qr-block" style="margin:0 auto;">
+            <img src="${qrImageUrl(data.code)}" alt="Scan to verify again" />
+            <span>SCAN TO<br>VERIFY AGAIN</span>
+          </div>
+        </div>
+
+        <div class="panel-box">
+          <div class="hanger-row">
+            ${icons.hanger}
+            <div>
+              <div class="panel-box-header" style="margin-bottom:5px;"><span style="color:var(--champagne-bright);">NOT A GENESIS PRODUCT</span></div>
+              <div class="panel-desc">Genesis is our limited Founder Edition collection of the first 100 pieces. This product belongs to another VALENCE collection.</div>
+            </div>
+          </div>
+          <a class="panel-cta outline" href="verify-authenticity.html">LEARN ABOUT GENESIS ${icons.arrow}</a>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="scan-again" id="scan-again-btn">${icons.scan}SCAN ANOTHER PRODUCT</button>
+        <a class="dash-link" href="dashboard.html">VIEW DASHBOARD</a>
+      </div>
+    `;
+    return html;
+  }
+
+  // ================= Branch B: Genesis collection (valid/registered) =================
+  function renderValidGenesis(data) {
+    const itemName = data.product_name || 'Valence Item';
+    const collectionName = data.collection_name || 'Genesis Vault';
+    const editionBadge = editionBadgeFor(data);
+    const tierLabel = data.edition_name || 'Founder Edition';
+    const itemNumber = data.item_number || '—';
+    const founderNumber = /^\d+$/.test(String(itemNumber)) ? String(itemNumber).padStart(3, '0') : itemNumber;
+
+    headerRight.innerHTML = `
+      <div class="owner-pill">
+        <div class="owner-avatar">${escapeHtml(initials(data.owner_name))}</div>
+        <div class="owner-pill-text">
+          <div class="owner-pill-title">FOUNDER #${escapeHtml(founderNumber)}</div>
+          <div class="owner-pill-name">${escapeHtml(data.owner_name || 'Owner')}</div>
+        </div>
+        ${icons.chevronDown}
+      </div>
     `;
 
-    if (valid || unclaimed) {
-      html += `
-        <div class="hero-divider"></div>
-        <div class="hero-product-name">${escapeHtml(itemName)}</div>
-      `;
-      if (editionName) html += `<div class="hero-tier">${escapeHtml(editionName.toUpperCase())}</div>`;
-      if (editionBadge) html += `<div class="hero-edition-badge">${escapeHtml(editionBadge)}</div>`;
-      if (collectionName) html += `<div class="hero-collection">${escapeHtml(collectionName.toUpperCase())}</div>`;
-    }
+    let html = `
+      <div class="hero-card">
+        <div class="hero-eyebrow mint">YOU ARE THE OWNER</div>
+        <div class="hero-headline">AUTHENTIC &amp;<span class="accent">OWNED</span></div>
+        <div class="hero-body">This product is 100% authentic and registered to you.</div>
+        <div class="hero-signature">
+          <div class="hero-signature-word">Valence</div>
+          <div class="hero-signature-caption">VALENCE TEAM</div>
+        </div>
+        ${productCardMarkup(data, itemName, tierLabel, editionBadge, true)}
+      </div>
+
+      <div class="section-gap">
+        <div class="panel-box">
+          <div class="hanger-row" style="margin-bottom:0;">
+            ${icons.lock}
+            <div>
+              <div class="panel-box-header" style="margin-bottom:5px;"><span>OWNERSHIP CERTIFICATE</span></div>
+              <div class="panel-desc">You are the official owner of this piece from the ${escapeHtml(collectionName)}.</div>
+            </div>
+          </div>
+          <div class="panel-inner-divider"></div>
+          <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Registered On</span><span class="detail-value">${escapeHtml(formatDate(data.registered_at))}</span></div></div>
+          <div class="detail-row">${icons.shieldCheck}<div class="detail-row-body"><span class="detail-label">Ownership ID</span><span class="detail-value mono mint">${escapeHtml(data.security_hash || '—')}</span></div></div>
+        </div>
+
+        <div class="panel-box">
+          <div class="founder-badge-icon">${icons.star}</div>
+          <div class="panel-box-header" style="margin:10px 0 0;"><span>FOUNDER STATUS</span></div>
+          <div class="founder-heading">Genesis Founder</div>
+          <div class="panel-desc">As one of the first 100 founders, you are part of VALENCE history.</div>
+          <a class="panel-cta" href="dashboard.html">VIEW FOUNDER BENEFITS ${icons.arrow}</a>
+        </div>
+
+        <div class="panel-box">
+          <div class="panel-box-header"><span>YOUR PRODUCT DETAILS</span></div>
+          <div class="icon-grid">
+            <div class="icon-grid-item">${icons.package}<div class="icon-grid-label">PRODUCT</div><div class="icon-grid-value">${escapeHtml(itemName)}</div></div>
+            <div class="icon-grid-item">${icons.layers}<div class="icon-grid-label">COLLECTION</div><div class="icon-grid-value">${escapeHtml(collectionName)}</div></div>
+            <div class="icon-grid-item">${icons.ribbon}<div class="icon-grid-label">EDITION</div><div class="icon-grid-value">${escapeHtml(editionBadge ? editionBadge.replace('#', '').replace(' / ', ' of ') : '—')}</div></div>
+            <div class="icon-grid-item">${icons.ruler}<div class="icon-grid-label">SIZE</div><div class="icon-grid-value">${escapeHtml(data.size || '—')}</div></div>
+            <div class="icon-grid-item">${icons.circle}<div class="icon-grid-label">COLOR</div><div class="icon-grid-value">${escapeHtml(data.color || '—')}</div></div>
+          </div>
+        </div>
+
+        <div class="panel-box">
+          <div class="panel-box-header"><span>EXCLUSIVE ACCESS</span></div>
+          <div class="panel-desc">As the owner, you unlock exclusive benefits and experiences.</div>
+          <div class="benefits-grid">
+            <div class="benefit-card">${icons.ticket}<div class="benefit-card-title">Event Access</div><div class="benefit-card-desc">Priority access to all VALENCE events.</div></div>
+            <div class="benefit-card">${icons.gift}<div class="benefit-card-title">Founder Rewards</div><div class="benefit-card-desc">Exclusive rewards only for founders.</div></div>
+            <div class="benefit-card">${icons.certificate}<div class="benefit-card-title">Digital Certificate</div><div class="benefit-card-desc">Your official ownership certificate.</div></div>
+            <div class="benefit-card">${icons.people}<div class="benefit-card-title">Founder Community</div><div class="benefit-card-desc">Connect with other VALENCE founders.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <a class="scan-again" href="dashboard.html">${icons.grid}VIEW YOUR DASHBOARD</a>
+        <button class="dash-link" id="scan-again-btn">${icons.scan}SCAN ANOTHER PRODUCT</button>
+      </div>
+    `;
+    return html;
+  }
+
+  // ================= Unclaimed / invalid: simpler shared template =================
+  function renderSimpleState(status, data, message, rawScanned) {
+    headerRight.innerHTML = DEFAULT_HEADER_RIGHT;
+    const unclaimed = status === 'unclaimed';
+    const genesis = isGenesisCollection(data.collection_name);
+    const accent = unclaimed ? (genesis ? 'var(--mint)' : 'var(--champagne-bright)') : 'var(--garnet)';
+    const itemName = data.product_name || 'Valence Item';
+    const editionBadge = editionBadgeFor(data);
+
+    const title = unclaimed ? 'UNCONFIRMED' : 'NOT VERIFIED';
+    const sub = unclaimed ? 'AWAITING CUSTOMER CONFIRMATION' : 'NO REGISTRY MATCH';
+
+    let html = `
+      <div class="simple-hero">
+        <div class="simple-ring-wrap">${simpleRingSvg(unclaimed ? 'unclaimed' : 'invalid')}</div>
+        <div class="simple-title" style="color:${accent};">${title}</div>
+        <div class="simple-sub">${sub}</div>
+    `;
 
     if (unclaimed) {
       html += `<p class="unclaimed-message">This item hasn't been confirmed yet. Enter the retailer's one-time code to confirm this is an original VALENCE product.</p>`;
       html += `<a class="claim-btn" href="claim.html?code=${encodeURIComponent(data.code)}">CONFIRM PRODUCT FOR AUTHENTICITY</a>`;
-    } else if (invalid) {
+    } else {
       html += `<p class="invalid-message">${escapeHtml(message || 'This code could not be verified.')}</p>`;
     }
+    html += `</div>`;
 
-    html += `</div>`; // close .hero
-
-    // Product image card (valid + unclaimed only — no product identity for invalid codes)
-    if (valid || unclaimed) {
-      html += `<div class="product-card">`;
-      html += `<div class="product-card-badge">${icons.lock}<span>OFFICIAL PRODUCT</span></div>`;
-      html += `<div class="product-card-watermark">V</div><div class="product-card-ring"></div>`;
-      if (data.image_url) {
-        html += `<img src="${escapeHtml(data.image_url)}" alt="${escapeHtml(itemName)}" />`;
-      } else {
-        html += `<div class="product-card-empty">${icons.image}<span>PHOTO NOT YET UPLOADED</span></div>`;
-      }
-      html += `</div>`;
-    }
-
-    // Authenticity explainer strip
-    const verifyTitle = valid ? 'AUTHENTICITY VERIFIED' : (unclaimed ? 'AWAITING CONFIRMATION' : 'NOT VERIFIED');
-    const verifyDesc = valid
-      ? 'This product has been verified against the official VALENCE registry.'
-      : (unclaimed
-        ? 'This product exists in the VALENCE registry but hasn\u2019t been confirmed as authentic by its owner yet.'
-        : 'This code does not match any record in the VALENCE registry.');
-    const verifyIcon = valid ? icons.shieldCheck : (unclaimed ? icons.dot : icons.x);
-    html += `
-      <div class="verify-panel ${heroKind}">
-        ${verifyIcon}
-        <div>
-          <div class="verify-title">${verifyTitle}</div>
-          <div class="verify-desc">${verifyDesc}</div>
-        </div>
-      </div>
-    `;
-
-    // Two-column data grid
-    if (valid) {
+    if (unclaimed) {
+      html += `<div class="section-gap">${productCardMarkup(data, itemName, data.edition_name, editionBadge, false)}</div>`;
       html += `
-        <div class="data-grid">
-          <div class="data-item">${icons.shieldCheck}<div><div class="data-label">PRODUCT</div><div class="data-value">${escapeHtml(itemName)}</div></div></div>
-          <div class="data-item">${icons.person}<div><div class="data-label">REGISTERED OWNER</div><div class="data-value">${escapeHtml(data.owner_name || '—')}</div></div></div>
-          <div class="data-item">${icons.package}<div><div class="data-label">COLLECTION</div><div class="data-value">${escapeHtml(collectionName || '—')}</div></div></div>
-          <div class="data-item">${icons.calendar}<div><div class="data-label">REGISTERED ON</div><div class="data-value">${escapeHtml(formatDate(data.registered_at))}</div></div></div>
-          <div class="data-item">${icons.ribbon}<div><div class="data-label">EDITION</div><div class="data-value">${escapeHtml(editionBadge || '—')}</div></div></div>
-          <div class="data-item">${icons.shieldStar}<div><div class="data-label">MANUFACTURED ON</div><div class="data-value">${escapeHtml(formatDate(data.manufactured_at))}</div></div></div>
-        </div>
-      `;
-    } else if (unclaimed) {
-      html += `
-        <div class="data-grid">
-          <div class="data-item">${icons.shieldCheck}<div><div class="data-label">PRODUCT</div><div class="data-value">${escapeHtml(itemName)}</div></div></div>
-          <div class="data-item">${icons.package}<div><div class="data-label">COLLECTION</div><div class="data-value">${escapeHtml(collectionName || '—')}</div></div></div>
-          <div class="data-item">${icons.ribbon}<div><div class="data-label">EDITION</div><div class="data-value">${escapeHtml(editionBadge || '—')}</div></div></div>
-          <div class="data-item">${icons.shieldStar}<div><div class="data-label">MANUFACTURED ON</div><div class="data-value">${escapeHtml(formatDate(data.manufactured_at))}</div></div></div>
-        </div>
-      `;
-    }
-
-    // Security status row (valid + unclaimed only)
-    if (valid || unclaimed) {
-      html += `
-        <div class="security-row">
-          ${icons.shieldCheck}
-          <div class="sec-body">
-            <div class="sec-title">SECURITY STATUS</div>
-            <div class="sec-desc">Protected by VALENCE registry verification${data.security_hash ? ` · token ${escapeHtml(data.security_hash)}` : ''}.</div>
+        <div class="section-gap">
+          <div class="panel-box">
+            <div class="panel-box-header">${icons.package}<span>PRODUCT DETAILS</span></div>
+            <div class="detail-row">${icons.tag}<div class="detail-row-body"><span class="detail-label">Product</span><span class="detail-value">${escapeHtml(itemName)}</span></div></div>
+            <div class="detail-row">${icons.layers}<div class="detail-row-body"><span class="detail-label">Collection</span><span class="detail-value">${escapeHtml(data.collection_name || '—')}</span></div></div>
+            <div class="detail-row">${icons.ribbon}<div class="detail-row-body"><span class="detail-label">Edition</span><span class="detail-value">${escapeHtml(editionBadge ? editionBadge.replace('#', '').replace(' / ', ' of ') : '—')}</span></div></div>
+            <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Manufactured On</span><span class="detail-value">${escapeHtml(formatDate(data.manufactured_at))}</span></div></div>
           </div>
-          <div class="secure-pill"><span class="secure-dot"></span>SECURE</div>
         </div>
       `;
     }
 
-    if (invalid && rawScanned) {
+    if (!unclaimed && rawScanned) {
       const codeVal = data.code || '';
       const charCodes = Array.from(codeVal).map(ch => ch.charCodeAt(0).toString(16).padStart(4, '0')).join(' ');
       html += `
@@ -619,9 +832,21 @@
     html += `
       <div class="action-row">
         <button class="scan-again" id="scan-again-btn">${icons.scan}SCAN ANOTHER</button>
-        <a class="dash-link" href="dashboard.html">VIEW DASHBOARD${icons.arrow}</a>
+        <a class="dash-link" href="dashboard.html">DASHBOARD</a>
       </div>
     `;
+    return html;
+  }
+
+  function renderResult(status, data, message, rawScanned) {
+    showStage(resultStage);
+
+    let html;
+    if (status === 'valid') {
+      html = isGenesisCollection(data.collection_name) ? renderValidGenesis(data) : renderValidNonGenesis(data);
+    } else {
+      html = renderSimpleState(status, data, message, rawScanned);
+    }
 
     resultStage.innerHTML = html;
     document.getElementById('scan-again-btn').addEventListener('click', startScan);
