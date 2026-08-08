@@ -83,40 +83,47 @@
   .info-list{ display:flex; flex-direction:column; }
   .info-row{
     display:flex; align-items:center; justify-content:space-between; padding:16px 4px;
-    border-bottom:1px solid var(--border-soft); cursor:pointer;
+    border-bottom:1px solid var(--border-soft);
   }
   .info-row:last-child{ border-bottom:none; }
-  .info-row:hover .info-value{ color:var(--gold-bright); }
   .info-label{ color:var(--text-dim); font-size:13.5px; font-weight:600; width:150px; flex-shrink:0; }
-  .info-value{ font-size:14.5px; font-weight:600; flex:1; }
-  .info-value input{
-    background:none; border:none; border-bottom:1px solid var(--gold); color:var(--text);
-    font-size:14.5px; font-weight:600; font-family:var(--sans); padding:2px 0; width:100%; outline:none;
-  }
-  .info-chevron{ width:16px; height:16px; color:var(--text-dimmer); flex-shrink:0; }
+  .info-value{ font-size:14.5px; font-weight:600; flex:1; text-align:right; }
 
-  .edit-actions{ display:flex; justify-content:center; margin-top:28px; gap:12px; }
-  .btn-outline{
-    display:inline-flex; align-items:center; gap:8px; background:none; cursor:pointer;
-    border:1px solid var(--gold); color:var(--gold-bright); border-radius:9px; padding:11px 22px;
-    font-size:13.5px; font-weight:700; font-family:var(--sans);
-  }
-  .btn-outline:hover{ background:rgba(203,185,141,0.1); }
-  .btn-outline svg{ width:14px; height:14px; }
-  .btn-solid{
-    display:inline-flex; align-items:center; gap:8px; cursor:pointer; border:1px solid var(--gold);
-    background:var(--gold); color:#1a1608; border-radius:9px; padding:11px 22px;
-    font-size:13.5px; font-weight:700;
-  }
-  .btn-solid:hover{ background:var(--gold-bright); }
-  .btn-ghost{
-    background:none; border:1px solid var(--border); color:var(--text-dim); border-radius:9px;
-    padding:11px 22px; font-size:13.5px; font-weight:700; cursor:pointer;
-  }
-  .btn-ghost:hover{ color:var(--text); border-color:var(--text-dim); }
-
-  .save-msg{ text-align:center; font-size:12.5px; color:var(--green); margin-top:14px; height:14px; }
+  .save-msg{ text-align:center; font-size:12.5px; color:var(--green); margin-top:18px; height:14px; }
   .avatar-file-input{ display:none; }
+
+  /* ---------- mobile hamburger + slide-out sidebar ---------- */
+  .mobile-header{ display:none; }
+  .scrim{
+    position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:25; opacity:0; pointer-events:none;
+    transition:opacity 0.2s ease;
+  }
+  .scrim.open{ opacity:1; pointer-events:auto; }
+
+  @media (max-width:900px){
+    .mobile-header{
+      display:flex; align-items:center; gap:12px; padding:14px 18px;
+      border-bottom:1px solid var(--border-soft); position:sticky; top:0;
+      background:var(--black); z-index:20;
+    }
+    .menu-btn{
+      background:none; border:1px solid var(--border); border-radius:8px; width:34px; height:34px;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); flex-shrink:0;
+    }
+    .menu-btn:hover{ border-color:var(--gold); color:var(--gold-bright); }
+    .menu-btn svg{ width:16px; height:16px; }
+    .mobile-header-title{
+      font-family:var(--serif); font-size:15px; letter-spacing:0.1em; font-weight:600; color:var(--gold-bright);
+    }
+
+    .side-card{ display:none; }
+    .side-card.mobile-open{
+      display:flex; flex-direction:column; position:fixed; top:0; left:0; height:100%; width:78%;
+      max-width:290px; z-index:30; border-radius:0; border-right:1px solid var(--border); border-top:none;
+      border-bottom:none; border-left:none; overflow-y:auto; padding:18px 12px;
+      box-shadow:20px 0 44px rgba(0,0,0,0.55);
+    }
+  }
 
   @media (max-width:900px){
     main.page{ padding:26px 18px 60px; }
@@ -133,15 +140,24 @@
 
 <div id="content" style="display:none;">
 
+  <div class="scrim" id="scrim"></div>
+
+  <header class="mobile-header">
+    <button class="menu-btn" id="menu-btn" aria-label="Open menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <span class="mobile-header-title">VALENCE</span>
+  </header>
+
   <main class="page">
     <h1 class="title">My Profile</h1>
     <p class="subtitle">Manage your account and preferences.</p>
 
     <div class="layout">
-      <aside class="side-card">
+      <aside class="side-card" id="side-card">
         <a href="profile.html" class="side-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Profile</a>
         <a href="orders.html" class="side-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 7h12l-1 14H7L6 7z"/><path d="M9 7V5a3 3 0 016 0v2"/></svg>Orders</a>
-        <a href="collection.html" class="side-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1.5"/><path d="M8 7V5a4 4 0 018 0v2"/></svg>My Products</a>
+        <a href="collection.html" class="side-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1.5"/><path d="M8 7V5a4 4 0 018 0v2"/></svg>My Collection</a>
         <a href="wishlist.html" class="side-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7.5-4.6-10-9.3C0.3 8 2 4.5 5.4 4c2-.3 3.7.7 6.6 3.5C14.9 4.7 16.6 3.7 18.6 4c3.4.5 5.1 4 3.4 7.7C19.5 16.4 12 21 12 21z"/></svg>Wishlist</a>
         <a href="settings.html" class="side-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Settings</a>
         <div class="side-divider"></div>
@@ -181,35 +197,21 @@
           <div class="info-row" data-field="full_name">
             <div class="info-label">Full Name</div>
             <div class="info-value" id="value-full_name">—</div>
-            <svg class="info-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
           </div>
           <div class="info-row" data-field="email">
             <div class="info-label">Email Address</div>
             <div class="info-value" id="value-email">—</div>
-            <svg class="info-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
           </div>
           <div class="info-row" data-field="phone">
             <div class="info-label">Phone Number</div>
             <div class="info-value" id="value-phone">—</div>
-            <svg class="info-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
           </div>
           <div class="info-row" data-field="password">
             <div class="info-label">Password</div>
             <div class="info-value" id="value-password">••••••••••••</div>
-            <svg class="info-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
           </div>
         </div>
 
-        <div class="edit-actions" id="view-actions">
-          <button class="btn-outline" id="edit-profile-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></svg>
-            Edit Profile
-          </button>
-        </div>
-        <div class="edit-actions" id="edit-actions" style="display:none;">
-          <button class="btn-solid" id="save-profile-btn">Save Changes</button>
-          <button class="btn-ghost" id="cancel-profile-btn">Cancel</button>
-        </div>
         <div class="save-msg" id="save-msg"></div>
       </section>
     </div>
@@ -290,77 +292,20 @@
   }
   document.getElementById('side-logout').addEventListener('click', logout);
 
-  // ---- edit mode ----
-  const editBtn = document.getElementById('edit-profile-btn');
-  const saveBtn = document.getElementById('save-profile-btn');
-  const cancelBtn = document.getElementById('cancel-profile-btn');
-  const viewActions = document.getElementById('view-actions');
-  const editActions = document.getElementById('edit-actions');
-  const saveMsg = document.getElementById('save-msg');
-
-  function enterEditMode(){
-    const fullName = currentMeta.full_name || currentMeta.username || '';
-    const phone = currentMeta.phone || currentUser.phone || '';
-    const email = currentUser.email || '';
-
-    document.getElementById('value-full_name').innerHTML = `<input type="text" id="edit-full_name" value="${fullName.replace(/"/g,'&quot;')}">`;
-    document.getElementById('value-email').innerHTML = `<input type="email" id="edit-email" value="${email.replace(/"/g,'&quot;')}">`;
-    document.getElementById('value-phone').innerHTML = `<input type="tel" id="edit-phone" value="${phone.replace(/"/g,'&quot;')}">`;
-
-    viewActions.style.display = 'none';
-    editActions.style.display = 'flex';
-    saveMsg.textContent = '';
+  // mobile hamburger sidebar toggle
+  const sideCardEl = document.getElementById('side-card');
+  const scrimEl = document.getElementById('scrim');
+  const menuBtnEl = document.getElementById('menu-btn');
+  function toggleMenu(open){
+    sideCardEl.classList.toggle('mobile-open', open);
+    scrimEl.classList.toggle('open', open);
   }
-
-  function exitEditMode(){
-    renderProfile();
-    viewActions.style.display = 'flex';
-    editActions.style.display = 'none';
-  }
-
-  editBtn.addEventListener('click', enterEditMode);
-  cancelBtn.addEventListener('click', exitEditMode);
-
-  // Password row -> trigger a reset email instead of exposing the value
-  document.querySelector('[data-field="password"]').addEventListener('click', async () => {
-    if (!currentUser?.email) return;
-    saveMsg.style.color = 'var(--green)';
-    saveMsg.textContent = 'Sending password reset email…';
-    const { error } = await supabaseClient.auth.resetPasswordForEmail(currentUser.email);
-    saveMsg.textContent = error ? `Error: ${error.message}` : 'Password reset email sent.';
-  });
-
-  saveBtn.addEventListener('click', async () => {
-    const newFullName = document.getElementById('edit-full_name').value.trim();
-    const newEmail = document.getElementById('edit-email').value.trim();
-    const newPhone = document.getElementById('edit-phone').value.trim();
-
-    saveBtn.disabled = true;
-    saveMsg.style.color = 'var(--text-dim)';
-    saveMsg.textContent = 'Saving…';
-
-    const updates = { data: { full_name: newFullName, phone: newPhone } };
-    if (newEmail && newEmail !== currentUser.email) updates.email = newEmail;
-
-    const { data, error } = await supabaseClient.auth.updateUser(updates);
-
-    saveBtn.disabled = false;
-    if (error) {
-      saveMsg.style.color = 'var(--red)';
-      saveMsg.textContent = `Error: ${error.message}`;
-      return;
-    }
-
-    currentUser = data.user;
-    currentMeta = currentUser.user_metadata || {};
-    saveMsg.style.color = 'var(--green)';
-    saveMsg.textContent = updates.email
-      ? 'Saved. Check your new email to confirm the change.'
-      : 'Profile updated.';
-    exitEditMode();
-  });
+  menuBtnEl.addEventListener('click', () => toggleMenu(true));
+  scrimEl.addEventListener('click', () => toggleMenu(false));
 
   // ---- avatar upload (expects a public "avatars" storage bucket) ----
+  const saveMsg = document.getElementById('save-msg');
+
   document.getElementById('avatar-edit-btn').addEventListener('click', (e) => {
     e.stopPropagation();
     document.getElementById('avatar-file-input').click();
