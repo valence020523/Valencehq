@@ -178,7 +178,7 @@
 
       <div class="field-row">
         <div>
-          <label for="listing_price">PRICE (USD)</label>
+          <label for="listing_price">PRICE (NGN)</label>
           <input type="number" id="listing_price" min="0" step="0.01" placeholder="250.00" />
         </div>
         <div>
@@ -227,7 +227,7 @@
 
   function formatPrice(cents){
     if (cents === null || cents === undefined) return '—';
-    return `$${(cents / 100).toFixed(2)}`;
+    return `\u20a6${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   function formatDate(d){
@@ -308,7 +308,7 @@
 
     const name = document.getElementById('listing_name').value.trim();
     const imageUrl = document.getElementById('listing_image').value.trim();
-    const priceDollars = parseFloat(document.getElementById('listing_price').value);
+    const priceNaira = parseFloat(document.getElementById('listing_price').value);
     const releaseDate = document.getElementById('listing_release').value;
 
     if (!name) {
@@ -316,7 +316,7 @@
       msgEl.classList.add('error');
       return;
     }
-    if (!priceDollars || priceDollars <= 0) {
+    if (!priceNaira || priceNaira <= 0) {
       msgEl.textContent = 'Enter a valid price.';
       msgEl.classList.add('error');
       return;
@@ -331,7 +331,7 @@
         .insert([{
           name,
           image_url: imageUrl || null,
-          price_cents: Math.round(priceDollars * 100),
+          price_cents: Math.round(priceNaira * 100),
           release_date: releaseDate || null,
           active: true,
         }]);
@@ -406,7 +406,7 @@
 
     const { data, error } = await supabaseClient
       .from('preorder_reservations')
-      .select('id, full_name, deposit_amount_cents, payment_method, receipt_path, status, created_at, preorder_listings(name, price_cents)')
+      .select('id, full_name, deposit_amount_cents, payment_method, paystack_reference, receipt_path, status, created_at, preorder_listings(name, price_cents)')
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -426,12 +426,16 @@
       card.className = 'reservation-card';
 
       const isPdf = (r.receipt_path || '').toLowerCase().endsWith('.pdf');
-      const thumbEl = document.createElement(isPdf ? 'div' : 'img');
-      thumbEl.className = 'receipt-thumb' + (isPdf ? ' pdf' : '');
-      if (isPdf) {
-        thumbEl.textContent = 'PDF RECEIPT';
-      } else {
-        thumbEl.alt = 'Receipt';
+      const hasReceipt = !!r.receipt_path;
+      let thumbEl = null;
+      if (hasReceipt) {
+        thumbEl = document.createElement(isPdf ? 'div' : 'img');
+        thumbEl.className = 'receipt-thumb' + (isPdf ? ' pdf' : '');
+        if (isPdf) {
+          thumbEl.textContent = 'PDF RECEIPT';
+        } else {
+          thumbEl.alt = 'Receipt';
+        }
       }
 
       card.innerHTML = `
@@ -443,6 +447,7 @@
           <div class="reservation-meta">
             ${escapeHtml(r.preorder_listings?.name || 'Unknown item')}<br>
             Deposit: ${formatPrice(r.deposit_amount_cents)} via ${escapeHtml(r.payment_method.replace('_', ' '))}<br>
+            ${r.paystack_reference ? `Ref: ${escapeHtml(r.paystack_reference)}<br>` : ''}
             ${formatDate(r.created_at)}
           </div>
           <div class="reservation-actions">
@@ -452,12 +457,13 @@
         </div>
       `;
 
-      card.prepend(thumbEl);
+      if (thumbEl) card.prepend(thumbEl);
       el.appendChild(card);
 
       // Receipts live in a private bucket, so fetch a short-lived signed
-      // URL per receipt rather than relying on a public path.
-      if (r.receipt_path) {
+      // URL per receipt rather than relying on a public path. Paystack
+      // reservations won't have a receipt_path at all — nothing to fetch.
+      if (hasReceipt) {
         supabaseClient.storage.from('receipts').createSignedUrl(r.receipt_path, 300).then(({ data: signed, error: signErr }) => {
           if (signErr || !signed) return;
           if (isPdf) {

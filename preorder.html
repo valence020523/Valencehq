@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="paystack-config.js"></script>
 <style>
   :root{
     --black:#05070b; --navy-950:#080d16; --navy-900:#0b1220; --navy-800:#101a2c;
@@ -314,8 +316,8 @@
 
       <div class="deposit-banner">
         <div class="label">DEPOSIT DUE (50%)</div>
-        <div class="value" id="modal-deposit-value">$0.00</div>
-        <div class="hint">A 50% deposit secures your pre-order and confirms you're ready to buy. The remaining balance is due before your item ships.</div>
+        <div class="value" id="modal-deposit-value">₦0.00</div>
+        <div class="hint">A 50% deposit secures your pre-order and confirms you're ready to buy. You'll pay securely via Paystack — the remaining balance is due before your item ships.</div>
       </div>
 
       <label for="modal-name-input">FULL NAME</label>
@@ -323,24 +325,12 @@
 
       <label for="modal-amount-input">AMOUNT TO PAY NOW</label>
       <div class="amount-input-wrap">
-        <span class="currency-prefix">$</span>
+        <span class="currency-prefix">₦</span>
         <input type="number" id="modal-amount-input" min="0" step="0.01" />
       </div>
 
-      <label for="modal-payment-select">PAYMENT METHOD</label>
-      <select id="modal-payment-select">
-        <option value="">— Select a payment method —</option>
-        <option value="card">Debit / Credit Card</option>
-        <option value="bank_transfer">Bank Transfer</option>
-        <option value="mobile_money">Mobile Money</option>
-        <option value="cash">Cash</option>
-      </select>
-
-      <label for="modal-receipt-input">UPLOAD PAYMENT RECEIPT</label>
-      <input type="file" id="modal-receipt-input" accept="image/*,application/pdf" />
-      <div class="modal-item-meta" style="margin:6px 0 0;">A photo or PDF of your payment confirmation. Our team verifies this before your pre-order is marked paid.</div>
-
-      <button class="modal-submit-btn" id="modal-submit-btn">CONFIRM PRE-ORDER</button>
+      <button class="modal-submit-btn" id="modal-submit-btn">PAY DEPOSIT WITH PAYSTACK</button>
+      <div class="modal-item-meta" style="margin:8px 0 0; text-align:center;">Secured by Paystack. Card, bank transfer, and mobile money accepted.</div>
       <div class="modal-msg" id="modal-msg"></div>
     </div>
   </div>
@@ -353,11 +343,12 @@
   let listings = [];
   let reservedIds = new Set();
   let currentUserId = null;
+  let currentUserEmail = null;
   let accountName = null;
 
   function formatPrice(cents){
     if (cents === null || cents === undefined) return '—';
-    return `$${(cents / 100).toFixed(2)}`;
+    return `\u20a6${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
 
   function formatDate(d){
@@ -410,7 +401,6 @@
   const modalScrim = document.getElementById('modal-scrim');
   const modalNameInput = document.getElementById('modal-name-input');
   const modalAmountInput = document.getElementById('modal-amount-input');
-  const modalPaymentSelect = document.getElementById('modal-payment-select');
   const modalMsg = document.getElementById('modal-msg');
   const modalSubmitBtn = document.getElementById('modal-submit-btn');
   let activeListing = null;
@@ -427,8 +417,6 @@
 
     modalNameInput.value = accountName || '';
     modalAmountInput.value = (depositCents / 100).toFixed(2);
-    modalPaymentSelect.value = '';
-    document.getElementById('modal-receipt-input').value = '';
     modalMsg.textContent = '';
     modalMsg.className = 'modal-msg';
     modalSubmitBtn.disabled = false;
@@ -444,90 +432,97 @@
   document.getElementById('modal-close-btn').addEventListener('click', closeModal);
   modalScrim.addEventListener('click', (e) => { if (e.target === modalScrim) closeModal(); });
 
-  modalSubmitBtn.addEventListener('click', async () => {
+  modalSubmitBtn.addEventListener('click', () => {
     if (!activeListing) return;
     modalMsg.textContent = '';
     modalMsg.className = 'modal-msg';
 
     const fullName = modalNameInput.value.trim();
-    const amountDollars = parseFloat(modalAmountInput.value);
-    const paymentMethod = modalPaymentSelect.value;
+    const amountNaira = parseFloat(modalAmountInput.value);
     const depositCents = Math.round((activeListing.price_cents || 0) / 2);
-    const receiptFile = document.getElementById('modal-receipt-input').files[0];
 
     if (!fullName) {
       modalMsg.textContent = 'Enter your full name.';
       modalMsg.classList.add('error');
       return;
     }
-    if (!amountDollars || amountDollars <= 0) {
+    if (!amountNaira || amountNaira <= 0) {
       modalMsg.textContent = 'Enter the amount you\u2019re paying now.';
       modalMsg.classList.add('error');
       return;
     }
-    if (Math.round(amountDollars * 100) < depositCents) {
+    if (Math.round(amountNaira * 100) < depositCents) {
       modalMsg.textContent = `Amount must be at least the 50% deposit (${formatPrice(depositCents)}).`;
       modalMsg.classList.add('error');
       return;
     }
-    if (!paymentMethod) {
-      modalMsg.textContent = 'Select a payment method.';
-      modalMsg.classList.add('error');
-      return;
-    }
-    if (!receiptFile) {
-      modalMsg.textContent = 'Upload a photo or PDF of your payment receipt.';
+    if (typeof window.PAYSTACK_PUBLIC_KEY === 'undefined' || !window.PAYSTACK_PUBLIC_KEY) {
+      modalMsg.textContent = 'Payments are not configured yet. Please contact support.';
       modalMsg.classList.add('error');
       return;
     }
 
+    const amountCents = Math.round(amountNaira * 100);
+    // Paystack reference — also passed to the verify function so it can
+    // look up the exact transaction it needs to check.
+    const reference = `VLC-${activeListing.id.slice(0, 8)}-${Date.now()}`;
+
     modalSubmitBtn.disabled = true;
-    modalMsg.textContent = 'Uploading receipt…';
+
+    const handler = PaystackPop.setup({
+      key: window.PAYSTACK_PUBLIC_KEY,
+      email: currentUserEmail,
+      amount: amountCents,
+      currency: window.PAYSTACK_CURRENCY || 'NGN',
+      ref: reference,
+      metadata: {
+        listing_id: activeListing.id,
+        user_id: currentUserId,
+        full_name: fullName,
+      },
+      callback: (response) => {
+        // Paystack confirms the popup succeeded, but the amount/status
+        // must still be verified server-side before we trust it — never
+        // mark a pre-order paid from the client alone.
+        finalizePayment(response.reference, fullName, amountCents);
+      },
+      onClose: () => {
+        modalSubmitBtn.disabled = false;
+      },
+    });
+
+    handler.openIframe();
+  });
+
+  async function finalizePayment(reference, fullName, amountCents) {
+    modalMsg.textContent = 'Confirming your payment…';
     modalMsg.className = 'modal-msg';
 
     try {
-      // Receipts go in a private "receipts" bucket, one folder per user,
-      // so RLS can restrict access to the uploader and the admin.
-      // See preorder-schema.sql for the bucket + policy setup.
-      const ext = receiptFile.name.split('.').pop();
-      const receiptPath = `${currentUserId}/${activeListing.id}-${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabaseClient
-        .storage
-        .from('receipts')
-        .upload(receiptPath, receiptFile);
-
-      if (uploadError) throw uploadError;
-
-      // NOTE: this records the pre-order intent, deposit details, and
-      // receipt only — it does not move any money itself. The admin
-      // reviews the receipt in preorderadmin.html and marks it paid.
-      const { error } = await supabaseClient
-        .from('preorder_reservations')
-        .insert([{
-          user_id: currentUserId,
+      const { data, error } = await supabaseClient.functions.invoke('verify-paystack-payment', {
+        body: {
+          reference,
           listing_id: activeListing.id,
           full_name: fullName,
-          deposit_amount_cents: Math.round(amountDollars * 100),
-          payment_method: paymentMethod,
-          receipt_path: receiptPath,
-          status: 'pending_payment',
-        }]);
+          expected_amount_cents: amountCents,
+        },
+      });
 
       if (error) throw error;
+      if (!data || !data.ok) {
+        throw new Error((data && data.error) || 'verification_failed');
+      }
 
       reservedIds.add(activeListing.id);
       renderListings();
       closeModal();
     } catch (err) {
-      console.error('Pre-order failed:', err);
+      console.error('Payment verification failed:', err);
       modalSubmitBtn.disabled = false;
-      modalMsg.textContent = err.code === '23505'
-        ? 'You already pre-ordered this item.'
-        : 'Could not complete pre-order — please try again.';
+      modalMsg.textContent = 'Payment could not be confirmed. If you were charged, contact support with reference ' + reference + '.';
       modalMsg.classList.add('error');
     }
-  });
+  }
 
   (async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -539,6 +534,7 @@
 
     const user = session.user;
     currentUserId = user.id;
+    currentUserEmail = user.email;
     const meta = user.user_metadata || {};
     const displayName = meta.username || (user.email ? user.email.split('@')[0] : 'Member');
     accountName = displayName;
