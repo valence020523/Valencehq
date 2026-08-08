@@ -73,6 +73,15 @@ begin
       true
     )
     on conflict (id) do nothing;
+
+    -- Retailer accounts are created directly by the admin, who is already
+    -- vouching for the person — so skip the email-confirmation step for
+    -- them specifically. This does NOT change the confirmation requirement
+    -- for your regular app users; it only auto-confirms accounts flagged
+    -- role = 'retailer'.
+    update auth.users
+      set email_confirmed_at = coalesce(email_confirmed_at, now())
+      where id = new.id;
   end if;
   return new;
 end;
@@ -265,6 +274,12 @@ $$;
 grant execute on function public.claim_product(text, text, text, text) to anon, authenticated;
 
 -- ---------- 5. Housekeeping ----------
+-- One-off: unblock a retailer account you created BEFORE the auto-confirm
+-- logic above existed (it won't retroactively apply to accounts already
+-- created). Replace the email and run once.
+-- update auth.users set email_confirmed_at = now()
+--   where email = 'asapdollarz18@gmail.com' and email_confirmed_at is null;
+--
 -- Optional: periodically delete old/expired/used OTPs. You can run this
 -- manually, or wire it to a Supabase cron job (pg_cron) if you have it
 -- enabled.
