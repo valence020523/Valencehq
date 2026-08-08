@@ -9,7 +9,7 @@
 // payments (Paystack dashboard → Settings → API Keys & Webhooks →
 // switch to Live Mode → copy "Public Key"). Until then, a pk_test_ key
 // is fine for testing with Paystack's test cards.
-window.PAYSTACK_PUBLIC_KEY = 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
+window.PAYSTACK_PUBLIC_KEY = 'pk_test_133fdccbca033fe75b6ef193fb1b02b9abdf14d9';
 
 // Currency your Paystack account is set up to charge in. This app is
 // configured for Nigerian Naira across all pages, so leave this as 'NGN'.
