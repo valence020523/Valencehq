@@ -327,7 +327,7 @@ begin
     v_expected_serial := nullif(v_product.item_number, '');
   end if;
 
-  if v_expected_serial is not null and trim(p_item_number) <> v_expected_serial then
+  if v_expected_serial is not null and upper(trim(p_item_number)) <> upper(v_expected_serial) then
     return jsonb_build_object('ok', false, 'error', 'serial_mismatch');
   end if;
 
