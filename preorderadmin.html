@@ -62,6 +62,31 @@
   }
   select:focus{ outline:none; border-color:var(--gold); }
 
+  textarea{
+    width:100%; padding:11px 13px; border-radius:8px; border:1px solid var(--border);
+    background:rgba(255,255,255,0.03); color:var(--text); font-family:var(--sans); font-size:13.5px;
+    resize:vertical; min-height:80px;
+  }
+  textarea:focus{ outline:none; border-color:var(--gold); }
+
+  .photo-row{ display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+  .photo-row input{ flex:1; }
+  .photo-row .photo-index{
+    flex-shrink:0; width:22px; text-align:center; font-family:var(--mono); font-size:10.5px; color:var(--text-dimmer);
+  }
+  .photo-row .remove-photo-btn{
+    flex-shrink:0; width:30px; height:30px; border-radius:8px; border:1px solid var(--border);
+    background:none; color:var(--text-dim); cursor:pointer; font-size:14px; line-height:1;
+  }
+  .photo-row .remove-photo-btn:hover{ color:#e88a8a; border-color:#e88a8a; }
+
+  .gen-btn{
+    font-family:var(--mono); font-size:11px; font-weight:600; color:var(--text);
+    background:transparent; border:1px solid var(--border); border-radius:8px; padding:9px 14px; cursor:pointer;
+  }
+  .gen-btn:hover{ border-color:var(--gold); color:var(--gold-bright); }
+  .gen-btn:disabled{ opacity:0.4; cursor:default; }
+
   .btn{
     margin-top:22px; width:100%; font-size:13px; font-weight:700; letter-spacing:0.03em; color:var(--black);
     background:var(--gold-bright); border:none; border-radius:999px; padding:13px; cursor:pointer; font-family:var(--sans);
@@ -179,9 +204,6 @@
       <label for="listing_name">PRODUCT NAME</label>
       <input type="text" id="listing_name" placeholder="Genesis Vault — Founder Edition" />
 
-      <label for="listing_image">IMAGE URL</label>
-      <input type="text" id="listing_image" placeholder="https://..." />
-
       <div class="field-row">
         <div>
           <label for="listing_price">PRICE (NGN)</label>
@@ -192,6 +214,14 @@
           <input type="date" id="listing_release" />
         </div>
       </div>
+
+      <label for="listing_description">DESCRIPTION</label>
+      <textarea id="listing_description" rows="4" placeholder="Tell customers what makes this piece worth owning..."></textarea>
+
+      <label>PHOTOS (UP TO 7)</label>
+      <p class="section-hint" style="margin:0 0 10px;">First photo is used as the card thumbnail. The rest appear when a customer opens the full details.</p>
+      <div id="photo-list"></div>
+      <button class="gen-btn" id="add-photo-btn" type="button" style="margin-top:8px;">+ ADD PHOTO</button>
 
       <button class="btn" id="add-listing-btn">ADD LISTING</button>
       <div class="msg" id="add-listing-msg"></div>
@@ -306,6 +336,55 @@
     showLoggedOut();
   });
 
+  // ---------------- Photo list (up to 7) ----------------
+  const MAX_PHOTOS = 7;
+  const photoListEl = document.getElementById('photo-list');
+  const addPhotoBtn = document.getElementById('add-photo-btn');
+
+  function photoRowCount() {
+    return photoListEl.querySelectorAll('.photo-row').length;
+  }
+
+  function addPhotoRow() {
+    if (photoRowCount() >= MAX_PHOTOS) return;
+    const row = document.createElement('div');
+    row.className = 'photo-row';
+    const index = photoRowCount() + 1;
+    row.innerHTML = `
+      <span class="photo-index">${index}</span>
+      <input type="text" class="photo-url-input" placeholder="https://.../photo-${index}.jpg" />
+      <button type="button" class="remove-photo-btn" title="Remove">&times;</button>
+    `;
+    row.querySelector('.remove-photo-btn').addEventListener('click', () => {
+      row.remove();
+      renumberPhotoRows();
+    });
+    photoListEl.appendChild(row);
+    renumberPhotoRows();
+  }
+
+  function renumberPhotoRows() {
+    photoListEl.querySelectorAll('.photo-row').forEach((row, i) => {
+      row.querySelector('.photo-index').textContent = i + 1;
+    });
+    addPhotoBtn.disabled = photoRowCount() >= MAX_PHOTOS;
+    addPhotoBtn.textContent = photoRowCount() >= MAX_PHOTOS ? 'MAX 7 PHOTOS' : '+ ADD PHOTO';
+  }
+
+  function getPhotoUrls() {
+    return Array.from(photoListEl.querySelectorAll('.photo-url-input'))
+      .map(i => i.value.trim())
+      .filter(Boolean);
+  }
+
+  function resetPhotoRows() {
+    photoListEl.innerHTML = '';
+    addPhotoRow();
+  }
+
+  addPhotoBtn.addEventListener('click', addPhotoRow);
+  resetPhotoRows();
+
   // ---------------- Add listing ----------------
   document.getElementById('add-listing-btn').addEventListener('click', async () => {
     const msgEl = document.getElementById('add-listing-msg');
@@ -314,7 +393,8 @@
 
     const name = document.getElementById('listing_name').value.trim();
     const listingType = document.getElementById('listing_type').value;
-    const imageUrl = document.getElementById('listing_image').value.trim();
+    const description = document.getElementById('listing_description').value.trim();
+    const photoUrls = getPhotoUrls();
     const priceNaira = parseFloat(document.getElementById('listing_price').value);
     const releaseDate = document.getElementById('listing_release').value;
 
@@ -338,7 +418,9 @@
         .insert([{
           name,
           listing_type: listingType,
-          image_url: imageUrl || null,
+          description: description || null,
+          image_urls: photoUrls,
+          image_url: photoUrls[0] || null,
           price_cents: Math.round(priceNaira * 100),
           release_date: releaseDate || null,
           active: true,
@@ -349,10 +431,11 @@
       msgEl.textContent = `Listing added to ${listingType === 'market' ? 'Explore Market' : 'Pre-Order'}.`;
       msgEl.classList.add('success');
       document.getElementById('listing_name').value = '';
-      document.getElementById('listing_image').value = '';
+      document.getElementById('listing_description').value = '';
       document.getElementById('listing_price').value = '';
       document.getElementById('listing_release').value = '';
       document.getElementById('listing_type').value = 'preorder';
+      resetPhotoRows();
       loadListings();
     } catch (err) {
       console.error('Add listing failed:', err);

@@ -103,7 +103,9 @@
 
   /* ---------- pre-order grid ---------- */
   .preorder-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-  .listing-card{ padding:0; overflow:hidden; display:flex; flex-direction:column; }
+  .listing-card{ padding:0; overflow:hidden; display:flex; flex-direction:column; cursor:pointer; transition:border-color .15s; }
+  .listing-card:hover{ border-color:var(--gold); }
+  .listing-card:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
   .listing-swatch{
     height:220px; position:relative; display:flex; align-items:center; justify-content:center;
     background:linear-gradient(200deg,#1a2233,#0a0e16 60%); overflow:hidden;
@@ -192,6 +194,46 @@
   .modal-msg{ margin-top:12px; font-size:12px; font-family:var(--mono); }
   .modal-msg.error{ color:#e88a8a; }
   .modal-msg.success{ color:var(--green); }
+
+  /* ---------- product detail modal (Explore Market) ---------- */
+  .detail-panel{ max-width:560px; padding:0; }
+  .detail-gallery{ position:relative; background:#000; }
+  .detail-main-image{
+    width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(200deg,#1a2233,#0a0e16 60%); overflow:hidden;
+  }
+  .detail-main-image img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .detail-main-image svg{ width:44px; height:44px; color:var(--gold); opacity:0.6; }
+  .detail-modal-close{
+    position:absolute; top:12px; right:12px; z-index:2; background:rgba(5,6,8,0.6); backdrop-filter:blur(4px);
+    border:1px solid var(--border); border-radius:8px; width:32px; height:32px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text);
+  }
+  .detail-modal-close:hover{ border-color:var(--gold); color:var(--gold-bright); }
+  .detail-thumbs{ display:flex; gap:8px; padding:10px; overflow-x:auto; background:var(--navy-950); }
+  .detail-thumb{
+    flex-shrink:0; width:56px; height:56px; border-radius:8px; overflow:hidden; cursor:pointer;
+    border:1.5px solid var(--border); opacity:0.6;
+  }
+  .detail-thumb img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .detail-thumb.active{ border-color:var(--gold); opacity:1; }
+  .detail-body{ padding:20px 22px 26px; }
+  .detail-pill{
+    display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:10px; font-weight:700;
+    letter-spacing:0.06em; padding:5px 10px; border-radius:999px;
+    background:rgba(203,185,141,0.16); color:var(--gold-bright); border:1px solid rgba(203,185,141,0.35);
+    margin-bottom:12px;
+  }
+  .detail-name{ font-size:20px; font-weight:800; line-height:1.25; margin-bottom:6px; }
+  .detail-price{ font-size:19px; font-weight:800; color:var(--gold-bright); margin-bottom:14px; }
+  .detail-meta-row{
+    display:flex; justify-content:space-between; font-size:12px; font-family:var(--mono);
+    padding:10px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:16px;
+  }
+  .detail-meta-row span:first-child{ color:var(--text-dimmer); letter-spacing:0.08em; }
+  .detail-meta-row span:last-child{ color:var(--text); font-weight:600; }
+  .detail-description-label{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; color:var(--text-dimmer); margin-bottom:8px; }
+  .detail-description{ font-size:13.5px; line-height:1.7; color:var(--text-dim); white-space:pre-line; }
 
   @media (max-width:980px){
     .sidebar{ display:none; }
@@ -300,6 +342,26 @@
     </main>
   </div>
 
+  <!-- Product detail modal -->
+  <div class="modal-scrim" id="detail-scrim">
+    <div class="modal-panel detail-panel">
+      <div class="detail-gallery">
+        <button class="detail-modal-close" id="detail-close-btn" aria-label="Close">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+        <div class="detail-main-image" id="detail-main-image"></div>
+        <div class="detail-thumbs" id="detail-thumbs"></div>
+      </div>
+      <div class="detail-body">
+        <div class="detail-pill">MARKET</div>
+        <div class="detail-name" id="detail-name"></div>
+        <div class="detail-price" id="detail-price"></div>
+        <div class="detail-meta-row"><span>RELEASE DATE</span><span id="detail-release"></span></div>
+        <div class="detail-description-label">DESCRIPTION</div>
+        <div class="detail-description" id="detail-description"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -318,19 +380,33 @@
     return new Date(d).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
   }
 
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function photosFor(listing){
+    if (Array.isArray(listing.image_urls) && listing.image_urls.length) return listing.image_urls;
+    if (listing.image_url) return [listing.image_url];
+    return [];
+  }
+
   // Explore Market is browse-only — no reserve button, no deposit modal.
-  // Same `preorder_listings` table as preorder.html, filtered to
+  // Clicking a card opens the full detail view (gallery + description)
+  // instead. Same `preorder_listings` table as preorder.html, filtered to
   // listing_type = 'market' so the two pages never show each other's items.
   function listingCardHTML(listing){
-    const swatch = listing.image_url
-      ? `<img src="${listing.image_url}" alt="${listing.name}">`
+    const photos = photosFor(listing);
+    const swatch = photos.length
+      ? `<img src="${escapeHtml(photos[0])}" alt="${escapeHtml(listing.name)}">`
       : boxIcon;
 
     return `
-      <div class="card listing-card" data-id="${listing.id}">
+      <div class="card listing-card" data-id="${listing.id}" role="button" tabindex="0">
         <div class="listing-swatch">${swatch}<div class="listing-pill">MARKET</div></div>
         <div class="listing-body">
-          <div class="listing-name">${listing.name}</div>
+          <div class="listing-name">${escapeHtml(listing.name)}</div>
           <div class="listing-meta"><span>RELEASE</span><span>${formatDate(listing.release_date)}</span></div>
           <div class="listing-price">${formatPrice(listing.price_cents)}</div>
         </div>
@@ -349,7 +425,79 @@
   function renderListings(){
     const grid = document.getElementById('preorder-grid');
     grid.innerHTML = listings.length ? listings.map(listingCardHTML).join('') : emptyStateHTML();
+
+    grid.querySelectorAll('.listing-card').forEach(card => {
+      const openDetail = () => {
+        const listing = listings.find(l => String(l.id) === card.dataset.id);
+        if (listing) openDetailModal(listing);
+      };
+      card.addEventListener('click', openDetail);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDetail(); }
+      });
+    });
   }
+
+  // ---------------- Detail modal ----------------
+  const detailScrim = document.getElementById('detail-scrim');
+  const detailMainImage = document.getElementById('detail-main-image');
+  const detailThumbs = document.getElementById('detail-thumbs');
+  const detailName = document.getElementById('detail-name');
+  const detailPrice = document.getElementById('detail-price');
+  const detailRelease = document.getElementById('detail-release');
+  const detailDescription = document.getElementById('detail-description');
+
+  function setMainPhoto(url, name){
+    detailMainImage.innerHTML = url
+      ? `<img src="${escapeHtml(url)}" alt="${escapeHtml(name)}">`
+      : boxIcon;
+  }
+
+  function openDetailModal(listing){
+    const photos = photosFor(listing);
+
+    detailName.textContent = listing.name || 'Untitled';
+    detailPrice.textContent = formatPrice(listing.price_cents);
+    detailRelease.textContent = formatDate(listing.release_date);
+    detailDescription.textContent = listing.description && listing.description.trim()
+      ? listing.description
+      : 'No description added yet for this piece.';
+
+    setMainPhoto(photos[0], listing.name);
+
+    if (photos.length > 1) {
+      detailThumbs.style.display = 'flex';
+      detailThumbs.innerHTML = photos.map((url, i) => `
+        <div class="detail-thumb ${i === 0 ? 'active' : ''}" data-url="${escapeHtml(url)}">
+          <img src="${escapeHtml(url)}" alt="">
+        </div>
+      `).join('');
+      detailThumbs.querySelectorAll('.detail-thumb').forEach(thumb => {
+        thumb.addEventListener('click', () => {
+          detailThumbs.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
+          thumb.classList.add('active');
+          setMainPhoto(thumb.dataset.url, listing.name);
+        });
+      });
+    } else {
+      detailThumbs.style.display = 'none';
+      detailThumbs.innerHTML = '';
+    }
+
+    detailScrim.classList.add('open');
+  }
+
+  function closeDetailModal(){
+    detailScrim.classList.remove('open');
+  }
+
+  document.getElementById('detail-close-btn').addEventListener('click', closeDetailModal);
+  detailScrim.addEventListener('click', (e) => {
+    if (e.target === detailScrim) closeDetailModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDetailModal();
+  });
 
   (async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -378,7 +526,7 @@
     try {
       const { data, error } = await supabaseClient
         .from('preorder_listings')
-        .select('id, name, image_url, price_cents, release_date')
+        .select('id, name, image_url, image_urls, description, price_cents, release_date')
         .eq('active', true)
         .eq('listing_type', 'market')
         .order('release_date', { ascending: true });
