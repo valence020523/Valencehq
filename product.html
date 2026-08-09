@@ -611,6 +611,7 @@
     x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5" stroke-linecap="round"/></svg>',
     dot: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M12 9v7" stroke-linecap="round"/><circle cx="12" cy="18.4" r="0.6" fill="currentColor" stroke="none"/></svg>',
     chevronDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    crown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8l3.5 3L12 6l4.5 5L20 8l-1.6 9H5.6L4 8z" stroke-linejoin="round" stroke-linecap="round"/><path d="M6.5 20h11" stroke-linecap="round"/></svg>',
   };
 
   function simpleRingSvg(kind) {
@@ -837,14 +838,9 @@
   }
 
   // ================= Branch B: Genesis collection (valid/registered) =================
-  function renderValidGenesis(data) {
-    const itemName = data.product_name || 'Valence Item';
-    const collectionName = data.collection_name || 'Genesis Vault';
-    const editionBadge = editionBadgeFor(data);
-    const tierLabel = data.edition_name || 'Founder Edition';
+  function setOwnerHeaderRight(data) {
     const itemNumber = data.item_number || '—';
     const founderNumber = /^\d+$/.test(String(itemNumber)) ? String(itemNumber).padStart(3, '0') : itemNumber;
-
     headerRight.innerHTML = `
       <div class="owner-pill">
         <div class="owner-avatar">${escapeHtml(initials(data.owner_name))}</div>
@@ -855,6 +851,15 @@
         ${icons.chevronDown}
       </div>
     `;
+  }
+
+  function renderValidGenesis(data) {
+    const itemName = data.product_name || 'Valence Item';
+    const collectionName = data.collection_name || 'Genesis Vault';
+    const editionBadge = editionBadgeFor(data);
+    const tierLabel = data.edition_name || 'Founder Edition';
+
+    setOwnerHeaderRight(data);
 
     let html = `
       <div class="hero-card">
@@ -910,6 +915,88 @@
         <div class="panel-box" style="margin-top:14px;">
           <div class="panel-box-header"><span>EXCLUSIVE ACCESS</span></div>
           <div class="panel-desc">As the owner, you unlock exclusive benefits and experiences.</div>
+          <div class="benefits-grid">
+            <div class="benefit-card">${icons.ticket}<div class="benefit-card-title">Event Access</div><div class="benefit-card-desc">Priority access to all VALENCE events.</div></div>
+            <div class="benefit-card">${icons.gift}<div class="benefit-card-title">Founder Rewards</div><div class="benefit-card-desc">Exclusive rewards only for founders.</div></div>
+            <div class="benefit-card">${icons.certificate}<div class="benefit-card-title">Digital Certificate</div><div class="benefit-card-desc">Your official ownership certificate.</div></div>
+            <div class="benefit-card">${icons.people}<div class="benefit-card-title">Founder Community</div><div class="benefit-card-desc">Connect with other VALENCE founders.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <a class="scan-again" href="dashboard.html">${icons.grid}VIEW YOUR DASHBOARD</a>
+        <button class="dash-link" id="scan-again-btn">${icons.scan}SCAN ANOTHER PRODUCT</button>
+      </div>
+    `;
+    return html;
+  }
+
+  // ================= Branch C: NOT Genesis, but current viewer IS the
+  // verified owner. Same "you are the owner" framing as the Genesis owner
+  // view, but with collection-neutral copy ("Learn About [Collection]"
+  // instead of Genesis-specific founder content) and Founder Benefits
+  // offered as a universal loyalty perk rather than Genesis-exclusive. =================
+  function renderValidOwnerNonGenesis(data) {
+    const itemName = data.product_name || 'Valence Item';
+    const collectionName = data.collection_name || 'Uncategorized';
+    const editionBadge = editionBadgeFor(data);
+
+    setOwnerHeaderRight(data);
+
+    let html = `
+      <div class="hero-card">
+        <div class="hero-col-text">
+          <div class="hero-eyebrow mint">YOU ARE THE OWNER</div>
+          <div class="hero-headline">AUTHENTIC &amp;<span class="accent">OWNED</span></div>
+          <div class="hero-body">This product is 100% authentic and registered to you.</div>
+          <div class="hero-signature">
+            <div class="hero-signature-word">Valence</div>
+            <div class="hero-signature-caption">VALENCE TEAM</div>
+          </div>
+        </div>
+        <div class="hero-col-image">
+          ${productCardMarkup(data, itemName, collectionName, editionBadge, true)}
+        </div>
+      </div>
+
+      <div class="section-gap">
+        <div class="panel-box">
+          <div class="hanger-panel-row">
+            <div class="hanger-row">
+              ${icons.star}
+              <div>
+                <div class="panel-box-header" style="margin-bottom:5px;"><span>THIS IS NOT A GENESIS VAULT ITEM</span></div>
+                <div class="panel-desc">This product belongs to the ${escapeHtml(collectionName)} Collection. Thank you for being part of the VALENCE legacy.</div>
+              </div>
+            </div>
+            <a class="panel-cta outline" href="verify-authenticity.html">LEARN ABOUT ${escapeHtml(collectionName.toUpperCase())} ${icons.arrow}</a>
+          </div>
+        </div>
+
+        <div class="two-col-grid" style="margin-top:14px;">
+          <div class="panel-box">
+            <div class="panel-box-header">${icons.shieldCheck}<span>OWNERSHIP CERTIFICATE</span></div>
+            <div class="detail-row">${icons.person}<div class="detail-row-body"><span class="detail-label">Registered Owner</span><span class="detail-value">${escapeHtml(data.owner_name || '—')}</span></div></div>
+            <div class="detail-row">${icons.shieldCheck}<div class="detail-row-body"><span class="detail-label">Ownership ID</span><span class="detail-value mono mint">${escapeHtml(data.security_hash || '—')}</span></div></div>
+            <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Registered On</span><span class="detail-value">${escapeHtml(formatDate(data.registered_at))}</span></div></div>
+            <div class="detail-row">${icons.shieldCheck}<div class="detail-row-body"><span class="detail-label">Product Status</span><span class="detail-value status"><span class="status-dot"></span>Registered &amp; Verified</span></div></div>
+          </div>
+
+          <div class="panel-box">
+            <div class="panel-box-header">${icons.package}<span>PRODUCT DETAILS</span></div>
+            <div class="detail-row">${icons.layers}<div class="detail-row-body"><span class="detail-label">Collection</span><span class="detail-value">${escapeHtml(collectionName)}</span></div></div>
+            <div class="detail-row">${icons.ribbon}<div class="detail-row-body"><span class="detail-label">Edition</span><span class="detail-value">${escapeHtml(editionBadge ? editionBadge.replace('#', '').replace(' / ', ' of ') : '—')}</span></div></div>
+            <div class="detail-row">${icons.tag}<div class="detail-row-body"><span class="detail-label">Product</span><span class="detail-value">${escapeHtml(itemName)}</span></div></div>
+            <div class="detail-row">${icons.ruler}<div class="detail-row-body"><span class="detail-label">Size</span><span class="detail-value">${escapeHtml(data.size || '—')}</span></div></div>
+            <div class="detail-row">${icons.circle}<div class="detail-row-body"><span class="detail-label">Color</span><span class="detail-value">${escapeHtml(data.color || '—')}</span></div></div>
+            <div class="detail-row">${icons.calendar}<div class="detail-row-body"><span class="detail-label">Manufactured On</span><span class="detail-value">${escapeHtml(formatDate(data.manufactured_at))}</span></div></div>
+          </div>
+        </div>
+
+        <div class="panel-box" style="margin-top:14px;">
+          <div class="panel-box-header">${icons.crown}<span>FOUNDER BENEFITS</span></div>
+          <div class="panel-desc">As an owner, you unlock exclusive benefits and experiences.</div>
           <div class="benefits-grid">
             <div class="benefit-card">${icons.ticket}<div class="benefit-card-title">Event Access</div><div class="benefit-card-desc">Priority access to all VALENCE events.</div></div>
             <div class="benefit-card">${icons.gift}<div class="benefit-card-title">Founder Rewards</div><div class="benefit-card-desc">Exclusive rewards only for founders.</div></div>
@@ -998,7 +1085,7 @@
     if (status === 'valid' && isGenesisCollection(data.collection_name)) {
       html = data._isOwnerViewing ? renderValidGenesis(data) : renderValidGenesisPublic(data);
     } else if (status === 'valid') {
-      html = renderValidNonGenesis(data);
+      html = data._isOwnerViewing ? renderValidOwnerNonGenesis(data) : renderValidNonGenesis(data);
     } else {
       html = renderSimpleState(status, data, message, rawScanned);
     }
