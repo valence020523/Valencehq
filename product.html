@@ -325,6 +325,41 @@
   .footer-mark img{ height:20px; width:auto; opacity:0.7; }
   .footer-meta{ font-family:var(--mono); font-size:9.5px; letter-spacing:0.06em; color:var(--text-dimmer); line-height:1.9; }
 
+  /* ================= Account sidebar =================
+     Hidden entirely for anonymous scanners (this page must stay usable
+     without an account). Only appears when a logged-in session is found,
+     and only at desktop widths — on mobile, product.html's own header
+     already carries the brand, so a second nav rail would be redundant. */
+  .sidebar{
+    display:none; width:230px; flex-shrink:0; background:var(--navy-900);
+    border-right:1px solid var(--border); padding:26px 16px; flex-direction:column;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .sidebar .brand{ padding:0 10px 28px; border-bottom:1px solid var(--border); margin-bottom:18px; }
+  .sidebar nav.primary-nav{ display:flex; flex-direction:column; gap:2px; }
+  .sidebar .nav-item{
+    display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:8px;
+    font-size:13.5px; font-weight:700; color:var(--text-dim); cursor:pointer; border:1px solid transparent;
+    font-family:var(--sans);
+  }
+  .sidebar .nav-item svg{ width:17px; height:17px; flex-shrink:0; opacity:0.85; }
+  .sidebar .nav-item:hover{ background:var(--panel); color:var(--text); }
+  .sidebar .nav-item.active{ background:rgba(203,185,141,0.14); color:var(--champagne-bright); border-color:rgba(203,185,141,0.28); }
+  .sidebar .nav-item.active svg{ opacity:1; }
+  .sidebar-bottom{ margin-top:auto; padding-top:16px; }
+  .sidebar .logout-btn{
+    font-size:11.5px; font-weight:700; color:var(--text-dim); background:none;
+    border:1px solid var(--border); border-radius:999px; padding:8px 12px; cursor:pointer;
+    font-family:var(--sans); width:100%;
+  }
+  .sidebar .logout-btn:hover{ color:var(--text); border-color:var(--gold); }
+
+  @media (min-width: 980px){
+    body.has-sidebar .app-shell{ display:flex; min-height:100vh; }
+    body.has-sidebar .sidebar{ display:flex; }
+    body.has-sidebar #page-content{ flex:1; min-width:0; }
+  }
+
   /* ================= Desktop breakpoint: match the reference composition ================= */
   @media (min-width: 860px){
     main{ padding:0 32px 60px; }
@@ -359,6 +394,32 @@
 </style>
 </head>
 <body>
+
+<div class="app-shell">
+<aside class="sidebar" id="product-sidebar">
+  <div class="brand">
+    <div class="brandmark">
+      <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
+      <span class="brand-word">VALENCE</span>
+    </div>
+  </div>
+  <nav class="primary-nav">
+    <a href="dashboard.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Dashboard</a>
+    <a href="profile.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>My Profile</a>
+    <a href="collection.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1.5"/><path d="M8 7V5a4 4 0 018 0v2"/></svg>My Collection</a>
+    <a href="preorder.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 7l6.5 9.5M16 7l-6.5 9.5"/></svg>Pre-Order</a>
+    <a href="market.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.8 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.8-3.8-9S9.5 5.5 12 3z"/></svg>Explore Market</a>
+    <a href="orders.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-1.5 12.5a2 2 0 01-2 1.5H7.5a2 2 0 01-2-1.5L4 5z"/><path d="M4 5l-1-2"/></svg>Orders</a>
+    <a href="voting.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9M7 11L3 9.5V20l4 1M7 11l6-4 4 2.5M17 9.5V20l4-1V10l-4-2M11 7v10"/></svg>Voting</a>
+    <a href="support.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.7-2.5 1.7-2.5 3.5"/><path d="M12 17h.01"/></svg>Support</a>
+    <a href="settings.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Settings</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <button class="logout-btn" id="sidebar-logout-btn">Log Out</button>
+  </div>
+</aside>
+
+<div id="page-content">
 
 <header>
   <div class="header-inner">
@@ -1094,6 +1155,30 @@
     document.getElementById('scan-again-btn').addEventListener('click', startScan);
   }
 
+  // --- Account sidebar ---
+  // Anonymous scanners never see this — it only appears once a real
+  // session is confirmed, so QR verification keeps working with no
+  // account at all. Runs independently of the scan/lookup flow below.
+  (async () => {
+    try {
+      if (typeof supabaseClient === 'undefined') return;
+      const { data } = await supabaseClient.auth.getSession();
+      if (data.session) {
+        document.body.classList.add('has-sidebar');
+      }
+    } catch (err) {
+      console.error('Sidebar session check failed', err);
+    }
+  })();
+
+  const sidebarLogoutBtn = document.getElementById('sidebar-logout-btn');
+  if (sidebarLogoutBtn) {
+    sidebarLogoutBtn.addEventListener('click', async () => {
+      await supabaseClient.auth.signOut();
+      window.location.href = 'login.html';
+    });
+  }
+
   // --- Entry point ---
   // If the QR encoded a link with ?code=, or verify-authenticity.html
   // forwarded one, skip straight to the lookup. Otherwise open the camera
@@ -1106,5 +1191,9 @@
     startScan();
   }
 </script>
+
+</div>
+</div>
+
 </body>
 </html>

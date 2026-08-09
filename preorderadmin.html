@@ -167,8 +167,14 @@
 
     <!-- Add listing -->
     <div class="panel">
-      <div class="section-label">ADD PRODUCT FOR PRE-ORDER</div>
-      <p class="section-hint">Creates a new listing customers can pre-order from preorder.html.</p>
+      <div class="section-label">ADD PRODUCT</div>
+      <p class="section-hint">Creates a new listing on either preorder.html (with deposit checkout) or market.html (browse-only).</p>
+
+      <label for="listing_type">LISTING TYPE</label>
+      <select id="listing_type">
+        <option value="preorder">Pre-Order (deposit checkout)</option>
+        <option value="market">Explore Market (browse only)</option>
+      </select>
 
       <label for="listing_name">PRODUCT NAME</label>
       <input type="text" id="listing_name" placeholder="Genesis Vault — Founder Edition" />
@@ -307,6 +313,7 @@
     msgEl.className = 'msg';
 
     const name = document.getElementById('listing_name').value.trim();
+    const listingType = document.getElementById('listing_type').value;
     const imageUrl = document.getElementById('listing_image').value.trim();
     const priceNaira = parseFloat(document.getElementById('listing_price').value);
     const releaseDate = document.getElementById('listing_release').value;
@@ -330,6 +337,7 @@
         .from('preorder_listings')
         .insert([{
           name,
+          listing_type: listingType,
           image_url: imageUrl || null,
           price_cents: Math.round(priceNaira * 100),
           release_date: releaseDate || null,
@@ -338,12 +346,13 @@
 
       if (error) throw error;
 
-      msgEl.textContent = 'Listing added.';
+      msgEl.textContent = `Listing added to ${listingType === 'market' ? 'Explore Market' : 'Pre-Order'}.`;
       msgEl.classList.add('success');
       document.getElementById('listing_name').value = '';
       document.getElementById('listing_image').value = '';
       document.getElementById('listing_price').value = '';
       document.getElementById('listing_release').value = '';
+      document.getElementById('listing_type').value = 'preorder';
       loadListings();
     } catch (err) {
       console.error('Add listing failed:', err);
@@ -360,7 +369,7 @@
 
     const { data, error } = await supabaseClient
       .from('preorder_listings')
-      .select('id, name, price_cents, release_date, active')
+      .select('id, name, price_cents, release_date, active, listing_type')
       .order('created_at', { ascending: false })
       .limit(15);
 
@@ -377,6 +386,7 @@
       <div class="row">
         <span>${escapeHtml(l.name)}</span>
         <span>
+          <span class="status-pill ${l.listing_type === 'market' ? 'inactive' : 'active'}" style="${l.listing_type === 'market' ? 'color:var(--gold-bright);background:rgba(203,185,141,0.12);border-color:rgba(203,185,141,0.35);' : ''}">${l.listing_type === 'market' ? 'MARKET' : 'PRE-ORDER'}</span>
           ${formatPrice(l.price_cents)} · ${formatDate(l.release_date)}
           <span class="status-pill ${l.active ? 'active' : 'inactive'}">${l.active ? 'ACTIVE' : 'INACTIVE'}</span>
           <button class="toggle-btn" data-id="${l.id}" data-active="${l.active}">${l.active ? 'DEACTIVATE' : 'ACTIVATE'}</button>

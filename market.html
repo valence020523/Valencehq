@@ -3,14 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pre-Order — VALENCE</title>
+<title>Explore Market — VALENCE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
-<script src="https://js.paystack.co/v1/inline.js"></script>
-<script src="paystack-config.js"></script>
 <style>
   :root{
     --black:#05070b; --navy-950:#080d16; --navy-900:#0b1220; --navy-800:#101a2c;
@@ -263,8 +261,8 @@
         <a href="dashboard.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Dashboard</a>
         <a href="profile.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>My Profile</a>
         <a href="collection.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1.5"/><path d="M8 7V5a4 4 0 018 0v2"/></svg>My Collection</a>
-        <a href="preorder.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 7l6.5 9.5M16 7l-6.5 9.5"/></svg>Pre-Order</a>
-        <a href="market.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.8 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.8-3.8-9S9.5 5.5 12 3z"/></svg>Explore Market</a>
+        <a href="preorder.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 7l6.5 9.5M16 7l-6.5 9.5"/></svg>Pre-Order</a>
+        <a href="market.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.8 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.8-3.8-9S9.5 5.5 12 3z"/></svg>Explore Market</a>
         <a href="orders.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-1.5 12.5a2 2 0 01-2 1.5H7.5a2 2 0 01-2-1.5L4 5z"/><path d="M4 5l-1-2"/></svg>Orders</a>
         <a href="voting.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9M7 11L3 9.5V20l4 1M7 11l6-4 4 2.5M17 9.5V20l4-1V10l-4-2M11 7v10"/></svg>Voting</a>
         <a href="support.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.7-2.5 1.7-2.5 3.5"/><path d="M12 17h.01"/></svg>Support</a>
@@ -294,45 +292,14 @@
       </div>
 
       <div class="page-head">
-        <h1 class="title">PRE-<span>ORDER</span></h1>
-        <div class="subtitle" id="listing-count">Loading drops…</div>
+        <h1 class="title">EXPLORE <span>MARKET</span></h1>
+        <div class="subtitle" id="listing-count">Loading market…</div>
       </div>
 
       <div class="preorder-grid" id="preorder-grid"></div>
     </main>
   </div>
 
-  <!-- Pre-order deposit modal -->
-  <div class="modal-scrim" id="modal-scrim">
-    <div class="modal-panel">
-      <div class="modal-header">
-        <div class="modal-title" id="modal-item-name">Item Name</div>
-        <button class="modal-close" id="modal-close-btn" aria-label="Close">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>
-        </button>
-      </div>
-      <div class="modal-item-meta" id="modal-item-meta"></div>
-
-      <div class="deposit-banner">
-        <div class="label">DEPOSIT DUE (50%)</div>
-        <div class="value" id="modal-deposit-value">₦0.00</div>
-        <div class="hint">A 50% deposit secures your pre-order and confirms you're ready to buy. You'll pay securely via Paystack — the remaining balance is due before your item ships.</div>
-      </div>
-
-      <label for="modal-name-input">FULL NAME</label>
-      <input type="text" id="modal-name-input" placeholder="John Chibueke" />
-
-      <label for="modal-amount-input">AMOUNT TO PAY NOW</label>
-      <div class="amount-input-wrap">
-        <span class="currency-prefix">₦</span>
-        <input type="number" id="modal-amount-input" min="0" step="0.01" />
-      </div>
-
-      <button class="modal-submit-btn" id="modal-submit-btn">PAY DEPOSIT WITH PAYSTACK</button>
-      <div class="modal-item-meta" style="margin:8px 0 0; text-align:center;">Secured by Paystack. Card, bank transfer, and mobile money accepted.</div>
-      <div class="modal-msg" id="modal-msg"></div>
-    </div>
-  </div>
 </div>
 
 <script>
@@ -340,10 +307,6 @@
   const emptyIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1.5"/><path d="M8 7V5a4 4 0 018 0v2"/><path d="M3 12h18"/></svg>`;
 
   let listings = [];
-  let reservedIds = new Set();
-  let currentUserId = null;
-  let currentUserEmail = null;
-  let accountName = null;
 
   function formatPrice(cents){
     if (cents === null || cents === undefined) return '—';
@@ -355,25 +318,21 @@
     return new Date(d).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
   }
 
+  // Explore Market is browse-only — no reserve button, no deposit modal.
+  // Same `preorder_listings` table as preorder.html, filtered to
+  // listing_type = 'market' so the two pages never show each other's items.
   function listingCardHTML(listing){
-    const isReserved = reservedIds.has(listing.id);
     const swatch = listing.image_url
       ? `<img src="${listing.image_url}" alt="${listing.name}">`
       : boxIcon;
-    const pill = isReserved
-      ? `<div class="listing-pill reserved">PRE-ORDERED</div>`
-      : `<div class="listing-pill">PRE-ORDER</div>`;
 
     return `
       <div class="card listing-card" data-id="${listing.id}">
-        <div class="listing-swatch">${swatch}${pill}</div>
+        <div class="listing-swatch">${swatch}<div class="listing-pill">MARKET</div></div>
         <div class="listing-body">
           <div class="listing-name">${listing.name}</div>
           <div class="listing-meta"><span>RELEASE</span><span>${formatDate(listing.release_date)}</span></div>
           <div class="listing-price">${formatPrice(listing.price_cents)}</div>
-          <button class="reserve-btn" data-id="${listing.id}" ${isReserved ? 'disabled' : ''}>
-            ${isReserved ? 'PRE-ORDERED ✓' : 'PRE-ORDER'}
-          </button>
         </div>
       </div>`;
   }
@@ -382,161 +341,27 @@
     return `
       <div class="empty-state">
         ${emptyIcon}
-        <h3>No open pre-orders</h3>
-        <p>New drops open for pre-order will show up here. Check back soon.</p>
+        <h3>Nothing in the market yet</h3>
+        <p>New items added to the market will show up here. Check back soon.</p>
       </div>`;
   }
 
   function renderListings(){
     const grid = document.getElementById('preorder-grid');
     grid.innerHTML = listings.length ? listings.map(listingCardHTML).join('') : emptyStateHTML();
-
-    grid.querySelectorAll('.reserve-btn').forEach(btn => {
-      btn.addEventListener('click', () => openModal(btn.dataset.id));
-    });
-  }
-
-  // ---------------- Deposit modal ----------------
-  const modalScrim = document.getElementById('modal-scrim');
-  const modalNameInput = document.getElementById('modal-name-input');
-  const modalAmountInput = document.getElementById('modal-amount-input');
-  const modalMsg = document.getElementById('modal-msg');
-  const modalSubmitBtn = document.getElementById('modal-submit-btn');
-  let activeListing = null;
-
-  function openModal(listingId){
-    activeListing = listings.find(l => l.id === listingId);
-    if (!activeListing) return;
-
-    const depositCents = Math.round((activeListing.price_cents || 0) / 2);
-    document.getElementById('modal-item-name').textContent = activeListing.name;
-    document.getElementById('modal-item-meta').textContent =
-      `Full price ${formatPrice(activeListing.price_cents)} · Release ${formatDate(activeListing.release_date)}`;
-    document.getElementById('modal-deposit-value').textContent = formatPrice(depositCents);
-
-    modalNameInput.value = accountName || '';
-    modalAmountInput.value = (depositCents / 100).toFixed(2);
-    modalMsg.textContent = '';
-    modalMsg.className = 'modal-msg';
-    modalSubmitBtn.disabled = false;
-
-    modalScrim.classList.add('open');
-  }
-
-  function closeModal(){
-    modalScrim.classList.remove('open');
-    activeListing = null;
-  }
-
-  document.getElementById('modal-close-btn').addEventListener('click', closeModal);
-  modalScrim.addEventListener('click', (e) => { if (e.target === modalScrim) closeModal(); });
-
-  modalSubmitBtn.addEventListener('click', () => {
-    if (!activeListing) return;
-    modalMsg.textContent = '';
-    modalMsg.className = 'modal-msg';
-
-    const fullName = modalNameInput.value.trim();
-    const amountNaira = parseFloat(modalAmountInput.value);
-    const depositCents = Math.round((activeListing.price_cents || 0) / 2);
-
-    if (!fullName) {
-      modalMsg.textContent = 'Enter your full name.';
-      modalMsg.classList.add('error');
-      return;
-    }
-    if (!amountNaira || amountNaira <= 0) {
-      modalMsg.textContent = 'Enter the amount you\u2019re paying now.';
-      modalMsg.classList.add('error');
-      return;
-    }
-    if (Math.round(amountNaira * 100) < depositCents) {
-      modalMsg.textContent = `Amount must be at least the 50% deposit (${formatPrice(depositCents)}).`;
-      modalMsg.classList.add('error');
-      return;
-    }
-    if (typeof window.PAYSTACK_PUBLIC_KEY === 'undefined' || !window.PAYSTACK_PUBLIC_KEY) {
-      modalMsg.textContent = 'Payments are not configured yet. Please contact support.';
-      modalMsg.classList.add('error');
-      return;
-    }
-
-    const amountCents = Math.round(amountNaira * 100);
-    // Paystack reference — also passed to the verify function so it can
-    // look up the exact transaction it needs to check.
-    const reference = `VLC-${activeListing.id.slice(0, 8)}-${Date.now()}`;
-
-    modalSubmitBtn.disabled = true;
-
-    const handler = PaystackPop.setup({
-      key: window.PAYSTACK_PUBLIC_KEY,
-      email: currentUserEmail,
-      amount: amountCents,
-      currency: window.PAYSTACK_CURRENCY || 'NGN',
-      ref: reference,
-      metadata: {
-        listing_id: activeListing.id,
-        user_id: currentUserId,
-        full_name: fullName,
-      },
-      callback: (response) => {
-        // Paystack confirms the popup succeeded, but the amount/status
-        // must still be verified server-side before we trust it — never
-        // mark a pre-order paid from the client alone.
-        finalizePayment(response.reference, fullName, amountCents);
-      },
-      onClose: () => {
-        modalSubmitBtn.disabled = false;
-      },
-    });
-
-    handler.openIframe();
-  });
-
-  async function finalizePayment(reference, fullName, amountCents) {
-    modalMsg.textContent = 'Confirming your payment…';
-    modalMsg.className = 'modal-msg';
-
-    try {
-      const { data, error } = await supabaseClient.functions.invoke('verify-paystack-payment', {
-        body: {
-          reference,
-          listing_id: activeListing.id,
-          full_name: fullName,
-          expected_amount_cents: amountCents,
-        },
-      });
-
-      if (error) throw error;
-      if (!data || !data.ok) {
-        throw new Error((data && data.error) || 'verification_failed');
-      }
-
-      reservedIds.add(activeListing.id);
-      renderListings();
-      closeModal();
-    } catch (err) {
-      console.error('Payment verification failed:', err);
-      modalSubmitBtn.disabled = false;
-      modalMsg.textContent = 'Payment could not be confirmed. If you were charged, contact support with reference ' + reference + '.';
-      modalMsg.classList.add('error');
-    }
   }
 
   (async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
 
     if (!session) {
-      window.location.href = 'login.html?redirect=' + encodeURIComponent('preorder.html');
+      window.location.href = 'login.html?redirect=' + encodeURIComponent('market.html');
       return;
     }
 
     const user = session.user;
-    currentUserId = user.id;
-    currentUserEmail = user.email;
     const meta = user.user_metadata || {};
     const displayName = meta.username || (user.email ? user.email.split('@')[0] : 'Member');
-    accountName = displayName;
 
     document.getElementById('dash-username').textContent = displayName;
     document.getElementById('dash-username-m').textContent = displayName;
@@ -549,35 +374,24 @@
       avatarEls.forEach(el => { el.textContent = initial; });
     }
 
-    // Pre-order listings — reads from `preorder_listings` (open drops) and
-    // `preorder_reservations` (this user's reservations, so we can show
-    // which items they've already reserved). See preorder-schema.sql.
     const countEl = document.getElementById('listing-count');
     try {
-      const [{ data: listingData, error: listingError }, { data: reservationData, error: reservationError }] = await Promise.all([
-        supabaseClient
-          .from('preorder_listings')
-          .select('id, name, image_url, price_cents, release_date')
-          .eq('active', true)
-          .eq('listing_type', 'preorder')
-          .order('release_date', { ascending: true }),
-        supabaseClient
-          .from('preorder_reservations')
-          .select('listing_id')
-          .eq('user_id', user.id),
-      ]);
+      const { data, error } = await supabaseClient
+        .from('preorder_listings')
+        .select('id, name, image_url, price_cents, release_date')
+        .eq('active', true)
+        .eq('listing_type', 'market')
+        .order('release_date', { ascending: true });
 
-      if (listingError) throw listingError;
-      if (reservationError) throw reservationError;
+      if (error) throw error;
 
-      listings = listingData || [];
-      reservedIds = new Set((reservationData || []).map(r => r.listing_id));
-      countEl.textContent = `${listings.length} open drop${listings.length === 1 ? '' : 's'}`;
+      listings = data || [];
+      countEl.textContent = `${listings.length} item${listings.length === 1 ? '' : 's'}`;
       renderListings();
     } catch (err) {
-      console.error('Failed to load pre-orders:', err);
+      console.error('Failed to load market listings:', err);
       listings = [];
-      countEl.textContent = 'Unable to load pre-orders';
+      countEl.textContent = 'Unable to load market';
       renderListings();
     }
 
