@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-config.js"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="paystack-config.js"></script>
 <style>
   :root{
     --black:#05070b; --navy-950:#080d16; --navy-900:#0b1220; --navy-800:#101a2c;
@@ -233,7 +235,34 @@
   .detail-meta-row span:first-child{ color:var(--text-dimmer); letter-spacing:0.08em; }
   .detail-meta-row span:last-child{ color:var(--text); font-weight:600; }
   .detail-description-label{ font-family:var(--mono); font-size:10.5px; letter-spacing:0.1em; color:var(--text-dimmer); margin-bottom:8px; }
-  .detail-description{ font-size:13.5px; line-height:1.7; color:var(--text-dim); white-space:pre-line; }
+  .detail-description{ font-size:13.5px; line-height:1.7; color:var(--text-dim); white-space:pre-line; margin-bottom:20px; }
+  .buy-btn{
+    width:100%; font-size:13px; font-weight:700; letter-spacing:0.03em; color:var(--black);
+    background:var(--gold-bright); border:none; border-radius:999px; padding:13px; cursor:pointer; font-family:var(--sans);
+  }
+  .buy-btn:hover{ background:var(--gold); }
+
+  /* ---------- buy / address modal ---------- */
+  .buy-panel{ max-width:460px; }
+  .buy-summary{ display:flex; gap:12px; align-items:center; margin-bottom:20px; }
+  .buy-summary-thumb{
+    width:52px; height:52px; border-radius:8px; object-fit:cover; flex-shrink:0;
+    background:linear-gradient(200deg,#1a2233,#0a0e16 60%);
+  }
+  .buy-summary-text .name{ font-size:13.5px; font-weight:700; }
+  .buy-summary-text .price{ font-size:13px; color:var(--gold-bright); font-weight:700; margin-top:2px; }
+  .field-row{ display:flex; gap:10px; }
+  .field-row > div{ flex:1; }
+  .buy-step{ display:none; }
+  .buy-step.active{ display:block; }
+  .success-seal{ width:64px; height:64px; margin:8px auto 16px; display:block; }
+  .success-title{ text-align:center; font-size:16px; font-weight:800; color:var(--green); margin-bottom:6px; }
+  .success-sub{ text-align:center; font-size:12.5px; color:var(--text-dim); margin-bottom:6px; line-height:1.6; }
+  .tracking-box{
+    text-align:center; font-family:var(--mono); font-size:15px; font-weight:700; color:var(--gold-bright);
+    background:rgba(203,185,141,0.08); border:1px solid rgba(203,185,141,0.25); border-radius:10px;
+    padding:12px; margin:14px 0 18px; letter-spacing:0.04em;
+  }
 
   @media (max-width:980px){
     .sidebar{ display:none; }
@@ -359,6 +388,81 @@
         <div class="detail-meta-row"><span>RELEASE DATE</span><span id="detail-release"></span></div>
         <div class="detail-description-label">DESCRIPTION</div>
         <div class="detail-description" id="detail-description"></div>
+        <button class="buy-btn" id="buy-now-btn">BUY NOW</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buy / address / payment modal -->
+  <div class="modal-scrim" id="buy-scrim">
+    <div class="modal-panel buy-panel">
+      <div class="modal-header">
+        <div class="modal-title">Checkout</div>
+        <button class="modal-close" id="buy-close-btn" aria-label="Close">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <div class="buy-summary">
+        <img class="buy-summary-thumb" id="buy-summary-thumb" src="" alt="" />
+        <div class="buy-summary-text">
+          <div class="name" id="buy-summary-name"></div>
+          <div class="price" id="buy-summary-price"></div>
+        </div>
+      </div>
+
+      <!-- Step 1: shipping details -->
+      <div class="buy-step active" id="buy-step-form">
+        <label for="buy-name-input">FULL NAME</label>
+        <input type="text" id="buy-name-input" placeholder="John Chibueke" />
+
+        <label for="buy-phone-input">PHONE NUMBER</label>
+        <input type="tel" id="buy-phone-input" placeholder="+234 800 000 0000" />
+
+        <label for="buy-address1-input">ADDRESS LINE 1</label>
+        <input type="text" id="buy-address1-input" placeholder="12 Admiralty Way" />
+
+        <label for="buy-address2-input">ADDRESS LINE 2 (OPTIONAL)</label>
+        <input type="text" id="buy-address2-input" placeholder="Apartment, suite, etc." />
+
+        <div class="field-row">
+          <div>
+            <label for="buy-city-input">CITY</label>
+            <input type="text" id="buy-city-input" placeholder="Lekki" />
+          </div>
+          <div>
+            <label for="buy-state-input">STATE</label>
+            <input type="text" id="buy-state-input" placeholder="Lagos" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div>
+            <label for="buy-postal-input">POSTAL CODE (OPTIONAL)</label>
+            <input type="text" id="buy-postal-input" placeholder="101245" />
+          </div>
+          <div>
+            <label for="buy-country-input">COUNTRY</label>
+            <input type="text" id="buy-country-input" value="Nigeria" />
+          </div>
+        </div>
+
+        <button class="modal-submit-btn" id="buy-pay-btn">PAY WITH PAYSTACK</button>
+        <div class="modal-item-meta" style="margin:8px 0 0; text-align:center;">Secured by Paystack. Card, bank transfer, and mobile money accepted.</div>
+        <div class="modal-msg" id="buy-msg"></div>
+      </div>
+
+      <!-- Step 2: success -->
+      <div class="buy-step" id="buy-step-success">
+        <svg class="success-seal" viewBox="0 0 104 104" fill="none">
+          <circle cx="52" cy="52" r="46" stroke="var(--green)" stroke-width="2.5" opacity="0.85"/>
+          <circle cx="52" cy="52" r="38" fill="rgba(127,216,160,0.18)"/>
+          <path d="M35 53l12 12 22-24" stroke="var(--green)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <div class="success-title">Order Placed</div>
+        <div class="success-sub">Your payment was confirmed and your order is on its way to being packed. Track it anytime from your Orders page.</div>
+        <div class="tracking-box" id="success-tracking-number"></div>
+        <a class="modal-submit-btn" href="orders.html" style="display:block; text-align:center;">VIEW MY ORDERS</a>
       </div>
     </div>
   </div>
@@ -369,6 +473,10 @@
   const emptyIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1.5"/><path d="M8 7V5a4 4 0 018 0v2"/><path d="M3 12h18"/></svg>`;
 
   let listings = [];
+  let currentUserId = null;
+  let currentUserEmail = null;
+  let accountName = null;
+  let activeListing = null;
 
   function formatPrice(cents){
     if (cents === null || cents === undefined) return '—';
@@ -454,6 +562,7 @@
   }
 
   function openDetailModal(listing){
+    activeListing = listing;
     const photos = photosFor(listing);
 
     detailName.textContent = listing.name || 'Untitled';
@@ -496,8 +605,139 @@
     if (e.target === detailScrim) closeDetailModal();
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeDetailModal();
+    if (e.key === 'Escape') { closeDetailModal(); closeBuyModal(); }
   });
+
+  // ---------------- Buy Now flow ----------------
+  const buyScrim = document.getElementById('buy-scrim');
+  const buyStepForm = document.getElementById('buy-step-form');
+  const buyStepSuccess = document.getElementById('buy-step-success');
+  const buyMsg = document.getElementById('buy-msg');
+  const buyPayBtn = document.getElementById('buy-pay-btn');
+
+  function showBuyStep(name){
+    buyStepForm.classList.toggle('active', name === 'form');
+    buyStepSuccess.classList.toggle('active', name === 'success');
+  }
+
+  function openBuyModal(){
+    if (!activeListing) return;
+    const photos = photosFor(activeListing);
+
+    document.getElementById('buy-summary-thumb').src = photos[0] || '';
+    document.getElementById('buy-summary-name').textContent = activeListing.name || 'Untitled';
+    document.getElementById('buy-summary-price').textContent = formatPrice(activeListing.price_cents);
+
+    document.getElementById('buy-name-input').value = accountName || '';
+    document.getElementById('buy-phone-input').value = '';
+    document.getElementById('buy-address1-input').value = '';
+    document.getElementById('buy-address2-input').value = '';
+    document.getElementById('buy-city-input').value = '';
+    document.getElementById('buy-state-input').value = '';
+    document.getElementById('buy-postal-input').value = '';
+    document.getElementById('buy-country-input').value = 'Nigeria';
+    buyMsg.textContent = '';
+    buyMsg.className = 'modal-msg';
+    buyPayBtn.disabled = false;
+
+    showBuyStep('form');
+    buyScrim.classList.add('open');
+  }
+
+  function closeBuyModal(){
+    buyScrim.classList.remove('open');
+  }
+
+  document.getElementById('buy-now-btn').addEventListener('click', () => {
+    closeDetailModal();
+    openBuyModal();
+  });
+  document.getElementById('buy-close-btn').addEventListener('click', closeBuyModal);
+  buyScrim.addEventListener('click', (e) => { if (e.target === buyScrim) closeBuyModal(); });
+
+  buyPayBtn.addEventListener('click', () => {
+    if (!activeListing) return;
+    buyMsg.textContent = '';
+    buyMsg.className = 'modal-msg';
+
+    const fullName = document.getElementById('buy-name-input').value.trim();
+    const phone = document.getElementById('buy-phone-input').value.trim();
+    const addressLine1 = document.getElementById('buy-address1-input').value.trim();
+    const addressLine2 = document.getElementById('buy-address2-input').value.trim();
+    const city = document.getElementById('buy-city-input').value.trim();
+    const state = document.getElementById('buy-state-input').value.trim();
+    const postalCode = document.getElementById('buy-postal-input').value.trim();
+    const country = document.getElementById('buy-country-input').value.trim() || 'Nigeria';
+
+    if (!fullName || !phone || !addressLine1 || !city || !state) {
+      buyMsg.textContent = 'Fill in your name, phone, and address to continue.';
+      buyMsg.classList.add('error');
+      return;
+    }
+    if (typeof window.PAYSTACK_PUBLIC_KEY === 'undefined' || !window.PAYSTACK_PUBLIC_KEY) {
+      buyMsg.textContent = 'Payments are not configured yet. Please contact support.';
+      buyMsg.classList.add('error');
+      return;
+    }
+
+    const amountCents = activeListing.price_cents;
+    const reference = `VLC-ORD-${String(activeListing.id).slice(0, 8)}-${Date.now()}`;
+
+    buyPayBtn.disabled = true;
+
+    const handler = PaystackPop.setup({
+      key: window.PAYSTACK_PUBLIC_KEY,
+      email: currentUserEmail,
+      amount: amountCents,
+      currency: window.PAYSTACK_CURRENCY || 'NGN',
+      ref: reference,
+      metadata: { listing_id: activeListing.id, user_id: currentUserId, full_name: fullName },
+      callback: (response) => {
+        finalizeOrder(response.reference, {
+          fullName, phone, addressLine1, addressLine2, city, state, postalCode, country, amountCents,
+        });
+      },
+      onClose: () => {
+        buyPayBtn.disabled = false;
+      },
+    });
+
+    handler.openIframe();
+  });
+
+  async function finalizeOrder(reference, shipping){
+    buyMsg.textContent = 'Confirming your payment…';
+    buyMsg.className = 'modal-msg';
+
+    try {
+      const { data, error } = await supabaseClient.functions.invoke('verify-order-payment', {
+        body: {
+          reference,
+          listing_id: activeListing.id,
+          full_name: shipping.fullName,
+          phone: shipping.phone,
+          address_line1: shipping.addressLine1,
+          address_line2: shipping.addressLine2,
+          city: shipping.city,
+          state: shipping.state,
+          postal_code: shipping.postalCode,
+          country: shipping.country,
+          expected_amount_cents: shipping.amountCents,
+        },
+      });
+
+      if (error) throw error;
+      if (!data || !data.ok) throw new Error((data && data.error) || 'verification_failed');
+
+      document.getElementById('success-tracking-number').textContent = data.tracking_number;
+      showBuyStep('success');
+    } catch (err) {
+      console.error('Order verification failed:', err);
+      buyPayBtn.disabled = false;
+      buyMsg.textContent = 'Payment could not be confirmed. If you were charged, contact support with reference ' + reference + '.';
+      buyMsg.classList.add('error');
+    }
+  }
 
   (async () => {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -508,8 +748,11 @@
     }
 
     const user = session.user;
+    currentUserId = user.id;
+    currentUserEmail = user.email;
     const meta = user.user_metadata || {};
     const displayName = meta.username || (user.email ? user.email.split('@')[0] : 'Member');
+    accountName = displayName;
 
     document.getElementById('dash-username').textContent = displayName;
     document.getElementById('dash-username-m').textContent = displayName;

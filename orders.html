@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Orders — VALENCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+  :root{
+    --black:#05070b; --navy-950:#080d16; --navy-900:#0b1220; --navy-800:#101a2c;
+    --panel:rgba(255,255,255,0.035); --border:rgba(255,255,255,0.09);
+    --gold:#cbb98d; --gold-bright:#e6d9b0; --green:#3ddc84;
+    --text:#f2f1ec; --text-dim:#93a0b4; --text-dimmer:#5c6779;
+    --mono:'JetBrains Mono',monospace; --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--black); color:var(--text); font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+  a{ color:inherit; text-decoration:none; }
+
+  .app{ display:flex; min-height:100vh; }
+
+  /* ---------- logo ---------- */
+  .logo-chip{ display:inline-flex; align-items:center; line-height:0; }
+  .logo-chip img{ display:block; height:34px; width:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
+  .logo-chip.sm img{ height:26px; }
+  .logo-chip.lg img{ height:44px; }
+  .brandmark{ display:flex; align-items:center; gap:10px; }
+  .brand-word{ font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:15px; text-shadow:0 0 14px rgba(203,185,141,0.35); }
+  .brand-word.sm{ font-size:12px; letter-spacing:0.13em; }
+  .brand-word.lg{ font-size:17px; }
+
+  /* ---------- sidebar (desktop) ---------- */
+  .sidebar{
+    width:230px; flex-shrink:0; background:var(--navy-950);
+    border-right:1px solid var(--border); padding:26px 16px; display:flex; flex-direction:column;
+  }
+  .brand{ padding:0 10px 28px; border-bottom:1px solid var(--border); margin-bottom:18px; }
+  nav.primary-nav{ display:flex; flex-direction:column; gap:2px; }
+  .nav-item{
+    display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:8px;
+    font-size:13.5px; font-weight:700; color:var(--text-dim); cursor:pointer; border:1px solid transparent;
+  }
+  .nav-item svg{ width:17px; height:17px; flex-shrink:0; opacity:0.85; }
+  .nav-item:hover{ background:var(--panel); color:var(--text); }
+  .nav-item.active{ background:rgba(203,185,141,0.14); color:var(--gold-bright); border-color:rgba(203,185,141,0.28); }
+  .nav-item.active svg{ opacity:1; }
+  .sidebar-bottom{ margin-top:auto; padding-top:16px; }
+  .logout-btn{
+    font-size:11.5px; font-weight:700; color:var(--text-dim); background:none;
+    border:1px solid var(--border); border-radius:999px; padding:8px 12px; cursor:pointer;
+    font-family:var(--sans); width:100%;
+  }
+  .logout-btn:hover{ color:var(--text); border-color:var(--gold); }
+
+  /* ---------- mobile header + slide-out nav ---------- */
+  .mobile-header{ display:none; }
+  .scrim{
+    position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:25; opacity:0; pointer-events:none;
+    transition:opacity 0.2s ease;
+  }
+  .scrim.open{ opacity:1; pointer-events:auto; }
+
+  /* ---------- main ---------- */
+  main.dash{
+    flex:1; min-width:0; padding:26px 34px 60px;
+    background:
+      radial-gradient(1100px 480px at 82% -10%, rgba(203,185,141,0.10), transparent 60%),
+      linear-gradient(180deg, var(--navy-900), var(--black) 55%);
+  }
+
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:34px; }
+  .profile-block{ display:flex; align-items:center; gap:10px; }
+  a.profile-block:hover .name{ color:var(--gold-bright); }
+  .profile-text{ text-align:right; line-height:1.3; }
+  .profile-text .label{ font-size:10px; letter-spacing:0.12em; color:var(--text-dimmer); font-family:var(--mono); font-weight:700; }
+  .profile-text .name{ font-size:13.5px; font-weight:700; }
+  .avatar-wrap{ position:relative; }
+  .avatar{
+    width:34px; height:34px; border-radius:50%; background:linear-gradient(145deg,#3a4a63,#1b2534);
+    background-size:cover; background-position:center;
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+    color:var(--text); border:1px solid var(--border);
+  }
+  .status-dot{
+    width:9px; height:9px; border-radius:50%; background:var(--green); position:absolute;
+    right:-1px; bottom:-1px; border:2px solid var(--navy-900);
+  }
+
+  .page-head{ margin-bottom:22px; }
+  h1.title{ font-size:clamp(22px,2.6vw,30px); font-weight:800; letter-spacing:0.01em; margin:0; }
+  h1.title span{ color:var(--gold-bright); }
+  .subtitle{ font-size:12.5px; color:var(--text-dim); font-family:var(--mono); margin-top:4px; }
+
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:18px; }
+
+  /* ---------- order cards ---------- */
+  .order-list{ display:flex; flex-direction:column; gap:14px; }
+  .order-card{ padding:18px; }
+  .order-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  .order-item-name{ font-size:14.5px; font-weight:700; }
+  .order-meta{ font-size:11.5px; color:var(--text-dimmer); font-family:var(--mono); margin-top:4px; }
+  .order-price{ font-size:14px; font-weight:800; color:var(--gold-bright); white-space:nowrap; }
+
+  .tracking-number{
+    font-family:var(--mono); font-size:12px; color:var(--gold-bright); background:rgba(203,185,141,0.08);
+    border:1px solid rgba(203,185,141,0.25); border-radius:8px; padding:8px 12px; margin-bottom:16px;
+    display:inline-block; letter-spacing:0.03em;
+  }
+
+  /* status progress */
+  .progress-track{ display:flex; align-items:center; margin-bottom:6px; }
+  .progress-step{ flex:1; display:flex; flex-direction:column; align-items:center; position:relative; }
+  .progress-dot{
+    width:20px; height:20px; border-radius:50%; background:var(--navy-800); border:2px solid var(--border);
+    display:flex; align-items:center; justify-content:center; z-index:1; flex-shrink:0;
+  }
+  .progress-dot svg{ width:10px; height:10px; color:var(--black); display:none; }
+  .progress-step.done .progress-dot{ background:var(--green); border-color:var(--green); }
+  .progress-step.done .progress-dot svg{ display:block; }
+  .progress-step.current .progress-dot{ background:var(--gold-bright); border-color:var(--gold-bright); }
+  .progress-line{
+    position:absolute; top:9px; left:calc(-50% + 10px); right:calc(50% + 10px); height:2px;
+    background:var(--border); z-index:0;
+  }
+  .progress-step:first-child .progress-line{ display:none; }
+  .progress-step.done .progress-line{ background:var(--green); }
+  .progress-label{ font-size:9.5px; font-family:var(--mono); letter-spacing:0.03em; color:var(--text-dimmer); margin-top:6px; text-align:center; }
+  .progress-step.done .progress-label, .progress-step.current .progress-label{ color:var(--text); }
+  .progress-track.cancelled .progress-dot{ background:#e88a8a; border-color:#e88a8a; }
+  .cancelled-note{ font-size:11.5px; color:#e88a8a; font-family:var(--mono); margin:8px 0 0; }
+
+  .order-address{ font-size:11.5px; color:var(--text-dim); line-height:1.6; margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+  .order-address .label{ font-family:var(--mono); font-size:10px; letter-spacing:0.08em; color:var(--text-dimmer); margin-bottom:4px; }
+  .order-carrier{ font-size:11.5px; color:var(--text-dim); margin-top:8px; }
+  .order-carrier a{ color:var(--gold-bright); text-decoration:underline; }
+
+  /* ---------- empty state ---------- */
+  .empty-state{
+    text-align:center; padding:60px 20px; display:flex; flex-direction:column; align-items:center; gap:12px;
+  }
+  .empty-state svg{ width:40px; height:40px; color:var(--text-dimmer); }
+  .empty-state h3{ font-size:15px; font-weight:700; margin:0; }
+  .empty-state p{ font-size:12.5px; color:var(--text-dim); margin:0; max-width:340px; }
+  .empty-state a.btn-outline{
+    margin-top:6px; display:inline-block; border:1px solid rgba(203,185,141,0.4); color:var(--gold-bright);
+    border-radius:999px; padding:10px 20px; font-size:12px; font-weight:700;
+  }
+  .empty-state a.btn-outline:hover{ background:rgba(203,185,141,0.1); border-color:var(--gold); }
+
+  @media (max-width:980px){
+    .sidebar{ display:none; }
+    .mobile-header{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px; border-bottom:1px solid var(--border);
+      background:linear-gradient(180deg,var(--navy-900),var(--black));
+      position:sticky; top:0; z-index:20;
+    }
+    .mobile-header .left{ display:flex; align-items:center; gap:12px; }
+    .menu-btn{
+      background:none; border:1px solid var(--border); border-radius:8px; width:32px; height:32px;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); flex-shrink:0;
+    }
+    .menu-btn svg{ width:16px; height:16px; }
+    .sidebar.mobile-open{
+      display:flex; position:fixed; top:0; left:0; height:100%; z-index:30;
+      transform:translateX(0); box-shadow:20px 0 40px rgba(0,0,0,0.5);
+    }
+    main.dash{ padding:18px 16px 44px; }
+    .topbar{ display:none; }
+    h1.title{ font-size:19px; }
+    .progress-label{ font-size:8.5px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading" style="color:var(--text-dim); font-size:14px; padding:60px 34px;">Loading your account…</div>
+
+<div id="content" style="display:none;">
+
+  <div class="scrim" id="scrim"></div>
+
+  <header class="mobile-header">
+    <div class="left">
+      <button class="menu-btn" id="menu-btn" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="brandmark">
+        <div class="logo-chip sm"><img src="valence-mark.png" alt="VALENCE"></div>
+        <span class="brand-word sm">VALENCE</span>
+      </div>
+    </div>
+    <a class="profile-block" href="profile.html">
+      <div class="profile-text">
+        <div class="label">PROFILE</div>
+        <div class="name" id="dash-username-m">—</div>
+      </div>
+      <div class="avatar-wrap">
+        <div class="avatar" id="avatar-initial-m">—</div>
+        <div class="status-dot"></div>
+      </div>
+    </a>
+  </header>
+
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brandmark">
+          <div class="logo-chip lg"><img src="valence-logo.png" alt="VALENCE"></div>
+          <span class="brand-word lg">VALENCE</span>
+        </div>
+      </div>
+      <nav class="primary-nav">
+        <a href="dashboard.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Dashboard</a>
+        <a href="profile.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>My Profile</a>
+        <a href="collection.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1.5"/><path d="M8 7V5a4 4 0 018 0v2"/></svg>My Collection</a>
+        <a href="preorder.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 7l6.5 9.5M16 7l-6.5 9.5"/></svg>Pre-Order</a>
+        <a href="market.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.8 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.8-3.8-9S9.5 5.5 12 3z"/></svg>Explore Market</a>
+        <a href="orders.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-1.5 12.5a2 2 0 01-2 1.5H7.5a2 2 0 01-2-1.5L4 5z"/><path d="M4 5l-1-2"/></svg>Orders</a>
+        <a href="voting.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9M7 11L3 9.5V20l4 1M7 11l6-4 4 2.5M17 9.5V20l4-1V10l-4-2M11 7v10"/></svg>Voting</a>
+        <a href="support.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.7-2.5 1.7-2.5 3.5"/><path d="M12 17h.01"/></svg>Support</a>
+        <a href="settings.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Settings</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="logout-btn" id="logout-btn">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="dash">
+      <div class="topbar">
+        <div class="brandmark">
+          <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
+          <span class="brand-word">VALENCE</span>
+        </div>
+        <a class="profile-block" href="profile.html">
+          <div class="profile-text">
+            <div class="label">PROFILE</div>
+            <div class="name" id="dash-username">—</div>
+          </div>
+          <div class="avatar-wrap">
+            <div class="avatar" id="avatar-initial">—</div>
+            <div class="status-dot"></div>
+          </div>
+        </a>
+      </div>
+
+      <div class="page-head">
+        <h1 class="title">MY <span>ORDERS</span></h1>
+        <div class="subtitle" id="order-count">Loading orders…</div>
+      </div>
+
+      <div class="order-list" id="order-list"></div>
+    </main>
+  </div>
+</div>
+
+<script>
+  const boxIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1.5"/><path d="M8 7V5a4 4 0 018 0v2"/></svg>`;
+  const emptyIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-1.5 12.5a2 2 0 01-2 1.5H7.5a2 2 0 01-2-1.5L4 5z"/><path d="M4 5l-1-2"/></svg>`;
+  const checkIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4L19 6"/></svg>`;
+
+  const STEPS = [
+    { key: 'paid', label: 'PAID' },
+    { key: 'processing', label: 'PROCESSING' },
+    { key: 'shipped', label: 'SHIPPED' },
+    { key: 'delivered', label: 'DELIVERED' },
+  ];
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function formatPrice(cents){
+    if (cents === null || cents === undefined) return '—';
+    return `\u20a6${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function formatDate(d){
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  function progressHTML(order){
+    if (order.status === 'cancelled') {
+      return `
+        <div class="progress-track cancelled">
+          <div class="progress-step done"><div class="progress-dot">${checkIcon}</div><div class="progress-label">PAID</div></div>
+          <div class="progress-step current"><div class="progress-line"></div><div class="progress-dot"></div><div class="progress-label">CANCELLED</div></div>
+        </div>`;
+    }
+
+    const currentIndex = STEPS.findIndex(s => s.key === order.status);
+    return `
+      <div class="progress-track">
+        ${STEPS.map((s, i) => {
+          const state = i < currentIndex ? 'done' : (i === currentIndex ? 'current' : '');
+          return `
+            <div class="progress-step ${state}">
+              <div class="progress-line"></div>
+              <div class="progress-dot">${state === 'done' ? checkIcon : ''}</div>
+              <div class="progress-label">${s.label}</div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  function orderCardHTML(order){
+    const listingName = order.preorder_listings?.name || 'Item';
+    const addressParts = [order.address_line1, order.address_line2, order.city, order.state, order.postal_code, order.country]
+      .filter(Boolean).map(escapeHtml).join(', ');
+
+    return `
+      <div class="card order-card">
+        <div class="order-top">
+          <div>
+            <div class="order-item-name">${escapeHtml(listingName)}</div>
+            <div class="order-meta">Ordered ${formatDate(order.created_at)}</div>
+          </div>
+          <div class="order-price">${formatPrice(order.amount_paid_cents)}</div>
+        </div>
+
+        <div class="tracking-number">TRACKING: ${escapeHtml(order.tracking_number)}</div>
+
+        ${progressHTML(order)}
+        ${order.status === 'cancelled' ? '<div class="cancelled-note">This order was cancelled. Contact support if you have questions.</div>' : ''}
+
+        ${order.carrier || order.tracking_url ? `
+          <div class="order-carrier">
+            ${order.carrier ? `Carrier: ${escapeHtml(order.carrier)}` : ''}
+            ${order.tracking_url ? ` · <a href="${escapeHtml(order.tracking_url)}" target="_blank" rel="noopener">Track shipment &rarr;</a>` : ''}
+          </div>` : ''}
+
+        <div class="order-address">
+          <div class="label">SHIPPING TO</div>
+          ${escapeHtml(order.full_name)} · ${escapeHtml(order.phone)}<br>
+          ${addressParts}
+        </div>
+      </div>`;
+  }
+
+  function emptyStateHTML(){
+    return `
+      <div class="card empty-state">
+        ${emptyIcon}
+        <h3>No orders yet</h3>
+        <p>Items you buy from Explore Market will show up here with tracking.</p>
+        <a class="btn-outline" href="market.html">Explore Market</a>
+      </div>`;
+  }
+
+  (async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (!session) {
+      window.location.href = 'login.html?redirect=' + encodeURIComponent('orders.html');
+      return;
+    }
+
+    const user = session.user;
+    const meta = user.user_metadata || {};
+    const displayName = meta.username || (user.email ? user.email.split('@')[0] : 'Member');
+
+    document.getElementById('dash-username').textContent = displayName;
+    document.getElementById('dash-username-m').textContent = displayName;
+
+    const avatarEls = [document.getElementById('avatar-initial'), document.getElementById('avatar-initial-m')];
+    if (meta.avatar_url) {
+      avatarEls.forEach(el => { el.style.backgroundImage = `url("${meta.avatar_url}")`; el.textContent = ''; });
+    } else {
+      const initial = displayName.charAt(0).toUpperCase();
+      avatarEls.forEach(el => { el.textContent = initial; });
+    }
+
+    const countEl = document.getElementById('order-count');
+    const listEl = document.getElementById('order-list');
+
+    try {
+      const { data, error } = await supabaseClient
+        .from('orders')
+        .select('id, full_name, phone, address_line1, address_line2, city, state, postal_code, country, amount_paid_cents, tracking_number, status, carrier, tracking_url, created_at, preorder_listings(name)')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const orders = data || [];
+      countEl.textContent = `${orders.length} order${orders.length === 1 ? '' : 's'}`;
+      listEl.innerHTML = orders.length ? orders.map(orderCardHTML).join('') : emptyStateHTML();
+    } catch (err) {
+      console.error('Failed to load orders:', err);
+      countEl.textContent = 'Unable to load orders';
+      listEl.innerHTML = emptyStateHTML();
+    }
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+  })();
+
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || !session) {
+      window.location.href = 'login.html';
+    }
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'login.html';
+  });
+
+  const sidebar = document.getElementById('sidebar');
+  const scrim = document.getElementById('scrim');
+  const menuBtn = document.getElementById('menu-btn');
+  function toggleMenu(open){
+    sidebar.classList.toggle('mobile-open', open);
+    scrim.classList.toggle('open', open);
+  }
+  menuBtn.addEventListener('click', () => toggleMenu(true));
+  scrim.addEventListener('click', () => toggleMenu(false));
+</script>
+</body>
+</html>

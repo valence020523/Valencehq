@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orders Admin — VALENCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+  :root{
+    --black:#05070b; --navy-900:#0b1220; --gold:#cbb98d; --gold-bright:#e6d9b0;
+    --panel:rgba(255,255,255,0.035); --border:rgba(255,255,255,0.09);
+    --text:#f2f1ec; --text-dim:#93a0b4; --text-dimmer:#5c6779;
+    --mono:'JetBrains Mono',monospace; --sans:'Inter','Segoe UI',system-ui,sans-serif;
+    --green:#7fd8a0; --red:#e88a8a;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--black); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; text-decoration:none; }
+  header{
+    display:flex; align-items:center; justify-content:space-between; padding:18px 30px;
+    border-bottom:1px solid var(--border); background:linear-gradient(180deg,var(--navy-900),var(--black));
+  }
+  .logo-chip img{ display:block; height:30px; width:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
+  .brandmark{ display:flex; align-items:center; gap:10px; }
+  .brand-word{ font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:15px; }
+  .back-link{ font-size:12.5px; font-family:var(--mono); color:var(--text-dim); }
+  .back-link:hover{ color:var(--gold-bright); }
+  #signout-btn{
+    font-size:12px; font-family:var(--mono); color:var(--text-dim); background:none;
+    border:1px solid var(--border); border-radius:999px; padding:6px 14px; cursor:pointer; display:none;
+  }
+  #signout-btn:hover{ color:var(--gold-bright); border-color:var(--gold); }
+
+  main{ max-width:720px; margin:0 auto; padding:60px 24px 90px; }
+  h1{ font-size:22px; font-weight:800; margin:0 0 8px; }
+  .sub{ font-size:13.5px; color:var(--text-dim); margin:0 0 24px; }
+
+  .panel{ border:1px solid var(--border); background:var(--panel); border-radius:16px; padding:22px; }
+  label{ display:block; font-size:11.5px; font-family:var(--mono); color:var(--text-dimmer); margin:16px 0 6px; }
+  label:first-of-type{ margin-top:0; }
+  input{
+    width:100%; padding:11px 13px; border-radius:8px; border:1px solid var(--border);
+    background:rgba(255,255,255,0.03); color:var(--text); font-family:var(--sans); font-size:13.5px;
+  }
+  input:focus{ outline:none; border-color:var(--gold); }
+  .btn{
+    margin-top:22px; width:100%; font-size:13px; font-weight:700; letter-spacing:0.03em; color:var(--black);
+    background:var(--gold-bright); border:none; border-radius:999px; padding:13px; cursor:pointer; font-family:var(--sans);
+  }
+  .btn:hover{ background:var(--gold); }
+  .btn:disabled{ opacity:0.5; cursor:default; }
+  .msg{ margin-top:16px; font-size:12.5px; font-family:var(--mono); }
+  .msg.error{ color:var(--red); }
+  .msg.success{ color:var(--green); }
+
+  #app-section{ display:none; }
+  #login-section{ display:block; }
+
+  /* ---------- filter tabs ---------- */
+  .filter-row{ display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap; }
+  .filter-tab{
+    font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:0.05em;
+    color:var(--text-dim); background:var(--panel); border:1px solid var(--border);
+    border-radius:999px; padding:7px 13px; cursor:pointer;
+  }
+  .filter-tab:hover{ color:var(--text); border-color:var(--gold); }
+  .filter-tab.active{ background:rgba(203,185,141,0.14); color:var(--gold-bright); border-color:rgba(203,185,141,0.28); }
+
+  /* ---------- order cards ---------- */
+  .order-card{ margin-top:14px; }
+  .order-top{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+  .order-item-name{ font-size:14px; font-weight:700; }
+  .order-meta{ font-size:11px; color:var(--text-dimmer); font-family:var(--mono); margin-top:4px; line-height:1.7; }
+  .order-price{ font-size:14px; font-weight:800; color:var(--gold-bright); white-space:nowrap; }
+  .status-pill{
+    display:inline-block; font-family:var(--mono); font-size:10px; letter-spacing:0.04em;
+    padding:3px 9px; border-radius:999px;
+  }
+  .status-pill.paid{ color:var(--gold-bright); background:rgba(203,185,141,0.12); border:1px solid rgba(203,185,141,0.35); }
+  .status-pill.processing{ color:#8ec9f0; background:rgba(142,201,240,0.1); border:1px solid rgba(142,201,240,0.3); }
+  .status-pill.shipped{ color:#c9a6f0; background:rgba(201,166,240,0.1); border:1px solid rgba(201,166,240,0.3); }
+  .status-pill.delivered{ color:var(--green); background:rgba(127,216,160,0.1); border:1px solid rgba(127,216,160,0.3); }
+  .status-pill.cancelled{ color:var(--red); background:rgba(232,138,138,0.1); border:1px solid rgba(232,138,138,0.3); }
+
+  .order-address{
+    font-size:11.5px; color:var(--text-dim); line-height:1.7; margin:10px 0 14px;
+    padding:10px 12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px solid var(--border);
+  }
+  .order-address .label{ font-family:var(--mono); font-size:10px; letter-spacing:0.08em; color:var(--text-dimmer); margin-bottom:4px; }
+
+  .order-controls{ display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; }
+  .order-controls > div{ flex:1; min-width:120px; }
+  .order-controls label{ margin:0 0 6px; }
+  select{
+    width:100%; padding:9px 11px; border-radius:8px; border:1px solid var(--border);
+    background:rgba(255,255,255,0.03); color:var(--text); font-family:var(--sans); font-size:12.5px;
+  }
+  select:focus{ outline:none; border-color:var(--gold); }
+  .save-btn{
+    font-family:var(--sans); font-size:12px; font-weight:700; color:var(--black); background:var(--gold-bright);
+    border:none; border-radius:999px; padding:9px 16px; cursor:pointer; white-space:nowrap;
+  }
+  .save-btn:hover{ background:var(--gold); }
+  .save-btn:disabled{ opacity:0.5; cursor:default; }
+  .order-save-msg{ font-size:11px; font-family:var(--mono); margin-top:8px; }
+  .order-save-msg.success{ color:var(--green); }
+  .order-save-msg.error{ color:var(--red); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brandmark">
+    <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
+    <span class="brand-word">VALENCE ADMIN</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <a class="back-link" href="dashboard.html">&larr; BACK TO DASHBOARD</a>
+    <button id="signout-btn">SIGN OUT</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ---------- Login ---------- -->
+  <section id="login-section">
+    <h1>Orders Admin</h1>
+    <p class="sub">Sign in with the authorized admin account.</p>
+    <div class="panel">
+      <label for="email">EMAIL</label>
+      <input type="email" id="email" autocomplete="username" />
+      <label for="password">PASSWORD</label>
+      <input type="password" id="password" autocomplete="current-password" />
+      <button class="btn" id="login-btn">SIGN IN</button>
+      <div class="msg" id="login-msg"></div>
+    </div>
+  </section>
+
+  <!-- ---------- App ---------- -->
+  <section id="app-section">
+    <h1>Orders Admin</h1>
+    <p class="sub">Update status, carrier, and tracking info for every order.</p>
+
+    <div class="filter-row" id="filter-row">
+      <button class="filter-tab active" data-filter="all">ALL</button>
+      <button class="filter-tab" data-filter="paid">PAID</button>
+      <button class="filter-tab" data-filter="processing">PROCESSING</button>
+      <button class="filter-tab" data-filter="shipped">SHIPPED</button>
+      <button class="filter-tab" data-filter="delivered">DELIVERED</button>
+      <button class="filter-tab" data-filter="cancelled">CANCELLED</button>
+    </div>
+
+    <div id="orders-list"></div>
+  </section>
+</main>
+
+<script>
+  const loginSection = document.getElementById('login-section');
+  const appSection = document.getElementById('app-section');
+  const signoutBtn = document.getElementById('signout-btn');
+  const loginMsg = document.getElementById('login-msg');
+
+  const ADMIN_EMAIL = 'mhilesjr@gmail.com';
+  const STATUS_OPTIONS = ['paid', 'processing', 'shipped', 'delivered', 'cancelled'];
+
+  let allOrders = [];
+  let activeFilter = 'all';
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function formatPrice(cents){
+    if (cents === null || cents === undefined) return '—';
+    return `\u20a6${(cents / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  function formatDate(d){
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  function showLoggedIn() {
+    loginSection.style.display = 'none';
+    appSection.style.display = 'block';
+    signoutBtn.style.display = 'inline-block';
+    loadOrders();
+  }
+
+  function showLoggedOut() {
+    loginSection.style.display = 'block';
+    appSection.style.display = 'none';
+    signoutBtn.style.display = 'none';
+  }
+
+  async function checkSession() {
+    const { data } = await supabaseClient.auth.getSession();
+    if (data.session && data.session.user?.email === ADMIN_EMAIL) {
+      showLoggedIn();
+    } else if (data.session) {
+      await supabaseClient.auth.signOut();
+      showLoggedOut();
+      loginMsg.textContent = 'This admin page is restricted to an authorized account.';
+      loginMsg.className = 'msg error';
+    } else {
+      showLoggedOut();
+    }
+  }
+
+  document.getElementById('login-btn').addEventListener('click', async () => {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    loginMsg.textContent = '';
+    loginMsg.className = 'msg';
+
+    if (!email || !password) {
+      loginMsg.textContent = 'Enter your email and password.';
+      loginMsg.classList.add('error');
+      return;
+    }
+    if (email.toLowerCase() !== ADMIN_EMAIL) {
+      loginMsg.textContent = 'This admin page is restricted to an authorized account.';
+      loginMsg.classList.add('error');
+      return;
+    }
+
+    const { error, data } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) {
+      loginMsg.textContent = error.message;
+      loginMsg.classList.add('error');
+      return;
+    }
+    if (data.user?.email !== ADMIN_EMAIL) {
+      await supabaseClient.auth.signOut();
+      loginMsg.textContent = 'This admin page is restricted to an authorized account.';
+      loginMsg.classList.add('error');
+      return;
+    }
+    showLoggedIn();
+  });
+
+  signoutBtn.addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    showLoggedOut();
+  });
+
+  document.getElementById('filter-row').addEventListener('click', (e) => {
+    const btn = e.target.closest('.filter-tab');
+    if (!btn) return;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    renderOrders();
+  });
+
+  async function loadOrders() {
+    const el = document.getElementById('orders-list');
+    el.innerHTML = '<div class="panel">Loading…</div>';
+
+    const { data, error } = await supabaseClient
+      .from('orders')
+      .select('id, full_name, phone, address_line1, address_line2, city, state, postal_code, country, amount_paid_cents, tracking_number, status, carrier, tracking_url, created_at, paystack_reference, preorder_listings(name)')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Load orders failed:', error);
+      el.innerHTML = '<div class="panel">Could not load orders.</div>';
+      return;
+    }
+
+    allOrders = data || [];
+    renderOrders();
+  }
+
+  function renderOrders() {
+    const el = document.getElementById('orders-list');
+    const filtered = activeFilter === 'all' ? allOrders : allOrders.filter(o => o.status === activeFilter);
+
+    if (!filtered.length) {
+      el.innerHTML = '<div class="panel">No orders match this filter.</div>';
+      return;
+    }
+
+    el.innerHTML = '';
+    filtered.forEach(order => {
+      const addressParts = [order.address_line1, order.address_line2, order.city, order.state, order.postal_code, order.country]
+        .filter(Boolean).map(escapeHtml).join(', ');
+
+      const card = document.createElement('div');
+      card.className = 'panel order-card';
+      card.innerHTML = `
+        <div class="order-top">
+          <div>
+            <div class="order-item-name">${escapeHtml(order.preorder_listings?.name || 'Item')}</div>
+            <div class="order-meta">
+              ${formatDate(order.created_at)} · Tracking: ${escapeHtml(order.tracking_number)}<br>
+              Ref: ${escapeHtml(order.paystack_reference || '—')}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div class="order-price">${formatPrice(order.amount_paid_cents)}</div>
+            <span class="status-pill ${order.status}" style="margin-top:6px;">${order.status.toUpperCase()}</span>
+          </div>
+        </div>
+
+        <div class="order-address">
+          <div class="label">SHIPPING TO</div>
+          ${escapeHtml(order.full_name)} · ${escapeHtml(order.phone)}<br>
+          ${addressParts}
+        </div>
+
+        <div class="order-controls">
+          <div>
+            <label>STATUS</label>
+            <select class="status-select">
+              ${STATUS_OPTIONS.map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s.toUpperCase()}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <label>CARRIER</label>
+            <input type="text" class="carrier-input" value="${escapeHtml(order.carrier || '')}" placeholder="e.g. DHL, GIG" />
+          </div>
+          <div>
+            <label>TRACKING URL</label>
+            <input type="text" class="tracking-url-input" value="${escapeHtml(order.tracking_url || '')}" placeholder="https://..." />
+          </div>
+          <button class="save-btn">SAVE</button>
+        </div>
+        <div class="order-save-msg"></div>
+      `;
+
+      card.querySelector('.save-btn').addEventListener('click', async () => {
+        const saveBtn = card.querySelector('.save-btn');
+        const msgEl = card.querySelector('.order-save-msg');
+        const newStatus = card.querySelector('.status-select').value;
+        const carrier = card.querySelector('.carrier-input').value.trim();
+        const trackingUrl = card.querySelector('.tracking-url-input').value.trim();
+
+        saveBtn.disabled = true;
+        msgEl.textContent = '';
+        msgEl.className = 'order-save-msg';
+
+        const { error: updateError } = await supabaseClient
+          .from('orders')
+          .update({
+            status: newStatus,
+            carrier: carrier || null,
+            tracking_url: trackingUrl || null,
+          })
+          .eq('id', order.id);
+
+        saveBtn.disabled = false;
+
+        if (updateError) {
+          console.error('Update order failed:', updateError);
+          msgEl.textContent = 'Could not save changes.';
+          msgEl.classList.add('error');
+          return;
+        }
+
+        msgEl.textContent = 'Saved.';
+        msgEl.classList.add('success');
+
+        // Keep local state and the visible status pill in sync without a
+        // full reload.
+        order.status = newStatus;
+        order.carrier = carrier;
+        order.tracking_url = trackingUrl;
+        const pill = card.querySelector('.status-pill');
+        pill.textContent = newStatus.toUpperCase();
+        pill.className = `status-pill ${newStatus}`;
+      });
+
+      el.appendChild(card);
+    });
+  }
+
+  checkSession();
+</script>
+</body>
+</html>
