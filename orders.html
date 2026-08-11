@@ -299,14 +299,17 @@
     }
 
     const currentIndex = STEPS.findIndex(s => s.key === order.status);
+    const isFinalStep = currentIndex === STEPS.length - 1;
     return `
       <div class="progress-track">
         ${STEPS.map((s, i) => {
-          const state = i < currentIndex ? 'done' : (i === currentIndex ? 'current' : '');
+          const isDone = i < currentIndex || (isFinalStep && i === currentIndex);
+          const isCurrent = i === currentIndex && !isFinalStep;
+          const state = isDone ? 'done' : (isCurrent ? 'current' : '');
           return `
             <div class="progress-step ${state}">
               <div class="progress-line"></div>
-              <div class="progress-dot">${state === 'done' ? checkIcon : ''}</div>
+              <div class="progress-dot">${isDone ? checkIcon : ''}</div>
               <div class="progress-label">${s.label}</div>
             </div>`;
         }).join('')}
