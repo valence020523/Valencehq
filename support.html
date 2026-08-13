@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Support — VALENCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-config.js"></script>
+<style>
+  :root{
+    --black:#05070b; --navy-950:#080d16; --navy-900:#0b1220; --navy-800:#101a2c;
+    --panel:rgba(255,255,255,0.035); --border:rgba(255,255,255,0.09);
+    --gold:#cbb98d; --gold-bright:#e6d9b0; --green:#3ddc84;
+    --text:#f2f1ec; --text-dim:#93a0b4; --text-dimmer:#5c6779;
+    --mono:'JetBrains Mono',monospace; --sans:'Inter','Segoe UI',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--black); color:var(--text); font-family:var(--sans); -webkit-font-smoothing:antialiased; }
+  a{ color:inherit; text-decoration:none; }
+  .app{ display:flex; min-height:100vh; }
+  .logo-chip{ display:inline-flex; align-items:center; line-height:0; }
+  .logo-chip img{ display:block; height:34px; width:auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5)); }
+  .logo-chip.sm img{ height:26px; }
+  .logo-chip.lg img{ height:44px; }
+  .brandmark{ display:flex; align-items:center; gap:10px; }
+  .brand-word{ font-weight:800; letter-spacing:0.16em; color:var(--gold-bright); font-size:15px; text-shadow:0 0 14px rgba(203,185,141,0.35); }
+  .brand-word.sm{ font-size:12px; letter-spacing:0.13em; }
+  .brand-word.lg{ font-size:17px; }
+  .sidebar{
+    width:230px; flex-shrink:0; background:var(--navy-950);
+    border-right:1px solid var(--border); padding:26px 16px; display:flex; flex-direction:column;
+  }
+  .brand{ padding:0 10px 28px; border-bottom:1px solid var(--border); margin-bottom:18px; }
+  nav.primary-nav{ display:flex; flex-direction:column; gap:2px; }
+  .nav-item{
+    display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:8px;
+    font-size:13.5px; font-weight:700; color:var(--text-dim); cursor:pointer; border:1px solid transparent;
+  }
+  .nav-item svg{ width:17px; height:17px; flex-shrink:0; opacity:0.85; }
+  .nav-item:hover{ background:var(--panel); color:var(--text); }
+  .nav-item.active{ background:rgba(203,185,141,0.14); color:var(--gold-bright); border-color:rgba(203,185,141,0.28); }
+  .nav-item.active svg{ opacity:1; }
+  .sidebar-bottom{ margin-top:auto; padding-top:16px; }
+  .logout-btn{
+    font-size:11.5px; font-weight:700; color:var(--text-dim); background:none;
+    border:1px solid var(--border); border-radius:999px; padding:8px 12px; cursor:pointer;
+    font-family:var(--sans); width:100%;
+  }
+  .logout-btn:hover{ color:var(--text); border-color:var(--gold); }
+  .mobile-header{ display:none; }
+  .scrim{
+    position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:25; opacity:0; pointer-events:none;
+    transition:opacity 0.2s ease;
+  }
+  .scrim.open{ opacity:1; pointer-events:auto; }
+  main.dash{
+    flex:1; min-width:0; padding:26px 34px 60px;
+    background:
+      radial-gradient(1100px 480px at 82% -10%, rgba(203,185,141,0.10), transparent 60%),
+      linear-gradient(180deg, var(--navy-900), var(--black) 55%);
+  }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:34px; }
+  .profile-block{ display:flex; align-items:center; gap:10px; }
+  a.profile-block:hover .name{ color:var(--gold-bright); }
+  .profile-text{ text-align:right; line-height:1.3; }
+  .profile-text .label{ font-size:10px; letter-spacing:0.12em; color:var(--text-dimmer); font-family:var(--mono); font-weight:700; }
+  .profile-text .name{ font-size:13.5px; font-weight:700; }
+  .avatar-wrap{ position:relative; }
+  .avatar{
+    width:34px; height:34px; border-radius:50%; background:linear-gradient(145deg,#3a4a63,#1b2534);
+    background-size:cover; background-position:center;
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700;
+    color:var(--text); border:1px solid var(--border);
+  }
+  .status-dot{
+    width:9px; height:9px; border-radius:50%; background:var(--green); position:absolute;
+    right:-1px; bottom:-1px; border:2px solid var(--navy-900);
+  }
+  .page-head{ margin-bottom:22px; }
+  h1.title{ font-size:clamp(22px,2.6vw,30px); font-weight:800; letter-spacing:0.01em; margin:0; }
+  h1.title span{ color:var(--gold-bright); }
+  .subtitle{ font-size:12.5px; color:var(--text-dim); font-family:var(--mono); margin-top:4px; }
+  .card{ background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:20px; }
+  .section-label{ font-family:var(--mono); font-size:11px; letter-spacing:0.1em; color:var(--gold); margin-bottom:14px; }
+
+  .content-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+
+  /* ---------- quick links ---------- */
+  .quick-links{ display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+  .quick-link{
+    display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:10px;
+    border:1px solid var(--border); background:rgba(255,255,255,0.02);
+  }
+  .quick-link:hover{ border-color:var(--gold); }
+  .quick-link svg{ width:18px; height:18px; color:var(--gold-bright); flex-shrink:0; }
+  .quick-link .ql-title{ font-size:13px; font-weight:700; }
+  .quick-link .ql-sub{ font-size:11px; color:var(--text-dimmer); font-family:var(--mono); margin-top:2px; }
+
+  /* ---------- faq ---------- */
+  .faq-item{ border-bottom:1px solid var(--border); }
+  .faq-item:last-child{ border-bottom:none; }
+  .faq-q{
+    display:flex; justify-content:space-between; align-items:center; gap:10px; padding:14px 0;
+    cursor:pointer; font-size:13px; font-weight:700;
+  }
+  .faq-q svg{ width:14px; height:14px; color:var(--text-dim); flex-shrink:0; transition:transform .2s ease; }
+  .faq-item.open .faq-q svg{ transform:rotate(45deg); }
+  .faq-a{ font-size:12.5px; color:var(--text-dim); line-height:1.7; max-height:0; overflow:hidden; transition:max-height .25s ease; }
+  .faq-item.open .faq-a{ max-height:240px; padding-bottom:14px; }
+
+  /* ---------- contact form ---------- */
+  label{ display:block; font-size:11.5px; font-family:var(--mono); color:var(--text-dimmer); margin:16px 0 6px; }
+  label:first-of-type{ margin-top:0; }
+  input, textarea{
+    width:100%; padding:11px 13px; border-radius:8px; border:1px solid var(--border);
+    background:rgba(255,255,255,0.03); color:var(--text); font-family:var(--sans); font-size:13.5px;
+  }
+  textarea{ resize:vertical; min-height:100px; }
+  input:focus, textarea:focus{ outline:none; border-color:var(--gold); }
+  .submit-btn{
+    margin-top:18px; width:100%; font-size:13px; font-weight:700; letter-spacing:0.03em; color:var(--black);
+    background:var(--gold-bright); border:none; border-radius:999px; padding:13px; cursor:pointer; font-family:var(--sans);
+  }
+  .submit-btn:hover{ background:var(--gold); }
+  .submit-btn:disabled{ opacity:0.5; cursor:default; }
+  .form-msg{ margin-top:12px; font-size:12px; font-family:var(--mono); }
+  .form-msg.error{ color:#e88a8a; }
+  .form-msg.success{ color:var(--green); }
+
+  /* ---------- ticket history ---------- */
+  .ticket-row{ padding:12px 0; border-bottom:1px solid var(--border); }
+  .ticket-row:last-child{ border-bottom:none; }
+  .ticket-top{ display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
+  .ticket-subject{ font-size:13px; font-weight:700; }
+  .ticket-meta{ font-size:10.5px; color:var(--text-dimmer); font-family:var(--mono); margin-top:3px; }
+  .status-pill{ font-family:var(--mono); font-size:9.5px; letter-spacing:0.04em; padding:3px 8px; border-radius:999px; white-space:nowrap; }
+  .status-pill.open{ color:var(--gold-bright); background:rgba(203,185,141,0.12); border:1px solid rgba(203,185,141,0.35); }
+  .status-pill.in_progress{ color:#8ec9f0; background:rgba(142,201,240,0.1); border:1px solid rgba(142,201,240,0.3); }
+  .status-pill.resolved{ color:var(--green); background:rgba(127,216,160,0.1); border:1px solid rgba(127,216,160,0.3); }
+  .no-tickets{ font-size:12.5px; color:var(--text-dim); }
+
+  @media (max-width:900px){
+    .content-grid{ grid-template-columns:1fr; }
+  }
+  @media (max-width:980px){
+    .sidebar{ display:none; }
+    .mobile-header{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 16px; border-bottom:1px solid var(--border);
+      background:linear-gradient(180deg,var(--navy-900),var(--black));
+      position:sticky; top:0; z-index:20;
+    }
+    .mobile-header .left{ display:flex; align-items:center; gap:12px; }
+    .menu-btn{
+      background:none; border:1px solid var(--border); border-radius:8px; width:32px; height:32px;
+      display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text); flex-shrink:0;
+    }
+    .menu-btn svg{ width:16px; height:16px; }
+    .sidebar.mobile-open{
+      display:flex; position:fixed; top:0; left:0; height:100%; z-index:30;
+      transform:translateX(0); box-shadow:20px 0 40px rgba(0,0,0,0.5);
+    }
+    main.dash{ padding:18px 16px 44px; }
+    .topbar{ display:none; }
+    h1.title{ font-size:19px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading" style="color:var(--text-dim); font-size:14px; padding:60px 34px;">Loading your account…</div>
+
+<div id="content" style="display:none;">
+
+  <div class="scrim" id="scrim"></div>
+
+  <header class="mobile-header">
+    <div class="left">
+      <button class="menu-btn" id="menu-btn" aria-label="Open menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="brandmark">
+        <div class="logo-chip sm"><img src="valence-mark.png" alt="VALENCE"></div>
+        <span class="brand-word sm">VALENCE</span>
+      </div>
+    </div>
+    <a class="profile-block" href="profile.html">
+      <div class="profile-text">
+        <div class="label">PROFILE</div>
+        <div class="name" id="dash-username-m">—</div>
+      </div>
+      <div class="avatar-wrap">
+        <div class="avatar" id="avatar-initial-m">—</div>
+        <div class="status-dot"></div>
+      </div>
+    </a>
+  </header>
+
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brandmark">
+          <div class="logo-chip lg"><img src="valence-logo.png" alt="VALENCE"></div>
+          <span class="brand-word lg">VALENCE</span>
+        </div>
+      </div>
+      <nav class="primary-nav">
+        <a href="dashboard.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Dashboard</a>
+        <a href="profile.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>My Profile</a>
+        <a href="collection.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="1.5"/><path d="M8 7V5a4 4 0 018 0v2"/></svg>My Collection</a>
+        <a href="preorder.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 7l6.5 9.5M16 7l-6.5 9.5"/></svg>Pre-Order</a>
+        <a href="market.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.8 5.8 3.8 9s-1.3 6.5-3.8 9c-2.5-2.5-3.8-5.8-3.8-9S9.5 5.5 12 3z"/></svg>Explore Market</a>
+        <a href="orders.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-1.5 12.5a2 2 0 01-2 1.5H7.5a2 2 0 01-2-1.5L4 5z"/><path d="M4 5l-1-2"/></svg>Orders</a>
+        <a href="voting.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11v9M7 11L3 9.5V20l4 1M7 11l6-4 4 2.5M17 9.5V20l4-1V10l-4-2M11 7v10"/></svg>Voting</a>
+        <a href="support.html" class="nav-item active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 015 .5c0 1.7-2.5 1.7-2.5 3.5"/><path d="M12 17h.01"/></svg>Support</a>
+        <a href="settings.html" class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Settings</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="logout-btn" id="logout-btn">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="dash">
+      <div class="topbar">
+        <div class="brandmark">
+          <div class="logo-chip"><img src="valence-logo.png" alt="VALENCE"></div>
+          <span class="brand-word">VALENCE</span>
+        </div>
+        <a class="profile-block" href="profile.html">
+          <div class="profile-text">
+            <div class="label">PROFILE</div>
+            <div class="name" id="dash-username">—</div>
+          </div>
+          <div class="avatar-wrap">
+            <div class="avatar" id="avatar-initial">—</div>
+            <div class="status-dot"></div>
+          </div>
+        </a>
+      </div>
+
+      <div class="page-head">
+        <h1 class="title">SUPPORT & <span>HELP</span></h1>
+        <div class="subtitle">We usually reply within 24 hours.</div>
+      </div>
+
+      <div class="content-grid">
+        <div>
+          <div class="card" style="margin-bottom:20px;">
+            <div class="section-label">QUICK LINKS</div>
+            <div class="quick-links">
+              <a class="quick-link" href="mailto:support@valence.com">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12H4z"/><path d="M4 7l8 6 8-6"/></svg>
+                <div>
+                  <div class="ql-title">Email Us</div>
+                  <div class="ql-sub">support@valence.com</div>
+                </div>
+              </a>
+              <a class="quick-link" href="https://instagram.com/valence" target="_blank" rel="noopener">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
+                <div>
+                  <div class="ql-title">Instagram</div>
+                  <div class="ql-sub">@valence</div>
+                </div>
+              </a>
+            </div>
+
+            <div class="section-label">FREQUENTLY ASKED</div>
+            <div id="faq-list">
+              <div class="faq-item">
+                <div class="faq-q"><span>How do I verify an item is authentic?</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+                <div class="faq-a">Scan the QR code or tag on your item, or search its code on the verification page. Every genuine VALENCE item resolves to a product page showing its edition, batch, and registered owner (if claimed).</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q"><span>How do pre-orders and deposits work?</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+                <div class="faq-a">Pre-ordering an open drop requires a 50% deposit, paid securely through Paystack, to confirm your spot. The remaining balance is due before your item ships.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q"><span>Where's my order?</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+                <div class="faq-a">Every purchase gets a tracking number. Check its status anytime under Orders in the sidebar — it moves through Paid, Processing, Shipped, and Delivered.</div>
+              </div>
+              <div class="faq-item">
+                <div class="faq-q"><span>Can I change my registered item's owner?</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></div>
+                <div class="faq-a">Ownership transfers aren't self-service yet. Message support with the item's serial number and details of the new owner and we'll help.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card" style="margin-bottom:20px;">
+            <div class="section-label">CONTACT SUPPORT</div>
+            <label for="ticket-subject">SUBJECT</label>
+            <input type="text" id="ticket-subject" placeholder="What's this about?" />
+            <label for="ticket-message">MESSAGE</label>
+            <textarea id="ticket-message" placeholder="Give us as much detail as you can…"></textarea>
+            <button class="submit-btn" id="ticket-submit-btn">SEND MESSAGE</button>
+            <div class="form-msg" id="ticket-form-msg"></div>
+          </div>
+
+          <div class="card">
+            <div class="section-label">YOUR MESSAGES</div>
+            <div id="ticket-list"><div class="no-tickets">Loading…</div></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  document.getElementById('faq-list').addEventListener('click', (e) => {
+    const q = e.target.closest('.faq-q');
+    if (!q) return;
+    q.parentElement.classList.toggle('open');
+  });
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  function formatDate(d){
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  let currentUserId = null;
+
+  async function loadTickets(){
+    const listEl = document.getElementById('ticket-list');
+    const { data, error } = await supabaseClient
+      .from('support_tickets')
+      .select('id, subject, message, status, created_at')
+      .eq('user_id', currentUserId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Load tickets failed:', error);
+      listEl.innerHTML = '<div class="no-tickets">Could not load your messages.</div>';
+      return;
+    }
+    if (!data || !data.length) {
+      listEl.innerHTML = '<div class="no-tickets">No messages yet.</div>';
+      return;
+    }
+
+    listEl.innerHTML = data.map(t => `
+      <div class="ticket-row">
+        <div class="ticket-top">
+          <div class="ticket-subject">${escapeHtml(t.subject)}</div>
+          <span class="status-pill ${t.status}">${t.status.replace('_',' ').toUpperCase()}</span>
+        </div>
+        <div class="ticket-meta">${formatDate(t.created_at)}</div>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('ticket-submit-btn').addEventListener('click', async () => {
+    const msgEl = document.getElementById('ticket-form-msg');
+    const subjectInput = document.getElementById('ticket-subject');
+    const messageInput = document.getElementById('ticket-message');
+    const subject = subjectInput.value.trim();
+    const message = messageInput.value.trim();
+
+    msgEl.textContent = '';
+    msgEl.className = 'form-msg';
+
+    if (!subject || !message) {
+      msgEl.textContent = 'Fill in both the subject and message.';
+      msgEl.classList.add('error');
+      return;
+    }
+
+    const btn = document.getElementById('ticket-submit-btn');
+    btn.disabled = true;
+
+    const { error } = await supabaseClient
+      .from('support_tickets')
+      .insert([{ user_id: currentUserId, subject, message }]);
+
+    btn.disabled = false;
+
+    if (error) {
+      console.error('Submit ticket failed:', error);
+      msgEl.textContent = 'Could not send your message. Please try again.';
+      msgEl.classList.add('error');
+      return;
+    }
+
+    msgEl.textContent = 'Sent — we\u2019ll get back to you soon.';
+    msgEl.classList.add('success');
+    subjectInput.value = '';
+    messageInput.value = '';
+    loadTickets();
+  });
+
+  (async () => {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+
+    if (!session) {
+      window.location.href = 'login.html?redirect=' + encodeURIComponent('support.html');
+      return;
+    }
+
+    const user = session.user;
+    currentUserId = user.id;
+    const meta = user.user_metadata || {};
+    const displayName = meta.username || (user.email ? user.email.split('@')[0] : 'Member');
+
+    document.getElementById('dash-username').textContent = displayName;
+    document.getElementById('dash-username-m').textContent = displayName;
+
+    const avatarEls = [document.getElementById('avatar-initial'), document.getElementById('avatar-initial-m')];
+    if (meta.avatar_url) {
+      avatarEls.forEach(el => { el.style.backgroundImage = `url("${meta.avatar_url}")`; el.textContent = ''; });
+    } else {
+      const initial = displayName.charAt(0).toUpperCase();
+      avatarEls.forEach(el => { el.textContent = initial; });
+    }
+
+    await loadTickets();
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+  })();
+
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_OUT' || !session) {
+      window.location.href = 'login.html';
+    }
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await supabaseClient.auth.signOut();
+    window.location.href = 'login.html';
+  });
+
+  const sidebar = document.getElementById('sidebar');
+  const scrim = document.getElementById('scrim');
+  const menuBtn = document.getElementById('menu-btn');
+  function toggleMenu(open){
+    sidebar.classList.toggle('mobile-open', open);
+    scrim.classList.toggle('open', open);
+  }
+  menuBtn.addEventListener('click', () => toggleMenu(true));
+  scrim.addEventListener('click', () => toggleMenu(false));
+</script>
+</body>
+</html>
